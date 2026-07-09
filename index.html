@@ -139,6 +139,14 @@ ol.plain .rem{display:block;font-size:12px;color:var(--sub);margin-top:1px}
 .sres{font-family:var(--mono);font-size:12.5px;color:var(--sub);display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
 .sopt .btn{margin-left:auto}
 
+/* ---- inverter series groups ---- */
+tr.ghead td{background:#EFF3F6;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.045em;color:var(--sub);cursor:pointer;user-select:none;padding:9px 12px}
+tr.ghead:hover td{background:#E8EDF2;color:var(--ink)}
+.gchev{display:inline-block;margin-right:7px;transition:transform .15s;color:var(--pri)}
+tr.ghead.open .gchev{transform:rotate(90deg)}
+.gcount{font-family:var(--mono);font-size:10.5px;font-weight:700;background:var(--pri-soft);color:var(--pri);border-radius:99px;padding:2px 8px;margin-left:8px;text-transform:none;letter-spacing:0}
+.ghint{float:right;font-weight:500;font-size:10.5px;color:#9AA6B1;text-transform:none;letter-spacing:0}
+
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;border-radius:10px;padding:10px 18px;font-size:13.5px;font-weight:600;opacity:0;transition:all .25s;z-index:50;pointer-events:none}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
@@ -383,14 +391,23 @@ const DEFAULTS={
   tiers:[{upto:100,pct:100},{upto:200,pct:75},{upto:400,pct:50},{upto:600,pct:25},{upto:null,pct:5}],
   dcac:1.2, sf:1.2, sysVolt:400, maxAc:1000,
   inverters:[
-    {model:"SG25CX-P2", kw:25, dc:35,  mppt:3, str:2, kva:27.5,amp:41.8, brk:63},
-    {model:"SG30CX-P2", kw:30, dc:42,  mppt:3, str:2, kva:33,  amp:50.2, brk:63},
-    {model:"SG33CX-P2", kw:33, dc:46.2,mppt:3, str:2, kva:36.3,amp:55.2, brk:80},
-    {model:"SG36CX-P2", kw:36, dc:50.4,mppt:3, str:2, kva:40,  amp:60.2, brk:80},
-    {model:"SG40CX-P2", kw:40, dc:56,  mppt:4, str:2, kva:44,  amp:66.9, brk:80},
-    {model:"SG50CX-P2", kw:50, dc:70,  mppt:4, str:2, kva:55,  amp:83.6, brk:100},
-    {model:"SG125CX-P2",kw:125,dc:175, mppt:12,str:2, kva:125, amp:181.1,brk:225},
-    {model:"SG150CX",   kw:150,dc:175, mppt:12,str:2, kva:165, amp:240.6,brk:320}
+    {model:"SG5.0RT-P2", kw:5,  dc:7.5, mppt:2, str:"1 / 1", kva:5.5, amp:8.3,  brk:16, series:"RT"},
+    {model:"SG6.0RT-P2", kw:6,  dc:9,   mppt:2, str:"1 / 1", kva:6.6, amp:10,   brk:16, series:"RT"},
+    {model:"SG7.0RT-P2", kw:7,  dc:10.5,mppt:2, str:"2 / 1", kva:7.7, amp:11.7, brk:16, series:"RT"},
+    {model:"SG8.0RT-P2", kw:8,  dc:12,  mppt:2, str:"2 / 1", kva:8.8, amp:13.3, brk:20, series:"RT"},
+    {model:"SG10RT-P2",  kw:10, dc:15,  mppt:2, str:"2 / 1", kva:11,  amp:16.7, brk:25, series:"RT"},
+    {model:"SG12RT-P2",  kw:12, dc:18,  mppt:2, str:"2 / 1", kva:13.2,amp:20,   brk:25, series:"RT"},
+    {model:"SG15RT-P2",  kw:15, dc:22.5,mppt:2, str:"2 / 2", kva:16.5,amp:25,   brk:32, series:"RT"},
+    {model:"SG17RT-P2",  kw:17, dc:25.5,mppt:2, str:"2 / 2", kva:18.7,amp:28.3, brk:40, series:"RT"},
+    {model:"SG20RT-P2",  kw:20, dc:30,  mppt:2, str:"2 / 2", kva:22,  amp:31.9, brk:40, series:"RT"},
+    {model:"SG25CX-P2", kw:25, dc:35,  mppt:3, str:2, kva:27.5,amp:41.8, brk:63, series:"CX"},
+    {model:"SG30CX-P2", kw:30, dc:42,  mppt:3, str:2, kva:33,  amp:50.2, brk:63, series:"CX"},
+    {model:"SG33CX-P2", kw:33, dc:46.2,mppt:3, str:2, kva:36.3,amp:55.2, brk:80, series:"CX"},
+    {model:"SG36CX-P2", kw:36, dc:50.4,mppt:3, str:2, kva:40,  amp:60.2, brk:80, series:"CX"},
+    {model:"SG40CX-P2", kw:40, dc:56,  mppt:4, str:2, kva:44,  amp:66.9, brk:80, series:"CX"},
+    {model:"SG50CX-P2", kw:50, dc:70,  mppt:4, str:2, kva:55,  amp:83.6, brk:100, series:"CX"},
+    {model:"SG125CX-P2",kw:125,dc:175, mppt:12,str:2, kva:125, amp:181.1,brk:225, series:"CX"},
+    {model:"SG150CX",   kw:150,dc:175, mppt:12,str:2, kva:165, amp:240.6,brk:320, series:"CX"}
   ],
   addc:[ /* ADDC standard: cable (mm² 4C) · max load kW · breaker A */
     {kw:18,  a:40,  c:"4Cx10"},
@@ -412,6 +429,8 @@ const DEFAULTS={
     {kw:1000,a:2000,c:"4Rx4Cx300"}
   ],
   brkCable:[
+    {a:16,c:"4Cx2.5",e:"1Cx2.5",t:"MCB"},{a:20,c:"4Cx4",e:"1Cx4",t:"MCB"},
+    {a:25,c:"4Cx6",e:"1Cx6",t:"MCB"},
     {a:32,c:"4Cx6",e:"1Cx6",t:"MCCB"},{a:40,c:"4Cx10",e:"1Cx10",t:"MCCB"},
     {a:63,c:"4Cx16",e:"1Cx16",t:"MCCB"},{a:80,c:"4Cx25",e:"1Cx16",t:"MCCB"},
     {a:100,c:"4Cx35",e:"1Cx16",t:"MCCB"},{a:125,c:"4Cx50",e:"1Cx25",t:"MCCB"},
@@ -481,7 +500,18 @@ let trayDC=[{i:1,qty:34}], trayAC=[{i:9,qty:2}];
 let trayMode="dc";
 function clone(o){return JSON.parse(JSON.stringify(o))}
 function store(){try{localStorage.setItem(KEY,JSON.stringify({D}))}catch(e){}}
-function loadS(){try{const s=localStorage.getItem(KEY);if(s){const o=JSON.parse(s);if(o.D)D={...clone(DEFAULTS),...o.D}}}catch(e){}}
+function loadS(){try{const s=localStorage.getItem(KEY);if(s){const o=JSON.parse(s);if(o.D)D={...clone(DEFAULTS),...o.D}}}catch(e){}
+  /* migrate older saved data — add new models / series tags / small breakers */
+  try{
+    DEFAULTS.inverters.forEach(dm=>{
+      const ex=D.inverters.find(m=>m.model===dm.model);
+      if(!ex)D.inverters.push(clone(dm));
+      else if(!ex.series)ex.series=dm.series;
+    });
+    DEFAULTS.brkCable.forEach(db=>{if(!D.brkCable.some(b=>b.a===db.a))D.brkCable.push(clone(db))});
+    D.brkCable.sort((a,b)=>a.a-b.a);
+  }catch(e){}
+}
 const $=id=>document.getElementById(id);
 const fmt=(v,d=2)=>isFinite(v)?(+v).toLocaleString("en",{maximumFractionDigits:d}):"—";
 function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove("on"),1900)}
@@ -552,29 +582,50 @@ function feederOf(m){ /* per-inverter breaker + cable, mode aware */
   if(isAD()){const r=addcFor(m.kw);return r?{brk:r.a,c:r.c,e:"—"}:null}
   const cb=cableFor(m.brk);return cb?{brk:m.brk,c:cb.c,e:cb.e}:{brk:m.brk,c:"—",e:"—"};
 }
+const SERIES=[
+  {id:"CX",label:"SG CX — Commercial · 25–150 kW"},
+  {id:"RT",label:"SG RT-P2 — Small rooftop · 5–20 kW"},
+  {id:"Other",label:"Other models"}
+];
+let groupOpen={CX:true,RT:true,Other:true};
 function renderInvTable(){
   const t=$("invTable"),ad=isAD();
   let h=`<tr><th>Model</th><th class="n">${ad?"Rated power (kW)":"AC output (kVA)"}</th><th class="n">Output current (A)</th><th class="n" style="width:110px">Qty</th></tr>`;
-  D.inverters.forEach((m,i)=>{
-    const q=invQty[m.model]||0;
-    h+=`<tr class="trow ${q?'sel':''}" data-i="${i}">
-      <td style="font-weight:650">${m.model}</td>
-      <td class="n">${fmt(ad?m.kw:m.kva)}</td><td class="n">${fmt(m.amp)}</td>
-      <td class="n"><span class="qty">
-        <button data-i="${i}" data-d="-1" aria-label="decrease">−</button>
-        <input type="number" min="0" step="1" value="${q||''}" placeholder="0" data-i="${i}" class="qtyIn">
-        <button data-i="${i}" data-d="1" aria-label="increase">+</button></span></td></tr>`;
-    if(expanded===i){
-      const f=feederOf(m);
-      h+=`<tr class="detail"><td colspan="4"><div class="dgrid">
-        <div>${ad?"AC output":"Rated power"}<b>${fmt(ad?m.kva:m.kw)} ${ad?"kVA":"kW"}</b></div>
-        <div>Max DC input<b>${fmt(m.dc)} kWp</b></div><div>MPPT<b>${m.mppt||"—"}</b></div>
-        <div>Strings / MPPT<b>${m.str||"—"}</b></div><div>Feeder breaker<b>${f?f.brk+" A":"—"}</b></div>
-        <div>AC cable<b>${f?f.c:"—"}</b></div><div>Earthing<b>${f?f.e:"—"}</b></div>
-      </div></td></tr>`;
-    }
+  const groups=SERIES.filter(s=>D.inverters.some(m=>(m.series||"Other")===s.id));
+  groups.forEach(g=>{
+    const idxs=D.inverters.map((m,i)=>[m,i]).filter(([m])=>(m.series||"Other")===g.id);
+    const selN=idxs.reduce((s,[m])=>s+(invQty[m.model]||0),0);
+    const open=!!groupOpen[g.id];
+    const shown=idxs.filter(([m])=>open||invQty[m.model]>0);
+    h+=`<tr class="ghead ${open?'open':''}" data-g="${g.id}"><td colspan="4">
+      <span class="gchev">▸</span>${g.label}
+      ${selN?`<span class="gcount">${selN} selected</span>`:""}
+      <span class="ghint">${open?"tap to minimise":`tap to show all ${idxs.length}`}</span></td></tr>`;
+    shown.forEach(([m,i])=>{
+      const q=invQty[m.model]||0;
+      h+=`<tr class="trow ${q?'sel':''}" data-i="${i}">
+        <td style="font-weight:650">${m.model}</td>
+        <td class="n">${fmt(ad?m.kw:m.kva)}</td><td class="n">${fmt(m.amp)}</td>
+        <td class="n"><span class="qty">
+          <button data-i="${i}" data-d="-1" aria-label="decrease">−</button>
+          <input type="number" min="0" step="1" value="${q||''}" placeholder="0" data-i="${i}" class="qtyIn">
+          <button data-i="${i}" data-d="1" aria-label="increase">+</button></span></td></tr>`;
+      if(expanded===i){
+        const f=feederOf(m);
+        h+=`<tr class="detail"><td colspan="4"><div class="dgrid">
+          <div>${ad?"AC output":"Rated power"}<b>${fmt(ad?m.kva:m.kw)} ${ad?"kVA":"kW"}</b></div>
+          <div>Max DC input<b>${fmt(m.dc)} kWp</b></div><div>MPPT<b>${m.mppt||"—"}</b></div>
+          <div>Strings / MPPT<b>${m.str||"—"}</b></div><div>Feeder breaker<b>${f?f.brk+" A":"—"}</b></div>
+          <div>AC cable<b>${f?f.c:"—"}</b></div><div>Earthing<b>${f?f.e:"—"}</b></div>
+        </div></td></tr>`;
+      }
+    });
+    if(open&&!shown.length)h+=`<tr><td colspan="4" style="color:var(--sub);font-size:12.5px">No models</td></tr>`;
   });
   t.innerHTML=h;
+  t.querySelectorAll("tr.ghead").forEach(r=>r.addEventListener("click",()=>{
+    const g=r.dataset.g;groupOpen[g]=!groupOpen[g];renderInvTable();
+  }));
   t.querySelectorAll("tr.trow").forEach(r=>r.addEventListener("click",e=>{
     if(e.target.closest(".qty"))return;
     const i=+r.dataset.i;expanded=expanded===i?null:i;renderInvTable();
@@ -699,6 +750,7 @@ $("suggestMix").addEventListener("click",e=>{
   const b=e.target.closest("button[data-opt]");if(!b)return;
   const opt=suggestOptions[+b.dataset.opt];if(!opt)return;
   invQty={...opt.mix};expanded=null;
+  Object.keys(groupOpen).forEach(g=>groupOpen[g]=false); /* minimise — only picked units stay visible */
   renderInvTable();renderInvTotals();toast(`Option ${+b.dataset.opt+1} applied to table`);
 });
 
@@ -928,8 +980,8 @@ function accWrap(title,node,open){
 function renderData(){
   const w=$("dataWrap");w.innerHTML="";
   w.appendChild(accWrap("Inverter database",editTable(D.inverters,[
-    {key:"model",label:"Model"},{key:"kw",label:"Rated kW",num:1},{key:"dc",label:"Max DC kWp",num:1},{key:"mppt",label:"MPPT",num:1},
-    {key:"str",label:"Str/MPPT",num:1},{key:"kva",label:"AC kVA",num:1},{key:"amp",label:"Max AC A",num:1},
+    {key:"model",label:"Model"},{key:"series",label:"Series (CX/RT)"},{key:"kw",label:"Rated kW",num:1},{key:"dc",label:"Max DC kWp",num:1},{key:"mppt",label:"MPPT",num:1},
+    {key:"str",label:"Str/MPPT"},{key:"kva",label:"AC kVA",num:1},{key:"amp",label:"Max AC A",num:1},
     {key:"brk",label:"Breaker A (DEWA)",num:1}]),true));
   w.appendChild(accWrap("Breaker → cable lookup (DEWA)",editTable(D.brkCable,[
     {key:"a",label:"Breaker A",num:1},{key:"c",label:"Cable"},{key:"e",label:"Earthing"},{key:"t",label:"Type"}])));
