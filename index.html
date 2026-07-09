@@ -130,9 +130,14 @@ ol.plain .rem{display:block;font-size:12px;color:var(--sub);margin-top:1px}
 .note b{color:var(--ink)}
 .flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .spacer{flex:1}
-.suggestion{background:var(--amber-soft);border:1px solid #F0DCB4;border-radius:10px;padding:11px 14px;font-size:13.5px;margin-top:12px;display:none}
-.suggestion.on{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.suggestion .mix{font-family:var(--mono);font-size:13px;font-weight:600}
+.suggestion{background:var(--amber-soft);border:1px solid #F0DCB4;border-radius:10px;padding:6px 14px;font-size:13.5px;margin-top:12px;display:none}
+.suggestion.on{display:block}
+.sopt{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 0;border-bottom:1px dashed #EAD9B4}
+.sopt:last-child{border-bottom:0}
+.stag{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--amber);flex:none;background:#fff;border:1px solid #F0DCB4;border-radius:99px;padding:3px 9px}
+.smix{font-family:var(--mono);font-size:13px;font-weight:650}
+.sres{font-family:var(--mono);font-size:12.5px;color:var(--sub);display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+.sopt .btn{margin-left:auto}
 
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;border-radius:10px;padding:10px 18px;font-size:13.5px;font-weight:600;opacity:0;transition:all .25s;z-index:50;pointer-events:none}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -141,6 +146,29 @@ ol.plain .rem{display:block;font-size:12px;color:var(--sub);margin-top:1px}
   .g2,.g32{grid-template-columns:1fr}
   .stat .v{font-size:22px}
   .wrap{padding:18px 14px 80px}
+}
+@media(max-width:640px){
+  .brandrow{flex-wrap:wrap;gap:8px;padding:12px 0 8px}
+  .brandrow .tag{display:none}
+  .brandrow .seg{width:100%;order:9;display:flex}
+  .brandrow .seg button{flex:1;text-align:center;padding:7px 8px}
+  .top .in{padding:0 14px}
+  .card{padding:16px 14px}
+  .frow{flex-wrap:wrap}
+  .frow .f{flex:1 1 130px;max-width:none!important}
+  #suggestBtn{width:100%;justify-content:center;margin-top:2px}
+  .sopt{flex-direction:column;align-items:stretch;gap:7px}
+  .sopt .btn{margin-left:0;justify-content:center}
+  .sres{justify-content:flex-start}
+  th,td{padding:9px 8px;font-size:13px}
+  td.n,th.n{font-size:12.5px}
+  .qty button{width:32px;height:36px;font-size:17px}
+  .qty input{width:38px}
+  .stat{padding:14px 15px}
+  .stat .v{font-size:20px}
+  .dgrid{grid-template-columns:repeat(2,1fr)}
+  .ph h2{font-size:19px}
+  .btn{padding:10px 16px}
 }
 </style>
 </head>
@@ -214,9 +242,7 @@ ol.plain .rem{display:block;font-size:12px;color:var(--sub);margin-top:1px}
       <button class="btn" id="suggestBtn">Suggest</button>
     </div>
     <div class="suggestion" id="suggestBox">
-      <span class="mix" id="suggestMix"></span>
-      <span class="spacer"></span>
-      <button class="btn sm pri" id="applySuggest">Apply</button>
+      <div id="suggestMix"></div>
     </div>
   </div>
 
@@ -602,26 +628,78 @@ function renderInvTotals(){
   else{$("incBrk").innerHTML="—<small>A</small>";$("incType").textContent="";$("incAlt").textContent="";$("incCable").textContent="—";$("incEarth").textContent=""}
 }
 
-/* auto-suggest — never exceeds the target */
-let lastSuggest=null;
-$("suggestBtn").addEventListener("click",()=>{
-  const tgt=parseFloat($("tgtCap").value),basis=$("tgtBasis").value,key=basis==="ac"?(isAD()?"kw":"kva"):"dc";
-  const unit=basis==="ac"?(isAD()?"kW":"kWac"):"kWp";
-  const box=$("suggestBox");lastSuggest=null;
-  if(!isFinite(tgt)||tgt<=0){box.classList.remove("on");toast("Enter a target first");return}
-  const models=[...D.inverters].filter(m=>m[key]>0).sort((a,b)=>b[key]-a[key]);
+/* auto-suggest — multiple options, never exceeds target · DC (kWp) = 1.2 × AC */
+let suggestOptions=[];
+const DC_RATIO=1.2;
+const mixKey=mix=>Object.entries(mix).sort().map(([m,q])=>m+":"+q).join("|");
+function mixTotals(mix){
+  let kva=0,kw=0,n=0;
+  Object.entries(mix).forEach(([mo,q])=>{const m=D.inverters.find(x=>x.model===mo);kva+=q*m.kva;kw+=q*(m.kw||0);n+=q});
+  return{kva,kw,n};
+}
+function greedyMix(models,tgt,key){
   let rem=tgt;const mix={};
   for(const m of models){const c=Math.floor((rem+1e-9)/m[key]);if(c>0){mix[m.model]=c;rem-=c*m[key]}}
-  if(!Object.keys(mix).length){box.classList.remove("on");toast("Target is below the smallest inverter");return}
-  const tot=k=>Object.entries(mix).reduce((s,[mo,q])=>s+q*(D.inverters.find(x=>x.model===mo)[k]||0),0);
-  lastSuggest=mix;
-  $("suggestMix").innerHTML=Object.entries(mix).map(([m,q])=>`${q}× ${m}`).join(" + ")+
-    ` &nbsp;→&nbsp; ${isAD()?fmt(tot("kw"))+" kW":fmt(tot("kva"))+" kVA"} · ${fmt(tot("dc"))} kWp DC <span class="pill ok">≤ ${fmt(tgt)} ${unit}</span>`;
+  return Object.keys(mix).length?mix:null;
+}
+function bestFitMix(models,tgt,key){
+  /* DP knapsack — maximise total AC ≤ target (0.1 resolution) */
+  const scale=10,T=Math.round(tgt*scale);
+  if(T<=0||T>300000)return null;
+  const sizes=models.map(m=>Math.round(m[key]*scale));
+  const reach=new Uint8Array(T+1),last=new Int32Array(T+1).fill(-1);
+  reach[0]=1;
+  for(let v=1;v<=T;v++)for(let i=0;i<sizes.length;i++){
+    const s=sizes[i];
+    if(s<=v&&reach[v-s]){reach[v]=1;last[v]=i;break}
+  }
+  let v=T;while(v>0&&!reach[v])v--;
+  if(v<=0)return null;
+  const mix={};
+  while(v>0){const i=last[v],mo=models[i].model;mix[mo]=(mix[mo]||0)+1;v-=sizes[i]}
+  return mix;
+}
+$("suggestBtn").addEventListener("click",()=>{
+  const raw=parseFloat($("tgtCap").value),basis=$("tgtBasis").value;
+  const box=$("suggestBox");suggestOptions=[];
+  if(!isFinite(raw)||raw<=0){box.classList.remove("on");toast("Enter a target first");return}
+  const key=isAD()?"kw":"kva";                       /* always size on AC */
+  const tgt=basis==="dc"?raw/DC_RATIO:raw;           /* kWp target → AC equivalent */
+  const unit=basis==="dc"?"kWp":(isAD()?"kW":"kWac");
+  const models=[...D.inverters].filter(m=>m[key]>0).sort((a,b)=>b[key]-a[key]);
+  const cands=[];
+  const push=(mix,label)=>{
+    if(!mix)return;const k=mixKey(mix);
+    if(cands.some(c=>c.k===k))return;
+    cands.push({mix,label,k,ac:isAD()?mixTotals(mix).kw:mixTotals(mix).kva});
+  };
+  push(greedyMix(models,tgt,key),"Fewest units");
+  push(bestFitMix(models,tgt,key),"Closest to target");
+  push(greedyMix(models.slice(1),tgt,key),"Alternative mix");
+  if(!cands.length){box.classList.remove("on");toast("Target is below the smallest inverter");return}
+  suggestOptions=cands;
+  $("suggestMix").innerHTML=cands.map((c,i)=>{
+    const t=mixTotals(c.mix),ac=isAD()?t.kw:t.kva;
+    const acTxt=isAD()?fmt(t.kw)+" kW":fmt(t.kva)+" kVA";
+    const dc=ac*DC_RATIO;                            /* kWp = 1.2 × kWac */
+    const gap=tgt-ac;
+    return `<div class="sopt">
+      <span class="stag">Option ${i+1} · ${c.label}</span>
+      <span class="smix">${Object.entries(c.mix).map(([m,q])=>`${q}× ${m}`).join(" + ")}</span>
+      <span class="sres">→ ${acTxt} · ${fmt(dc)} kWp DC
+        <span class="pill ok">≤ ${fmt(raw)} ${unit}</span>
+        ${gap>0.05?`<span class="pill warn">−${fmt(gap)} ${isAD()?"kW":"kVA"} vs target</span>`:`<span class="pill ok">exact</span>`}
+      </span>
+      <button class="btn sm pri" data-opt="${i}">Apply</button>
+    </div>`;
+  }).join("");
   box.classList.add("on");
 });
-$("applySuggest").addEventListener("click",()=>{
-  if(!lastSuggest)return;invQty={...lastSuggest};expanded=null;
-  renderInvTable();renderInvTotals();toast("Applied to table");
+$("suggestMix").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-opt]");if(!b)return;
+  const opt=suggestOptions[+b.dataset.opt];if(!opt)return;
+  invQty={...opt.mix};expanded=null;
+  renderInvTable();renderInvTotals();toast(`Option ${+b.dataset.opt+1} applied to table`);
 });
 
 /* ================== 3 · VOLTAGE DROP ================== */
