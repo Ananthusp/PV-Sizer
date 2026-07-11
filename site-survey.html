@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PV Design Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F6F8; --card:#FFFFFF; --ink:#17212B; --sub:#66727F; --line:#E4E9EE; --line2:#CBD4DC;
+  --pri:#0B7A67; --pri-soft:#E2F2EF; --pri-dark:#075E4F;
+  --amber:#B97509; --amber-soft:#FCF3E2;
+  --ok:#0B7A67; --ok-bg:#E2F2EF; --bad:#C2402F; --bad-bg:#FBEAE7;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  --r:14px; --sh:0 1px 3px rgba(23,33,43,.06),0 4px 14px rgba(23,33,43,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font:14.5px/1.5 'Inter',system-ui,sans-serif}
+input,select,button{font-family:inherit;font-size:14px;color:var(--ink)}
+input[type=number],input[type=text],select{background:#fff;border:1px solid var(--line2);border-radius:9px;padding:9px 12px;outline:none;width:100%;transition:border-color .12s, box-shadow .12s}
+input:focus,select:focus{border-color:var(--pri);box-shadow:0 0 0 3px var(--pri-soft)}
+input[type=number]{font-family:var(--mono);font-size:13.5px}
+
+/* ---- header / nav ---- */
+.top{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.top .in{max-width:1080px;margin:0 auto;padding:0 20px}
+.brandrow{display:flex;align-items:center;gap:10px;padding:14px 0 10px}
+.logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--pri),#0E9B83);display:grid;place-items:center;color:#fff;font-weight:800;font-size:15px}
+.brandrow h1{font-size:16px;font-weight:750;letter-spacing:-.01em}
+.brandrow .tag{font-size:12px;color:var(--sub);margin-left:2px}
+.tabs{display:flex;gap:4px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;background:none;border:0;border-radius:9px;padding:8px 14px;font-size:13.5px;font-weight:600;color:var(--sub);cursor:pointer;transition:background .12s,color .12s}
+.tabs button:hover{background:var(--bg);color:var(--ink)}
+.tabs button.on{background:var(--ink);color:#fff}
+
+.wrap{max-width:1080px;margin:0 auto;padding:24px 20px 90px}
+section.page{display:none}
+section.page.on{display:block;animation:fade .16s ease}
+@keyframes fade{from{opacity:0;transform:translateY(3px)}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){section.page.on{animation:none}}
+
+.ph{margin:4px 0 18px}
+.ph h2{font-size:21px;font-weight:750;letter-spacing:-.015em}
+.ph p{color:var(--sub);font-size:13.5px;margin-top:2px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:20px}
+.card h3{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:14px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:1fr 1fr}
+.g32{grid-template-columns:3fr 2fr}
+.mt{margin-top:16px}
+
+.f{margin-bottom:13px}
+.f label{display:block;font-size:12.5px;font-weight:600;color:var(--sub);margin-bottom:5px}
+.f .u{font-weight:500;color:#93A0AC}
+.frow{display:flex;gap:12px}.frow .f{flex:1}
+
+/* ---- stats ---- */
+.stats{display:grid;gap:12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:16px 18px;display:flex;flex-direction:column;gap:3px}
+.stat .k{font-size:12px;font-weight:600;color:var(--sub)}
+.stat .v{font-family:var(--mono);font-size:26px;font-weight:700;letter-spacing:-.02em}
+.stat .v small{font-size:12px;font-weight:500;color:var(--sub);margin-left:3px}
+.stat.hero{background:linear-gradient(135deg,var(--pri),#0E9B83);border:0}
+.stat.hero .k{color:rgba(255,255,255,.75)}
+.stat.hero .v{color:#fff}
+.stat.hero .v small{color:rgba(255,255,255,.7)}
+.stat .hint{font-size:11.5px;color:var(--sub)}
+.stat.hero .hint{color:rgba(255,255,255,.65)}
+
+.pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:99px}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.pill.bad{background:var(--bad-bg);color:var(--bad)}
+.pill.warn{background:var(--amber-soft);color:var(--amber)}
+
+.btn{display:inline-flex;align-items:center;gap:7px;background:var(--ink);color:#fff;border:0;border-radius:9px;padding:9px 16px;font-size:13.5px;font-weight:600;cursor:pointer;transition:filter .12s}
+.btn:hover{filter:brightness(1.15)}
+.btn.pri{background:var(--pri)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line2)}
+.btn.ghost:hover{background:var(--bg);filter:none}
+.btn.sm{padding:6px 11px;font-size:12.5px;border-radius:8px}
+.btn.danger{background:transparent;border:1px solid #E6B4AC;color:var(--bad)}
+.btn.danger:hover{background:var(--bad-bg);filter:none}
+
+/* ---- tables ---- */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--sub);background:#FAFBFC;padding:10px 12px;text-align:left;border-bottom:1px solid var(--line)}
+td{padding:10px 12px;border-bottom:1px solid var(--line);font-size:13.5px}
+tr:last-child td{border-bottom:0}
+td.n,th.n{text-align:right;font-family:var(--mono);font-size:13px}
+td input{padding:6px 8px;border-radius:7px}
+tr.trow{cursor:pointer;transition:background .1s}
+tr.trow:hover td{background:#FAFBFC}
+tr.sel td{background:var(--pri-soft)}
+tr.detail td{background:#FAFBFC;padding:12px 16px}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.dgrid div{font-size:12px;color:var(--sub)}
+.dgrid b{display:block;font-family:var(--mono);font-size:13px;color:var(--ink);font-weight:600;margin-top:1px}
+tr.totrow td{background:var(--pri-soft);font-weight:700;font-family:var(--mono);font-size:13px}
+
+.qty{display:inline-flex;align-items:center;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+.qty button{width:28px;height:30px;border:0;background:#fff;cursor:pointer;font-size:15px;color:var(--sub)}
+.qty button:hover{background:var(--bg);color:var(--ink)}
+.qty input{width:44px;border:0;border-radius:0;text-align:center;padding:5px 2px}
+.qty input:focus{box-shadow:none}
+
+/* ---- accordions ---- */
+details.acc{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);margin-bottom:12px;overflow:hidden}
+details.acc summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:15px 18px;font-weight:650;font-size:14px}
+details.acc summary::-webkit-details-marker{display:none}
+details.acc summary .count{font-family:var(--mono);font-size:11.5px;color:var(--sub);font-weight:600;background:var(--bg);border-radius:99px;padding:3px 9px}
+details.acc summary .chev{margin-left:auto;color:var(--sub);transition:transform .15s;flex:none}
+details.acc[open] summary .chev{transform:rotate(90deg)}
+details.acc .body{border-top:1px solid var(--line);padding:6px 18px 14px}
+ol.plain{list-style:none;counter-reset:c}
+ol.plain li{counter-increment:c;display:flex;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+ol.plain li:last-child{border-bottom:0}
+ol.plain li::before{content:counter(c,decimal-leading-zero);font-family:var(--mono);font-size:11.5px;color:var(--pri);font-weight:700;margin-top:2px}
+ol.plain .rem{display:block;font-size:12px;color:var(--sub);margin-top:1px}
+
+.seg{display:inline-flex;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:none;border-radius:8px;padding:6px 16px;font-size:13px;font-weight:600;color:var(--sub);cursor:pointer}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+
+.note{font-size:12.5px;color:var(--sub);background:var(--bg);border-radius:10px;padding:10px 14px;margin-top:14px}
+.note b{color:var(--ink)}
+.flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+.suggestion{background:var(--amber-soft);border:1px solid #F0DCB4;border-radius:10px;padding:6px 14px;font-size:13.5px;margin-top:12px;display:none}
+.suggestion.on{display:block}
+.sopt{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 0;border-bottom:1px dashed #EAD9B4}
+.sopt:last-child{border-bottom:0}
+.stag{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--amber);flex:none;background:#fff;border:1px solid #F0DCB4;border-radius:99px;padding:3px 9px}
+.smix{font-family:var(--mono);font-size:13px;font-weight:650}
+.sres{font-family:var(--mono);font-size:12.5px;color:var(--sub);display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+.sopt .btn{margin-left:auto}
+
+/* ---- inverter series groups ---- */
+tr.ghead td{background:#EFF3F6;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.045em;color:var(--sub);cursor:pointer;user-select:none;padding:9px 12px}
+tr.ghead:hover td{background:#E8EDF2;color:var(--ink)}
+.gchev{display:inline-block;margin-right:7px;transition:transform .15s;color:var(--pri)}
+tr.ghead.open .gchev{transform:rotate(90deg)}
+.gcount{font-family:var(--mono);font-size:10.5px;font-weight:700;background:var(--pri-soft);color:var(--pri);border-radius:99px;padding:2px 8px;margin-left:8px;text-transform:none;letter-spacing:0}
+.ghint{float:right;font-weight:500;font-size:10.5px;color:#9AA6B1;text-transform:none;letter-spacing:0}
+
+/* ---- qty highlight (edit-me fields) ---- */
+input.qtyEdit{background:var(--amber-soft);border-color:#E8C87F;font-weight:700}
+input.qtyEdit:focus{border-color:var(--amber);box-shadow:0 0 0 3px #F7E7C3}
+
+/* ---- breaker choice radios (page 2 hero card) ---- */
+.brkChoices{display:flex;flex-direction:column;gap:2px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.25)}
+.brkOpt{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,.92);cursor:pointer;padding:2px 0}
+.brkOpt input{accent-color:#fff;width:15px;height:15px;margin:0;flex:none}
+.brkOpt .m{font-family:var(--mono);font-weight:700}
+.brkOpt .sfx{color:rgba(255,255,255,.65);font-size:11px}
+
+/* ---- cable tray page ---- */
+.seg.mini button{padding:5px 12px;font-size:12px}
+tr.hl td{background:var(--pri-soft);font-weight:600}
+.opt{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:9px 0;border-bottom:1px dashed var(--line)}
+.opt:last-child{border-bottom:0}
+.osize{font-family:var(--mono);font-size:15px;font-weight:700}
+.ores{font-family:var(--mono);font-size:12px;color:var(--sub)}
+#ctDcDraw svg,#ctAcDraw svg{max-width:100%;height:auto;display:block}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;border-radius:10px;padding:10px 18px;font-size:13.5px;font-weight:600;opacity:0;transition:all .25s;z-index:50;pointer-events:none}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:820px){
+  .g2,.g32{grid-template-columns:1fr}
+  .stat .v{font-size:22px}
+  .wrap{padding:18px 14px 80px}
+}
+@media(max-width:640px){
+  .brandrow{flex-wrap:wrap;gap:8px;padding:12px 0 8px}
+  .brandrow .tag{display:none}
+  .brandrow .seg{width:100%;order:9;display:flex}
+  .brandrow .seg button{flex:1;text-align:center;padding:7px 8px}
+  .top .in{padding:0 14px}
+  .card{padding:16px 14px}
+  .frow{flex-wrap:wrap}
+  .frow .f{flex:1 1 130px;max-width:none!important}
+  #suggestBtn{width:100%;justify-content:center;margin-top:2px}
+  .sopt{flex-direction:column;align-items:stretch;gap:7px}
+  .sopt .btn{margin-left:0;justify-content:center}
+  .sres{justify-content:flex-start}
+  th,td{padding:9px 8px;font-size:13px}
+  td.n,th.n{font-size:12.5px}
+  .qty button{width:32px;height:36px;font-size:17px}
+  .qty input{width:38px}
+  .stat{padding:14px 15px}
+  .stat .v{font-size:20px}
+  .dgrid{grid-template-columns:repeat(2,1fr)}
+  .ph h2{font-size:19px}
+  .btn{padding:10px 16px}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="in">
+    <div class="brandrow">
+      <div class="logo">☀</div>
+      <h1>PV Design Assistant</h1>
+      <span class="tag">SLD · Procurement</span>
+      <span class="spacer"></span>
+      <div class="seg" id="authSeg">
+        <button data-a="dewa" class="on">DEWA · Dubai</button>
+        <button data-a="ad">ADDC · Abu Dhabi</button>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button data-p="dewa" class="on">DEWA Capacity</button>
+      <button data-p="inv">Inverters</button>
+      <button data-p="vd">Voltage Drop</button>
+      <button data-p="tray">Cable Tray</button>
+      <button data-p="chk">Checklists</button>
+      <button data-p="data">Data</button>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+<!-- ================= 1 · DEWA ================= -->
+<section class="page on" id="p-dewa">
+  <div class="ph"><h2 id="capTitle">DEWA Acceptable Capacity</h2><p id="capSub">Shams Dubai — tiered allowance from Total Connected Load</p></div>
+  <div class="grid g32">
+    <div class="card">
+      <h3>Input</h3>
+      <div id="modeDewa">
+        <div class="f"><label>Total Connected Load — TCL <span class="u">kW</span></label>
+          <input type="number" id="tcl" placeholder="e.g. 5676" min="0" step="any" style="font-size:16px;padding:12px 14px">
+        </div>
+      </div>
+      <div id="modeAd" style="display:none">
+        <div class="f"><label>Planned DC capacity <span class="u">kWp</span></label>
+          <input type="number" id="adDc" placeholder="e.g. 500" min="0" step="any" style="font-size:16px;padding:12px 14px">
+        </div>
+        <div class="f"><label>DC / AC ratio</label>
+          <input type="number" id="adRatio" step="0.01" min="1" value="1.2">
+          <div style="font-size:12px;color:var(--sub);margin-top:4px">Usually 1.2 — sometimes 1.25 or 1.3 is accepted (grey area, confirm per project)</div>
+        </div>
+      </div>
+      <button class="btn pri" id="toInv">Use result in inverter sizing →</button>
+    </div>
+    <div class="stats">
+      <div class="stat hero"><span class="k" id="acCapK">Acceptable AC capacity</span><span class="v" id="acCap">—<small>kWac</small></span><span class="hint" id="acCapHint"></span></div>
+      <div class="stat"><span class="k" id="dcCapK">Max DC capacity</span><span class="v" id="dcCap">—<small>kWp</small></span>
+        <span class="hint" id="dcCapHint">AC × 1.2 — max allowable DC/AC ratio per DEWA</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 2 · INVERTERS ================= -->
+<section class="page" id="p-inv">
+  <div class="ph"><h2>Inverter Selection</h2><p>Pick a mix, get the incomer breaker and cable — tap a model row for full details</p></div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3>Auto-suggest mix</h3>
+    <div class="frow" style="align-items:flex-end;flex-wrap:wrap">
+      <div class="f" style="max-width:200px;margin-bottom:0"><label>Target capacity</label><input type="number" id="tgtCap" step="any" min="0" placeholder="e.g. 718.25"></div>
+      <div class="f" style="max-width:160px;margin-bottom:0"><label>Basis</label>
+        <select id="tgtBasis"><option value="ac">kWac (AC output)</option><option value="dc">kWp (DC input)</option></select></div>
+      <button class="btn" id="suggestBtn">Suggest</button>
+    </div>
+    <div class="suggestion" id="suggestBox">
+      <div id="suggestMix"></div>
+    </div>
+  </div>
+
+  <div class="tw"><table id="invTable"></table></div>
+
+  <div class="grid g2 mt">
+    <div class="stats">
+      <div class="stat"><span class="k">Selected AC output</span><span class="v" id="sumKva">0<small>kVA</small></span></div>
+      <div class="stat"><span class="k">Total output current · with SF</span><span class="v" id="sumAmp">0<small>A</small></span><span class="hint" id="ampSfHint"></span></div>
+    </div>
+    <div class="stats">
+      <div class="stat hero"><span class="k">Combiner / ACCB breaker</span><span class="v" id="incBrk">—<small>A</small></span><span class="hint" id="incType"></span><span class="hint" id="incAlt"></span><div class="brkChoices" id="brkChoices" style="display:none"></div></div>
+      <div class="stat"><span class="k">Combiner / ACCB cable</span><span class="v" id="incCable" style="font-size:19px">—</span><span class="hint" id="incEarth"></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 3 · VOLTAGE DROP ================= -->
+<section class="page" id="p-vd">
+  <div class="ph"><h2>Voltage Drop</h2><p>DC string cables and AC feeder route</p></div>
+  <div class="flex" style="margin-bottom:16px">
+    <div class="seg" id="vdSeg"><button data-t="dc" class="on">DC — String</button><button data-t="ac">AC — Feeder</button></div>
+  </div>
+
+  <!-- DC -->
+  <div id="vd-dc">
+    <div class="grid g32">
+      <div class="card">
+        <h3>String &amp; cable</h3>
+        <div class="frow">
+          <div class="f"><label>Cable size</label><select id="vdSize"></select></div>
+          <div class="f"><label>Modules / string</label><input type="number" id="vdN" step="1" min="1"></div>
+        </div>
+        <div class="frow">
+          <div class="f"><label>Length of + cable <span class="u">m</span></label><input type="number" id="vdLp" step="any" min="0"></div>
+          <div class="f"><label>Length of − cable <span class="u">m</span></label><input type="number" id="vdLn" step="any" min="0"></div>
+        </div>
+        <div class="frow">
+          <div class="f"><label>Module Impp <span class="u">A</span></label><input type="number" id="vdImpp" step="any"></div>
+          <div class="f"><label>Module Vmpp <span class="u">V</span></label><input type="number" id="vdVmpp" step="any"></div>
+        </div>
+        <div class="frow">
+          <div class="f"><label>Conductor temp <span class="u">°C</span></label><input type="number" id="vdT" step="1"></div>
+          <div class="f"><label>Limit <span class="u">%</span></label><input type="number" id="vdLim" step="0.1" min="0"></div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat hero"><span class="k">Voltage drop</span><span class="v" id="vdPct">—</span><span class="hint" id="vdDropV"></span></div>
+        <div class="stat"><span class="k">Verdict</span><span class="v" id="vdVerdict" style="font-size:16px">—</span><span class="hint" id="vdMaxL"></span></div>
+      </div>
+    </div>
+    <div class="note">Drop is calculated over <b>both conductors</b> (L+ + L−): Vd = R<sub>T</sub> × (L+ + L−) × Impp, where R<sub>T</sub> = R₂₀ × (1 + 0.00393 × (T − 20)). % is on string voltage Vmpp × N.</div>
+  </div>
+
+  <!-- AC -->
+  <div id="vd-ac" style="display:none">
+    <div class="card">
+      <div class="flex" style="margin-bottom:12px">
+        <h3 style="margin-bottom:0">Feeder route</h3>
+        <div class="spacer"></div>
+        <button class="btn sm pri" id="acBuild">⚡ Build route from inverter selection</button>
+      </div>
+      <div class="tw"><table id="acTable"></table></div>
+      <div class="flex mt">
+        <button class="btn sm ghost" id="acAdd">+ Add segment</button>
+        <div class="spacer"></div>
+        <label style="font-size:12.5px;color:var(--sub);font-weight:600">System voltage</label>
+        <input type="number" id="acVolt" step="1" style="width:90px">
+        <span style="font-size:12px;color:var(--sub)">V</span>
+      </div>
+    </div>
+    <div class="grid g2 mt">
+      <div class="stat hero"><span class="k">Total voltage drop (segments in path)</span><span class="v" id="acTotPct">—</span><span class="hint" id="acTotV"></span></div>
+      <div class="stat"><span class="k">Method</span><span class="v" style="font-size:14px;font-weight:600;font-family:Inter">Vd = mV/A/m × I × L ÷ runs</span><span class="hint">mV/A/m values from NCI cable data (editable in Data). Inverter runs are parallel — only the worst one is counted, automatically.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 4 · CABLE TRAY ================= -->
+<section class="page" id="p-tray">
+  <div class="ph"><h2>Cable Tray Sizing</h2><p>DC — laid touching, sized by fill area · AC — single layer with custom spacing, earth auto-paired</p></div>
+  <div class="flex" style="margin-bottom:16px">
+    <div class="seg" id="ctSeg"><button data-t="dc" class="on">DC tray</button><button data-t="ac">AC tray</button></div>
+  </div>
+
+  <!-- ---- DC TRAY ---- -->
+  <div id="ct-dc">
+    <div class="grid g32">
+      <div>
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+            <h3 style="margin:0">DC cables</h3><span class="spacer"></span>
+            <div class="seg mini" id="ctDcCountSeg">
+              <button data-c="strings" class="on">By strings (+ &amp; −)</button>
+              <button data-c="cables">By cables</button>
+            </div>
+          </div>
+          <div class="tw"><table id="ctDcTable"></table></div>
+          <button class="btn sm ghost mt" id="ctDcAdd">+ Add cable</button>
+          <div class="frow mt">
+            <div class="f" style="max-width:220px;margin-bottom:0"><label>Free space required <span class="u">%</span></label>
+              <input type="number" id="ctDcFree" value="30" min="0" max="90" step="5"></div>
+          </div>
+        </div>
+        <div class="card mt">
+          <h3 id="ctDcCapTitle">String capacity per tray size</h3>
+          <div class="tw"><table id="ctDcCapTable"></table></div>
+          <div class="note" style="margin-top:12px">Based on the <b>first cable row</b> — 1 string = 2 cables (+ &amp; −). Suggested tray highlighted.</div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><span class="k">Section view</span><div id="ctDcDraw" style="margin-top:6px"></div>
+          <span class="hint" id="ctDcDrawHint">Red = + · black = − (strings) · laid touching, layered</span></div>
+        <div class="stat hero"><span class="k">Suggested tray</span><span class="v" id="ctDcSel" style="font-size:22px">—</span><span class="hint" id="ctDcSelHint"></span></div>
+        <div class="stat"><span class="k">Total cable area</span><span class="v" id="ctDcArea">—<small>mm²</small></span><span class="hint" id="ctDcAreaHint"></span></div>
+        <div class="stat"><span class="k">Other options</span><span id="ctDcOpts" style="font-size:13px">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---- AC TRAY ---- -->
+  <div id="ct-ac" style="display:none">
+    <div class="grid g32">
+      <div>
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+            <h3 style="margin:0">AC cables · earth auto-selected</h3><span class="spacer"></span>
+            <div class="seg mini" id="ctAcArmSeg">
+              <button data-a="arm" class="on">Armoured</button>
+              <button data-a="unarm">Unarmoured</button>
+            </div>
+          </div>
+          <div class="tw"><table id="ctAcTable"></table></div>
+          <button class="btn sm ghost mt" id="ctAcAdd">+ Add cable</button>
+          <div class="frow mt">
+            <div class="f" style="max-width:200px;margin-bottom:0"><label>Spacing between circuits <span class="u">mm</span></label>
+              <input type="number" id="ctAcSpace" value="50" min="0" step="5"></div>
+          </div>
+        </div>
+        <div class="note"><b>Layout:</b> power cable + its earth touching side-by-side as one group, then the spacing gap, then the next group. Width = Σ(power OD + earth OD) + spacing gaps — confirm the spacing with your consultant/DEWA reviewer. Keep communication cables on a separate small tray.</div>
+      </div>
+      <div class="stats">
+        <div class="stat"><span class="k">Section view</span><div id="ctAcDraw" style="margin-top:6px"></div>
+          <span class="hint">Grey = power cable · green = earth (touching) · gaps = spacing</span></div>
+        <div class="stat hero"><span class="k">Suggested tray</span><span class="v" id="ctAcSel" style="font-size:22px">—</span><span class="hint" id="ctAcSelHint"></span></div>
+        <div class="stat"><span class="k">Required width — single layer</span><span class="v" id="ctAcReq">—<small>mm</small></span><span class="hint" id="ctAcReqHint"></span></div>
+        <div class="stat"><span class="k">Other options</span><span id="ctAcOpts" style="font-size:13px">—</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 5 · CHECKLISTS ================= -->
+<section class="page" id="p-chk">
+  <div class="ph"><h2>Checklists</h2><p>Reference lists — client inputs, DEWA submission, portal steps</p></div>
+  <div id="chkWrap"></div>
+</section>
+
+<!-- ================= 6 · DATA ================= -->
+<section class="page" id="p-data">
+  <div class="ph"><h2>Data</h2><p>All lookup tables behind the calculators — edit, save, export</p></div>
+  <div class="flex" style="margin-bottom:16px">
+    <button class="btn pri" id="saveData">Save changes</button>
+    <button class="btn ghost" id="exportData">Export JSON</button>
+    <button class="btn ghost" id="importData">Import</button>
+    <input type="file" id="importFile" accept=".json" style="display:none">
+    <div class="spacer"></div>
+    <button class="btn danger" id="resetData">Reset defaults</button>
+  </div>
+  <div id="dataWrap"></div>
+</section>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ╔════════════════════════════════════════════════════════════╗
+   ║  PV DESIGN ASSISTANT — CODE MAP (find sections with Ctrl+F) ║
+   ║  S0 · DATA DEFAULTS ......... all lookup tables             ║
+   ║  S1 · STATE & STORAGE ....... runtime state, localStorage   ║
+   ║  S2 · HELPERS & NAVIGATION .. $, fmt, tabs, authority       ║
+   ║  S3 · PAGE 1 CAPACITY ....... DEWA tiers / ADDC ratio       ║
+   ║  S4 · PAGE 2 INVERTERS ...... table, totals, breaker choice,║
+   ║                               auto-suggest options          ║
+   ║  S5 · PAGE 3 VOLTAGE DROP ... DC string + AC feeder route   ║
+   ║  S6 · PAGE 4 CABLE TRAY ..... DC fill + AC layout + drawings║
+   ║  S7 · PAGE 5 CHECKLISTS                                     ║
+   ║  S8 · PAGE 6 DATA EDITOR .... edit/save/export/import       ║
+   ║  S9 · INIT .................. refreshAll, boot              ║
+   ╚════════════════════════════════════════════════════════════╝ */
+
+/* ============================================================
+   S0 · DATA DEFAULTS
+   ============================================================ */
+const DEFAULTS={
+  authority:"dewa",
+  tiers:[{upto:100,pct:100},{upto:200,pct:75},{upto:400,pct:50},{upto:600,pct:25},{upto:null,pct:5}],
+  dcac:1.2, sf:1.2, sysVolt:400, maxAc:1000,
+  inverters:[
+    {model:"SG5.0RT-P2", kw:5,  dc:7.5, mppt:2, str:"1 / 1", kva:5.5, amp:8.3,  brk:16, series:"RT"},
+    {model:"SG6.0RT-P2", kw:6,  dc:9,   mppt:2, str:"1 / 1", kva:6.6, amp:10,   brk:16, series:"RT"},
+    {model:"SG7.0RT-P2", kw:7,  dc:10.5,mppt:2, str:"2 / 1", kva:7.7, amp:11.7, brk:16, series:"RT"},
+    {model:"SG8.0RT-P2", kw:8,  dc:12,  mppt:2, str:"2 / 1", kva:8.8, amp:13.3, brk:20, series:"RT"},
+    {model:"SG10RT-P2",  kw:10, dc:15,  mppt:2, str:"2 / 1", kva:11,  amp:16.7, brk:25, series:"RT"},
+    {model:"SG12RT-P2",  kw:12, dc:18,  mppt:2, str:"2 / 1", kva:13.2,amp:20,   brk:25, series:"RT"},
+    {model:"SG15RT-P2",  kw:15, dc:22.5,mppt:2, str:"2 / 2", kva:16.5,amp:25,   brk:32, series:"RT"},
+    {model:"SG17RT-P2",  kw:17, dc:25.5,mppt:2, str:"2 / 2", kva:18.7,amp:28.3, brk:40, series:"RT"},
+    {model:"SG20RT-P2",  kw:20, dc:30,  mppt:2, str:"2 / 2", kva:22,  amp:31.9, brk:40, series:"RT"},
+    {model:"SG25CX-P2", kw:25, dc:35,  mppt:3, str:2, kva:27.5,amp:41.8, brk:63, series:"CX"},
+    {model:"SG30CX-P2", kw:30, dc:42,  mppt:3, str:2, kva:33,  amp:50.2, brk:63, series:"CX"},
+    {model:"SG33CX-P2", kw:33, dc:46.2,mppt:3, str:2, kva:36.3,amp:55.2, brk:80, series:"CX"},
+    {model:"SG36CX-P2", kw:36, dc:50.4,mppt:3, str:2, kva:40,  amp:60.2, brk:80, series:"CX"},
+    {model:"SG40CX-P2", kw:40, dc:56,  mppt:4, str:2, kva:44,  amp:66.9, brk:80, series:"CX"},
+    {model:"SG50CX-P2", kw:50, dc:70,  mppt:4, str:2, kva:55,  amp:83.6, brk:100, series:"CX"},
+    {model:"SG125CX-P2",kw:125,dc:175, mppt:12,str:2, kva:125, amp:181.1,brk:225, series:"CX"},
+    {model:"SG150CX",   kw:150,dc:175, mppt:12,str:2, kva:165, amp:240.6,brk:320, series:"CX"}
+  ],
+  addc:[ /* ADDC standard: cable (mm² 4C) · max load kW · breaker A */
+    {kw:18,  a:40,  c:"4Cx10"},
+    {kw:36,  a:63,  c:"4Cx16"},
+    {kw:50,  a:100, c:"4Cx25"},
+    {kw:62,  a:125, c:"4Cx35"},
+    {kw:80,  a:160, c:"4Cx50"},
+    {kw:100, a:200, c:"4Cx70"},
+    {kw:125, a:250, c:"4Cx120"},
+    {kw:150, a:300, c:"4Cx150"},
+    {kw:175, a:350, c:"4Cx185"},
+    {kw:200, a:400, c:"4Cx240"},
+    {kw:250, a:500, c:"4Cx300"},
+    {kw:300, a:630, c:"2Rx4Cx150"},
+    {kw:400, a:800, c:"2Rx4Cx240"},
+    {kw:500, a:1000,c:"2Rx4Cx300"},
+    {kw:600, a:1200,c:"3Rx4Cx240"},
+    {kw:800, a:1600,c:"4Rx4Cx240"},
+    {kw:1000,a:2000,c:"4Rx4Cx300"}
+  ],
+  brkCable:[
+    {a:16,c:"4Cx2.5",e:"1Cx2.5",t:"MCB"},{a:20,c:"4Cx4",e:"1Cx4",t:"MCB"},
+    {a:25,c:"4Cx6",e:"1Cx6",t:"MCB"},
+    {a:32,c:"4Cx6",e:"1Cx6",t:"MCCB"},{a:40,c:"4Cx10",e:"1Cx10",t:"MCCB"},
+    {a:63,c:"4Cx16",e:"1Cx16",t:"MCCB"},{a:80,c:"4Cx25",e:"1Cx16",t:"MCCB"},
+    {a:100,c:"4Cx35",e:"1Cx16",t:"MCCB"},{a:125,c:"4Cx50",e:"1Cx25",t:"MCCB"},
+    {a:160,c:"4Cx70",e:"1Cx35",t:"MCCB"},{a:200,c:"4Cx95",e:"1Cx50",t:"MCCB"},
+    {a:225,c:"4Cx120",e:"1Cx70",t:"MCCB"},{a:250,c:"4Cx150",e:"1Cx70",t:"MCCB"},
+    {a:300,c:"4Cx185",e:"1Cx95",t:"MCCB"},{a:320,c:"4Cx185",e:"1Cx95",t:"MCCB"},
+    {a:350,c:"4Cx240",e:"1Cx120",t:"MCCB"},{a:400,c:"4Cx300",e:"1Cx150",t:"MCCB"},
+    {a:500,c:"2Rx4Cx150",e:"2Rx1Cx70",t:"MCCB"},{a:630,c:"2Rx4Cx185",e:"2Rx1Cx95",t:"MCCB/ACB"},
+    {a:800,c:"2Rx4Cx300",e:"2Rx1Cx150",t:"ACB"},{a:1000,c:"3Rx4Cx240",e:"3Rx1Cx120",t:"ACB"},
+    {a:1250,c:"3Rx4Cx300",e:"3Rx1Cx150",t:"ACB"},{a:1600,c:"4Rx4Cx300",e:"4Rx1Cx150",t:"ACB"},
+    {a:2000,c:"5Rx4Cx300",e:"5Rx1Cx150",t:"ACB (as reg.)"},{a:2500,c:"6Rx4Cx300",e:"6Rx1Cx300",t:"ACB (as reg.)"}
+  ],
+  r20:[{sq:4,r:4.95},{sq:6,r:3.39},{sq:10,r:1.95},{sq:16,r:1.24},{sq:25,r:0.795},{sq:35,r:0.565}],
+  vd:{impp:13.76,vmpp:42.52,n:17,lp:100,ln:100,size:6,temp:70,lim:1,alpha:0.00393},
+  nci:[ /* 4-core Cu/XLPE — VD in mV/A/m */
+    {name:"4C x 1.5",vd:21.48},{name:"4C x 2.5",vd:13.18},{name:"4C x 4",vd:8.23},
+    {name:"4C x 6",vd:5.52},{name:"4C x 10",vd:3.32},{name:"4C x 16",vd:2.12},
+    {name:"4C x 25",vd:1.37},{name:"4C x 35",vd:1.01},{name:"4C x 50",vd:0.76},
+    {name:"4C x 70",vd:0.55},{name:"4C x 95",vd:0.42},{name:"4C x 120",vd:0.35},
+    {name:"4C x 150",vd:0.30},{name:"4C x 185",vd:0.25},{name:"4C x 240",vd:0.21},
+    {name:"4C x 300",vd:0.19},{name:"4C x 400",vd:0.16},{name:"4C x 500",vd:0.15},{name:"4C x 630",vd:0.13}
+  ],
+  /* --- cable tray: DC cables (dia editable in tray page too) --- */
+  dcCables:[
+    {name:"1C 6 sqmm solar — unarmoured", od:7.4},
+    {name:"1C 6 sqmm solar — armoured",   od:11.5},
+    {name:"1C 10 sqmm solar — unarmoured",od:8.8},
+    {name:"1C 10 sqmm solar — armoured",  od:13.0}
+  ],
+  /* --- cable tray: AC cables — unarm/arm ODs + auto earth pairing --- */
+  acCables:[
+    {name:"4C x 6",  od:18,arm:21, earth:"1C x 6"},  {name:"4C x 10", od:22,arm:25, earth:"1C x 10"},
+    {name:"4C x 16", od:25,arm:28, earth:"1C x 16"}, {name:"4C x 25", od:28,arm:32, earth:"1C x 16"},
+    {name:"4C x 35", od:32,arm:36, earth:"1C x 16"}, {name:"4C x 50", od:36,arm:40, earth:"1C x 25"},
+    {name:"4C x 70", od:42,arm:46, earth:"1C x 35"}, {name:"4C x 95", od:48,arm:52, earth:"1C x 50"},
+    {name:"4C x 120",od:52,arm:57, earth:"1C x 70"}, {name:"4C x 150",od:58,arm:62, earth:"1C x 70"},
+    {name:"4C x 185",od:63,arm:67, earth:"1C x 95"}, {name:"4C x 240",od:68,arm:73, earth:"1C x 120"},
+    {name:"4C x 300",od:75,arm:80, earth:"1C x 150"}
+  ],
+  /* --- cable tray: earth cable ODs --- */
+  earthCables:[
+    {name:"No earth",od:0},
+    {name:"1C x 6",od:5.6},{name:"1C x 10",od:6.8},{name:"1C x 16",od:7.8},
+    {name:"1C x 25",od:9.7},{name:"1C x 35",od:10.9},{name:"1C x 50",od:12.8},
+    {name:"1C x 70",od:14.6},{name:"1C x 95",od:17.1},{name:"1C x 120",od:19},
+    {name:"1C x 150",od:21.3}
+  ],
+  /* --- cable tray: available sizes W × H (mm) --- */
+  trays:[
+    {w:50,h:50},{w:100,h:50},{w:150,h:50},{w:200,h:50},{w:250,h:50},{w:300,h:50},
+    {w:100,h:100},{w:150,h:100},{w:200,h:100},{w:250,h:100},{w:300,h:100},
+    {w:400,h:100},{w:450,h:100},{w:500,h:100},{w:550,h:100},{w:600,h:100}
+  ],
+  checklists:[
+    {title:"Required from client",items:[
+      "Roof layout / setting-out plan","Roof profile","Elevation drawing","SLD",
+      "DEWA bills — last 12 months","LV room location (if drawings not provided)",
+      "Load schedule","Google Maps location","Premise number"]},
+    {title:"DEWA pre-submission documents",items:[
+      "Emirates ID (during submission)","Commercial / trade license","Affection plan",
+      "Design assessment checklist|Connected load, rooftop, inverter",
+      "Load schedule|TCL, MDB, inverter","SLD",
+      "Setting-out plan with plot limit|Solar meter, POC",
+      "SRP|Mention string numbers","Datasheets|PV, inverter, interface protection",
+      "PVsyst report","SGP|PV module, inverter, monitoring system",
+      "LV room drawing|LV dimensions, MDB, solar meter"]},
+    {title:"DEWA portal — application steps",items:[
+      "Login to DEWA portal","Getting Solar Permits and Connection","Select owner","Revision (if applicable)",
+      "Basic details|Premise no., community code, plot no.",
+      "Expected commissioning date — today + 4 months","Add coordinates",
+      "Add inverter and panel details|Panel reference = 'MDB'",
+      "Upload documents|Affection plan, design assessment, TCL details, SLD, site setting layout, SRP, datasheets, PVsyst, SGP, POC drawing"]},
+    {title:"DM submission (to consultant)",items:[
+      "Affection plan","Site images","DM approved drawings, slab drawings",
+      "Solar plan","Trade license","Consultant appointment letter"]},
+    {title:"Revision application — documents",items:[
+      "Commercial / trade license","Emirates ID (optional)","Affection plan","Single line diagram",
+      "Approved load schedule","Rooftop CAD drawing with skylight and plot limit","Elevation drawing",
+      "LV room drawing","Architectural drawing","Structural drawing","Building completion certificate"]}
+  ]
+};
+
+/* ============================================================
+   S1 · STATE & STORAGE
+   ============================================================ */
+const KEY="pv_design_tool_v2";
+let D=clone(DEFAULTS);
+let invQty={}, expanded=null;
+let acRows=[];
+let ctDcRows=[{i:0,od:null,qty:12}];      /* cable tray — DC rows */
+let ctAcRows=[{i:4,od:null,eod:null,qty:2}]; /* cable tray — AC rows */
+let ctDcCount="strings", ctAcArm=true, ctDcBestTray=null;
+let brkChoice=null;                        /* page 2 — chosen ACCB breaker (null = recommended) */
+function clone(o){return JSON.parse(JSON.stringify(o))}
+function store(){try{localStorage.setItem(KEY,JSON.stringify({D}))}catch(e){}}
+function loadS(){try{const s=localStorage.getItem(KEY);if(s){const o=JSON.parse(s);if(o.D)D={...clone(DEFAULTS),...o.D}}}catch(e){}
+  /* migrate older saved data — add new models / series tags / small breakers */
+  try{
+    DEFAULTS.inverters.forEach(dm=>{
+      const ex=D.inverters.find(m=>m.model===dm.model);
+      if(!ex)D.inverters.push(clone(dm));
+      else if(!ex.series)ex.series=dm.series;
+    });
+    DEFAULTS.brkCable.forEach(db=>{if(!D.brkCable.some(b=>b.a===db.a))D.brkCable.push(clone(db))});
+    D.brkCable.sort((a,b)=>a.a-b.a);
+    /* tray data — backfill if missing (old saves / partial imports) */
+    ["dcCables","acCables","earthCables","trays"].forEach(k=>{
+      if(!Array.isArray(D[k])||!D[k].length)D[k]=clone(DEFAULTS[k]);
+    });
+  }catch(e){}
+}
+const $=id=>document.getElementById(id);
+const fmt=(v,d=2)=>isFinite(v)?(+v).toLocaleString("en",{maximumFractionDigits:d}):"—";
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove("on"),1900)}
+
+/* ============================================================
+   S2 · HELPERS & NAVIGATION — tabs, authority toggle
+   ============================================================ */
+/* ---- 2a · tab navigation ---- */
+$("tabs").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  document.querySelectorAll("#tabs button").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll("section.page").forEach(s=>s.classList.toggle("on",s.id==="p-"+b.dataset.p));
+});
+function goTab(p){document.querySelector(`#tabs button[data-p="${p}"]`).click()}
+
+/* ---- 2b · authority (DEWA / ADDC) ---- */
+const isAD=()=>D.authority==="ad";
+$("authSeg").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  D.authority=b.dataset.a;store();applyAuthority();
+});
+function applyAuthority(){
+  const ad=isAD();
+  document.querySelectorAll("#authSeg button").forEach(x=>x.classList.toggle("on",x.dataset.a===D.authority));
+  $("modeDewa").style.display=ad?"none":"";
+  $("modeAd").style.display=ad?"":"none";
+  $("capTitle").textContent=ad?"ADDC Capacity — Abu Dhabi":"DEWA Acceptable Capacity";
+  $("capSub").textContent=ad?"From planned DC capacity and DC/AC ratio":"Shams Dubai — tiered allowance from Total Connected Load";
+  $("acCapK").textContent=ad?"Required AC capacity":"Acceptable AC capacity";
+  $("dcCapK").textContent=ad?"Planned DC capacity":"Max DC capacity";
+  $("dcCapHint").textContent=ad?"":"AC × 1.2 — max allowable DC/AC ratio per DEWA";
+  renderDewa();renderInvTable();renderInvTotals();acUpdateTotals();
+}
+
+/* ============================================================
+   S3 · PAGE 1 — CAPACITY (DEWA tiers / ADDC ratio)
+   ============================================================ */
+function dewaCalc(tcl){let prev=0,ac=0;
+  for(const t of D.tiers){const cap=t.upto==null?Infinity:t.upto;
+    ac+=Math.max(0,Math.min(tcl,cap)-prev)*t.pct/100;prev=cap;if(tcl<=cap)break}
+  return ac}
+function renderDewa(){
+  if(isAD()){
+    const dc=parseFloat($("adDc").value), ratio=parseFloat($("adRatio").value)||1.2;
+    if(!isFinite(dc)||dc<=0){$("acCap").innerHTML="—<small>kWac</small>";$("dcCap").innerHTML="—<small>kWp</small>";$("acCapHint").textContent="";window._pageAC=null;return}
+    const ac=dc/ratio;
+    $("acCap").innerHTML=fmt(ac)+"<small>kWac</small>";
+    $("acCapHint").textContent=`DC ÷ ${ratio} ratio`;
+    $("dcCap").innerHTML=fmt(dc)+"<small>kWp</small>";
+    window._pageAC=ac;return;
+  }
+  const tcl=parseFloat($("tcl").value);
+  if(!isFinite(tcl)||tcl<=0){$("acCap").innerHTML="—<small>kWac</small>";$("dcCap").innerHTML="—<small>kWp</small>";$("acCapHint").textContent="";window._pageAC=null;renderInvTotals();return}
+  const tier=dewaCalc(tcl), cap=D.maxAc||1000, ac=Math.min(tier,cap);
+  $("acCap").innerHTML=fmt(ac)+"<small>kWac</small>";
+  $("acCapHint").textContent=tier>cap?`Capped at ${fmt(cap,0)} kWac — DEWA maximum (tier formula gave ${fmt(tier)})`:"";
+  $("dcCap").innerHTML=fmt(ac*D.dcac)+"<small>kWp</small>";
+  window._pageAC=ac;renderInvTotals();
+}
+$("tcl").addEventListener("input",renderDewa);
+$("adDc").addEventListener("input",renderDewa);
+$("adRatio").addEventListener("input",renderDewa);
+$("toInv").addEventListener("click",()=>{
+  if(window._pageAC){$("tgtCap").value=+window._pageAC.toFixed(2);$("tgtBasis").value="ac"}
+  goTab("inv");
+});
+
+/* ============================================================
+   S4 · PAGE 2 — INVERTER SELECTION
+   sub-blocks: 4a series groups · 4b table · 4c totals + breaker
+               radios · 4d auto-suggest (3 options)
+   ============================================================ */
+const cableFor=a=>D.brkCable.find(r=>+r.a===+a)||null;
+const nextBreaker=amps=>[...D.brkCable].sort((a,b)=>a.a-b.a).find(r=>r.a>=amps)||null;
+const addcFor=kw=>[...D.addc].sort((a,b)=>a.kw-b.kw).find(r=>r.kw>=kw-1e-9)||null;
+function feederOf(m){ /* per-inverter breaker + cable, mode aware */
+  if(isAD()){const r=addcFor(m.kw);return r?{brk:r.a,c:r.c,e:"—"}:null}
+  const cb=cableFor(m.brk);return cb?{brk:m.brk,c:cb.c,e:cb.e}:{brk:m.brk,c:"—",e:"—"};
+}
+const SERIES=[
+  {id:"CX",label:"SG CX — Commercial · 25–150 kW"},
+  {id:"RT",label:"SG RT-P2 — Small rooftop · 5–20 kW"},
+  {id:"Other",label:"Other models"}
+];
+let groupOpen={CX:true,RT:true,Other:true};
+function renderInvTable(){
+  const t=$("invTable"),ad=isAD();
+  let h=`<tr><th>Model</th><th class="n">${ad?"Rated power (kW)":"AC output (kVA)"}</th><th class="n">Output current (A)</th><th class="n" style="width:110px">Qty</th></tr>`;
+  const groups=SERIES.filter(s=>D.inverters.some(m=>(m.series||"Other")===s.id));
+  groups.forEach(g=>{
+    const idxs=D.inverters.map((m,i)=>[m,i]).filter(([m])=>(m.series||"Other")===g.id);
+    const selN=idxs.reduce((s,[m])=>s+(invQty[m.model]||0),0);
+    const open=!!groupOpen[g.id];
+    const shown=idxs.filter(([m])=>open||invQty[m.model]>0);
+    h+=`<tr class="ghead ${open?'open':''}" data-g="${g.id}"><td colspan="4">
+      <span class="gchev">▸</span>${g.label}
+      ${selN?`<span class="gcount">${selN} selected</span>`:""}
+      <span class="ghint">${open?"tap to minimise":`tap to show all ${idxs.length}`}</span></td></tr>`;
+    shown.forEach(([m,i])=>{
+      const q=invQty[m.model]||0;
+      h+=`<tr class="trow ${q?'sel':''}" data-i="${i}">
+        <td style="font-weight:650">${m.model}</td>
+        <td class="n">${fmt(ad?m.kw:m.kva)}</td><td class="n">${fmt(m.amp)}</td>
+        <td class="n"><span class="qty">
+          <button data-i="${i}" data-d="-1" aria-label="decrease">−</button>
+          <input type="number" min="0" step="1" value="${q||''}" placeholder="0" data-i="${i}" class="qtyIn">
+          <button data-i="${i}" data-d="1" aria-label="increase">+</button></span></td></tr>`;
+      if(expanded===i){
+        const f=feederOf(m);
+        h+=`<tr class="detail"><td colspan="4"><div class="dgrid">
+          <div>${ad?"AC output":"Rated power"}<b>${fmt(ad?m.kva:m.kw)} ${ad?"kVA":"kW"}</b></div>
+          <div>Max DC input<b>${fmt(m.dc)} kWp</b></div><div>MPPT<b>${m.mppt||"—"}</b></div>
+          <div>Strings / MPPT<b>${m.str||"—"}</b></div><div>Feeder breaker<b>${f?f.brk+" A":"—"}</b></div>
+          <div>AC cable<b>${f?f.c:"—"}</b></div><div>Earthing<b>${f?f.e:"—"}</b></div>
+        </div></td></tr>`;
+      }
+    });
+    if(open&&!shown.length)h+=`<tr><td colspan="4" style="color:var(--sub);font-size:12.5px">No models</td></tr>`;
+  });
+  t.innerHTML=h;
+  t.querySelectorAll("tr.ghead").forEach(r=>r.addEventListener("click",()=>{
+    const g=r.dataset.g;groupOpen[g]=!groupOpen[g];renderInvTable();
+  }));
+  t.querySelectorAll("tr.trow").forEach(r=>r.addEventListener("click",e=>{
+    if(e.target.closest(".qty"))return;
+    const i=+r.dataset.i;expanded=expanded===i?null:i;renderInvTable();
+  }));
+  t.querySelectorAll(".qty button").forEach(b=>b.addEventListener("click",()=>{
+    const m=D.inverters[+b.dataset.i];
+    invQty[m.model]=Math.max(0,(invQty[m.model]||0)+ +b.dataset.d);
+    renderInvTable();renderInvTotals();
+  }));
+  t.querySelectorAll(".qtyIn").forEach(inp=>inp.addEventListener("input",()=>{
+    const m=D.inverters[+inp.dataset.i];
+    invQty[m.model]=Math.max(0,parseInt(inp.value)||0);
+    inp.closest("tr").classList.toggle("sel",!!invQty[m.model]);
+    renderInvTotals();
+  }));
+}
+function renderInvTotals(){
+  let kva=0,kw=0,amp=0,n=0;
+  D.inverters.forEach(m=>{const q=invQty[m.model]||0;n+=q;kva+=q*m.kva;kw+=q*(m.kw||0);amp+=q*m.amp});
+  const ad=isAD();
+  $("sumKva").innerHTML=ad?fmt(kw)+"<small>kW</small>":fmt(kva)+"<small>kVA</small>";
+  $("sumAmp").innerHTML=fmt(amp)+"<small>A</small>";
+  if(ad){
+    /* ADDC: breaker + cable straight from the kW standard table */
+    $("ampSfHint").textContent="";
+    $("incAlt").textContent="";
+    $("brkChoices").style.display="none";$("brkChoices").innerHTML="";
+    window._combiner=null;
+    const r=kw>0?addcFor(kw):null;
+    if(r){
+      $("incBrk").innerHTML=r.a+"<small>A</small>";
+      $("incType").textContent=`ADDC standard — up to ${fmt(r.kw,0)} kW`;
+      $("incCable").textContent=r.c;$("incEarth").textContent="";
+      window._combiner={amp,row:r};
+    }else{
+      $("incBrk").innerHTML="—<small>A</small>";$("incCable").textContent="—";$("incEarth").textContent="";
+      $("incType").textContent=kw>0?"Above 1000 kW — beyond ADDC standard table":"";
+    }
+    return;
+  }
+  const sf=D.sf, ampSf=amp*sf;
+  $("ampSfHint").innerHTML=n?`× ${sf} SF → <b style="font-family:var(--mono)">${fmt(ampSf)} A</b>`:"";
+  const rec=ampSf>0?nextBreaker(ampSf):null;   /* recommended — full SF */
+  if(rec){
+    /* candidates: recommended + up to 2 lower-SF alternatives (still above raw current) */
+    const alts=[...D.brkCable].filter(b=>b.a<rec.a&&b.a>amp).sort((a,b)=>b.a-a.a).slice(0,2);
+    const opts=[rec,...alts];
+    const sel=opts.find(o=>o.a===brkChoice)||rec;  /* stale choice falls back to recommended */
+    window._combiner={amp,row:sel};
+    $("incBrk").innerHTML=sel.a+"<small>A</small>";
+    $("incType").textContent=(sel.t||"")+(sel.a===rec.a?" · recommended":"");
+    $("incCable").textContent=sel.c;$("incEarth").textContent="Earth: "+sel.e;
+    $("incAlt").innerHTML=sel.a<rec.a?`<span class="pill warn">reduced SF — confirm acceptance with consultant / DEWA</span>`:"";
+    /* radio list — pick a smaller breaker if a lower SF is accepted */
+    const bc=$("brkChoices");
+    if(opts.length>1){
+      bc.style.display="";
+      bc.innerHTML=opts.map(o=>`<label class="brkOpt">
+        <input type="radio" name="brkSel" value="${o.a}"${o.a===sel.a?" checked":""}>
+        <span class="m">${o.a} A</span>
+        <span class="sfx">SF ${fmt(100*(o.a/amp-1),1)}% · ${o.c}${o.a===rec.a?" · recommended":""}</span></label>`).join("");
+    }else{bc.style.display="none";bc.innerHTML=""}
+  }
+  else{
+    window._combiner=null;
+    $("incBrk").innerHTML="—<small>A</small>";$("incType").textContent="";$("incAlt").textContent="";
+    $("incCable").textContent="—";$("incEarth").textContent="";
+    $("brkChoices").style.display="none";$("brkChoices").innerHTML="";
+  }
+}
+/* breaker radio — select smaller size when lower SF is accepted */
+$("brkChoices").addEventListener("change",e=>{
+  const r=e.target.closest('input[type=radio]');if(!r)return;
+  brkChoice=+r.value;renderInvTotals();
+});
+
+/* auto-suggest — multiple options, never exceeds target · DC (kWp) = 1.2 × AC */
+let suggestOptions=[];
+const DC_RATIO=1.2;
+const mixKey=mix=>Object.entries(mix).sort().map(([m,q])=>m+":"+q).join("|");
+function mixTotals(mix){
+  let kva=0,kw=0,n=0;
+  Object.entries(mix).forEach(([mo,q])=>{const m=D.inverters.find(x=>x.model===mo);kva+=q*m.kva;kw+=q*(m.kw||0);n+=q});
+  return{kva,kw,n};
+}
+function greedyMix(models,tgt,key){
+  let rem=tgt;const mix={};
+  for(const m of models){const c=Math.floor((rem+1e-9)/m[key]);if(c>0){mix[m.model]=c;rem-=c*m[key]}}
+  return Object.keys(mix).length?mix:null;
+}
+function bestFitMix(models,tgt,key){
+  /* DP knapsack — maximise total AC ≤ target (0.1 resolution) */
+  const scale=10,T=Math.round(tgt*scale);
+  if(T<=0||T>300000)return null;
+  const sizes=models.map(m=>Math.round(m[key]*scale));
+  const reach=new Uint8Array(T+1),last=new Int32Array(T+1).fill(-1);
+  reach[0]=1;
+  for(let v=1;v<=T;v++)for(let i=0;i<sizes.length;i++){
+    const s=sizes[i];
+    if(s<=v&&reach[v-s]){reach[v]=1;last[v]=i;break}
+  }
+  let v=T;while(v>0&&!reach[v])v--;
+  if(v<=0)return null;
+  const mix={};
+  while(v>0){const i=last[v],mo=models[i].model;mix[mo]=(mix[mo]||0)+1;v-=sizes[i]}
+  return mix;
+}
+$("suggestBtn").addEventListener("click",()=>{
+  const raw=parseFloat($("tgtCap").value),basis=$("tgtBasis").value;
+  const box=$("suggestBox");suggestOptions=[];
+  if(!isFinite(raw)||raw<=0){box.classList.remove("on");toast("Enter a target first");return}
+  const key=isAD()?"kw":"kva";                       /* always size on AC */
+  const tgt=basis==="dc"?raw/DC_RATIO:raw;           /* kWp target → AC equivalent */
+  const unit=basis==="dc"?"kWp":(isAD()?"kW":"kWac");
+  const models=[...D.inverters].filter(m=>m[key]>0).sort((a,b)=>b[key]-a[key]);
+  const cands=[];
+  const push=(mix,label)=>{
+    if(!mix)return;const k=mixKey(mix);
+    if(cands.some(c=>c.k===k))return;
+    cands.push({mix,label,k,ac:isAD()?mixTotals(mix).kw:mixTotals(mix).kva});
+  };
+  push(greedyMix(models,tgt,key),"Fewest units");
+  push(bestFitMix(models,tgt,key),"Closest to target");
+  push(greedyMix(models.slice(1),tgt,key),"Alternative mix");
+  if(!cands.length){box.classList.remove("on");toast("Target is below the smallest inverter");return}
+  suggestOptions=cands;
+  $("suggestMix").innerHTML=cands.map((c,i)=>{
+    const t=mixTotals(c.mix),ac=isAD()?t.kw:t.kva;
+    const acTxt=isAD()?fmt(t.kw)+" kW":fmt(t.kva)+" kVA";
+    const dc=ac*DC_RATIO;                            /* kWp = 1.2 × kWac */
+    const gap=tgt-ac;
+    return `<div class="sopt">
+      <span class="stag">Option ${i+1} · ${c.label}</span>
+      <span class="smix">${Object.entries(c.mix).map(([m,q])=>`${q}× ${m}`).join(" + ")}</span>
+      <span class="sres">→ ${acTxt} · ${fmt(dc)} kWp DC
+        <span class="pill ok">≤ ${fmt(raw)} ${unit}</span>
+        ${gap>0.05?`<span class="pill warn">−${fmt(gap)} ${isAD()?"kW":"kVA"} vs target</span>`:`<span class="pill ok">exact</span>`}
+      </span>
+      <button class="btn sm pri" data-opt="${i}">Apply</button>
+    </div>`;
+  }).join("");
+  box.classList.add("on");
+});
+$("suggestMix").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-opt]");if(!b)return;
+  const opt=suggestOptions[+b.dataset.opt];if(!opt)return;
+  invQty={...opt.mix};expanded=null;brkChoice=null;
+  Object.keys(groupOpen).forEach(g=>groupOpen[g]=false); /* minimise — only picked units stay visible */
+  renderInvTable();renderInvTotals();toast(`Option ${+b.dataset.opt+1} applied to table`);
+});
+
+/* ============================================================
+   S5 · PAGE 3 — VOLTAGE DROP (DC string · AC feeder route)
+   ============================================================ */
+$("vdSeg").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  document.querySelectorAll("#vdSeg button").forEach(x=>x.classList.toggle("on",x===b));
+  $("vd-dc").style.display=b.dataset.t==="dc"?"":"none";
+  $("vd-ac").style.display=b.dataset.t==="ac"?"":"none";
+});
+const r20For=sq=>{const r=D.r20.find(x=>+x.sq===+sq);return r?r.r/1000:null};
+function renderVd(){
+  const sq=parseFloat($("vdSize").value),n=parseInt($("vdN").value)||0,
+        lp=parseFloat($("vdLp").value)||0,ln_=parseFloat($("vdLn").value)||0,
+        impp=parseFloat($("vdImpp").value),vmpp=parseFloat($("vdVmpp").value),
+        T=parseFloat($("vdT").value),lim=parseFloat($("vdLim").value)||1;
+  const r20=r20For(sq);
+  if(r20==null||!n||!isFinite(impp)||!isFinite(vmpp)||(lp+ln_)<=0){
+    $("vdPct").textContent="—";$("vdDropV").textContent="";$("vdVerdict").textContent="—";$("vdMaxL").textContent="";return}
+  const rt=r20*(1+D.vd.alpha*(T-20));
+  const vtot=vmpp*n, drop=rt*(lp+ln_)*impp, pct=100*drop/vtot;
+  $("vdPct").textContent=fmt(pct,3)+" %";
+  $("vdDropV").innerHTML=`${fmt(drop,2)} V drop on string voltage ${fmt(vtot,1)} V`;
+  $("vdVerdict").innerHTML=`<span class="pill ${pct<=lim?'ok':'bad'}">${pct<=lim?'Within':'Exceeds'} ${lim}% limit</span>`;
+  const maxTot=(lim/100)*vtot/(rt*impp);
+  $("vdMaxL").innerHTML=`Max total (+&nbsp;+&nbsp;−) length at ${lim}%: <b style="font-family:var(--mono)">${fmt(maxTot,0)} m</b> — e.g. ${fmt(maxTot/2,0)} m each side`;
+}
+["vdN","vdLp","vdLn","vdImpp","vdVmpp","vdT","vdLim"].forEach(i=>$(i).addEventListener("input",renderVd));
+$("vdSize").addEventListener("change",renderVd);
+function fillVdSizes(){$("vdSize").innerHTML=D.r20.map(x=>`<option value="${x.sq}">${x.sq} sqmm</option>`).join("")}
+
+/* --- AC --- */
+/* --- AC --- */
+function parseCable(c){ /* "2Rx4Cx185" | "4Cx120" -> {runs,size} */
+  const m=/^(?:(\d+)Rx)?4Cx(\d+)$/i.exec((c||"").trim());
+  return m?{runs:+(m[1]||1),size:+m[2]}:null;
+}
+const nciName=size=>{const n="4C x "+size;return D.nci.some(x=>x.name===n)?n:null};
+function acSegVd(r){
+  const c=D.nci.find(x=>x.name===r.size);
+  return c?c.vd*(r.amp||0)*(r.len||0)/Math.max(1,r.runs||1)/1000:0;
+}
+function acUpdateTotals(){
+  const V=parseFloat($("acVolt").value)||D.sysVolt;
+  let totV=0, worstInv=0;
+  acRows.forEach((r,i)=>{
+    const vd=acSegVd(r);
+    if(r.grp==="inv"){worstInv=Math.max(worstInv,vd)}
+    else if(r.inc){totV+=vd}
+    const row=$("acTable").querySelector(`tr[data-row="${i}"]`);
+    if(row){row.querySelector(".cVd").textContent=fmt(vd,3);row.querySelector(".cPc").textContent=fmt(100*vd/V,3)}
+  });
+  totV+=worstInv;
+  const pct=100*totV/V;
+  $("acTotPct").textContent=fmt(pct,3)+" %";
+  let hint=fmt(totV,3)+" V on "+V+" V system"+(worstInv>0?" · worst inverter run auto-included":"");
+  if(isAD()&&totV>0){
+    const okP=pct<=4, okV=totV<=16, ok=okP&&okV;
+    hint+=` &nbsp;<span class="pill ${ok?'ok':'bad'}">${ok?'Within':'Exceeds'} ADDC limit — 4% / 16 V</span>`;
+  }
+  $("acTotV").innerHTML=hint;
+}
+function renderAc(){
+  const t=$("acTable");
+  let h=`<tr><th>From</th><th>To</th><th>Cable</th><th class="n">Current (A)</th><th class="n">Length (m)</th><th class="n">Runs</th><th class="n">Vd (V)</th><th class="n">%</th><th class="n">In path</th><th></th></tr>`;
+  if(!acRows.length){h+=`<tr><td colspan="10" style="color:var(--sub);text-align:center;padding:22px">Select inverters on page 2, then press <b>Build route</b> — or add segments manually.</td></tr>`}
+  acRows.forEach((r,i)=>{
+    h+=`<tr data-row="${i}">
+     <td><input type="text" value="${r.from}" data-i="${i}" data-k="from" style="min-width:110px"></td>
+     <td><input type="text" value="${r.to}" data-i="${i}" data-k="to" style="min-width:100px"></td>
+     <td><select data-i="${i}" data-k="size" style="min-width:110px">${D.nci.map(x=>`<option${x.name===r.size?" selected":""}>${x.name}</option>`).join("")}</select></td>
+     <td class="n"><input type="number" step="any" min="0" value="${r.amp}" data-i="${i}" data-k="amp" style="width:86px"></td>
+     <td class="n"><input type="number" step="any" min="0" value="${r.len||''}" placeholder="0" data-i="${i}" data-k="len" style="width:80px"></td>
+     <td class="n"><input type="number" step="1" min="1" value="${r.runs}" data-i="${i}" data-k="runs" style="width:60px"></td>
+     <td class="n cVd"></td><td class="n cPc"></td>
+     <td class="n">${r.grp==="inv"
+        ?'<span style="font-size:11px;color:var(--sub)">worst auto</span>'
+        :`<input type="checkbox" data-i="${i}" data-k="inc"${r.inc?" checked":""} style="width:16px;height:16px;accent-color:var(--pri)">`}</td>
+     <td><button class="btn sm danger" data-del="${i}">×</button></td></tr>`;
+  });
+  t.innerHTML=h;
+  t.querySelectorAll("input,select").forEach(el=>{
+    const ev=(el.type==="checkbox"||el.tagName==="SELECT")?"change":"input";
+    el.addEventListener(ev,()=>{
+      const r=acRows[+el.dataset.i],k=el.dataset.k;
+      if(k==="inc")r.inc=el.checked;
+      else if(el.type==="number")r[k]=parseFloat(el.value)||0;
+      else r[k]=el.value;
+      acUpdateTotals();
+    });
+  });
+  t.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",()=>{acRows.splice(+b.dataset.del,1);renderAc()}));
+  acUpdateTotals();
+}
+function buildAcRoute(){
+  const sel=D.inverters.filter(m=>invQty[m.model]>0);
+  if(!sel.length){toast("No inverters selected on page 2");return}
+  if(acRows.length&&!confirm("Replace the current route with one built from your inverter selection?"))return;
+  const rows=[];
+  sel.forEach(m=>{
+    const f=feederOf(m), p=f?parseCable(f.c):null;
+    const size=p&&nciName(p.size)?nciName(p.size):D.nci[D.nci.length-1].name;
+    for(let k=1;k<=invQty[m.model];k++){
+      rows.push({from:`${m.model} #${k}`,to:"ACCB",size,amp:m.amp,len:0,runs:p?p.runs:1,inc:false,grp:"inv"});
+    }
+  });
+  const c=window._combiner;
+  if(c){
+    const p=parseCable(c.row.c);
+    const size=p&&nciName(p.size)?nciName(p.size):D.nci[D.nci.length-1].name;
+    rows.push({from:"ACCB",to:"Solar Meter",size,amp:c.amp,len:0,runs:p?p.runs:1,inc:true});
+    rows.push({from:"Solar Meter",to:"POC",size,amp:c.amp,len:0,runs:p?p.runs:1,inc:true});
+  }
+  acRows=rows;renderAc();goTab("vd");
+  document.querySelector('#vdSeg button[data-t="ac"]').click();
+  toast("Route built — enter the lengths");
+}
+$("acBuild").addEventListener("click",buildAcRoute);
+$("acAdd").addEventListener("click",()=>{acRows.push({from:"",to:"",size:D.nci[12]?.name||D.nci[0].name,amp:0,len:0,runs:1,inc:true});renderAc()});
+$("acVolt").addEventListener("input",acUpdateTotals);
+
+/* ============================================================
+   S6 · PAGE 4 — CABLE TRAY  (DC fill-area · AC single layer)
+   sub-blocks: 6a mode seg · 6b DC rows · 6c DC calc + capacity
+               6d DC drawing · 6e AC rows · 6f AC calc · 6g AC drawing
+   ============================================================ */
+
+/* ---- 6a · DC / AC segment ---- */
+$("ctSeg").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  document.querySelectorAll("#ctSeg button").forEach(x=>x.classList.toggle("on",x===b));
+  $("ct-dc").style.display=b.dataset.t==="dc"?"":"none";
+  $("ct-ac").style.display=b.dataset.t==="ac"?"":"none";
+});
+
+/* tray helpers */
+const ctDcOd =r=>r.od !=null?r.od :(D.dcCables[r.i]?.od??0);
+const ctAcOd =r=>r.od !=null?r.od :(ctAcArm?(D.acCables[r.i]?.arm??0):(D.acCables[r.i]?.od??0));
+const ctEarth=r=>D.earthCables.find(e=>e.name===(D.acCables[r.i]?.earth))||D.earthCables[0];
+const ctAcEod=r=>r.eod!=null?r.eod:ctEarth(r).od;
+
+/* ---- 6b · DC cable rows ---- */
+$("ctDcCountSeg").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  document.querySelectorAll("#ctDcCountSeg button").forEach(x=>x.classList.toggle("on",x===b));
+  ctDcCount=b.dataset.c;renderCtDc();
+});
+function renderCtDc(){
+  const t=$("ctDcTable"),byStr=ctDcCount==="strings";
+  ctDcRows.forEach(r=>{if(r.i>=D.dcCables.length)r.i=0});
+  let h=`<tr><th>Cable</th><th class="n">Dia (mm)</th><th class="n">${byStr?"No. of strings":"No. of cables"}</th><th></th></tr>`;
+  ctDcRows.forEach((r,ri)=>{
+    h+=`<tr>
+      <td><select data-r="${ri}" data-k="i">${D.dcCables.map((c,ci)=>`<option value="${ci}"${ci===r.i?" selected":""}>${c.name}</option>`).join("")}</select></td>
+      <td class="n"><input type="number" step="0.1" min="1" value="${fmt(ctDcOd(r),1)}" data-r="${ri}" data-k="od"></td>
+      <td class="n"><input type="number" step="1" min="0" value="${r.qty}" data-r="${ri}" data-k="qty" class="qtyEdit"></td>
+      <td><button class="btn sm danger" data-del="${ri}">×</button></td></tr>`;
+  });
+  t.innerHTML=h;
+  t.querySelectorAll("select,input").forEach(el=>el.addEventListener("input",()=>{
+    const r=ctDcRows[+el.dataset.r],k=el.dataset.k;
+    if(k==="i"){r.i=+el.value;r.od=null;renderCtDc();return}
+    r[k]=parseFloat(el.value)||0;calcCtDc();
+  }));
+  t.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",()=>{ctDcRows.splice(+b.dataset.del,1);renderCtDc()}));
+  calcCtDc();
+}
+$("ctDcAdd").addEventListener("click",()=>{ctDcRows.push({i:0,od:null,qty:1});renderCtDc()});
+$("ctDcFree").addEventListener("input",calcCtDc);
+
+/* ---- 6c · DC calculation + capacity table ---- */
+function calcCtDc(){
+  const free=Math.min(90,Math.max(0,parseFloat($("ctDcFree").value)||0));
+  const byStr=ctDcCount==="strings";
+  let area=0,n=0,maxOd=0,widthSum=0;
+  ctDcRows.forEach(r=>{
+    const od=ctDcOd(r),cables=(r.qty||0)*(byStr?2:1);
+    if(cables>0&&od>0){area+=cables*Math.PI/4*od*od;n+=cables;maxOd=Math.max(maxOd,od);widthSum+=cables*od}
+  });
+  ctDcBestTray=null;
+  if(!n){$("ctDcSel").textContent="—";$("ctDcSelHint").textContent="";$("ctDcArea").innerHTML="—<small>mm²</small>";$("ctDcAreaHint").textContent="";$("ctDcOpts").textContent="—";$("ctDcDraw").innerHTML="";renderCtDcCap(free);return}
+  const maxFill=(100-free)/100;
+  $("ctDcArea").innerHTML=fmt(area,0)+"<small>mm²</small>";
+  $("ctDcAreaHint").textContent=`${n} cables · max fill allowed ${fmt(100-free,0)}%`;
+  const cands=[...D.trays]
+    .filter(tr=>tr.h>=maxOd && (area/(tr.w*tr.h))<=maxFill)
+    .sort((a,b)=>(a.w*a.h)-(b.w*b.h)||a.h-b.h);
+  const fill=t=>100*area/(t.w*t.h);
+  if(!cands.length){
+    $("ctDcSel").textContent="> 600×100";
+    $("ctDcSelHint").textContent="Exceeds largest tray — split across multiple trays";
+    $("ctDcOpts").textContent="—";
+  }else{
+    const best=cands[0];ctDcBestTray=best;
+    $("ctDcSel").textContent=`${best.w} × ${best.h} mm`;
+    $("ctDcSelHint").textContent=`Fill ${fmt(fill(best))}% · free ${fmt(100-fill(best))}% · single-layer width equivalent ${fmt(widthSum,0)} mm`;
+    const others=cands.slice(1,4);
+    $("ctDcOpts").innerHTML=others.length?others.map(t=>
+      `<div class="opt"><span class="osize">${t.w} × ${t.h}</span><span class="ores">fill ${fmt(fill(t))}% · free ${fmt(100-fill(t))}%</span></div>`).join(""):"—";
+  }
+  drawCtDc(ctDcBestTray);
+  renderCtDcCap(free);
+}
+/* capacity table — based on FIRST cable row */
+function renderCtDcCap(free){
+  const t=$("ctDcCapTable"),r=ctDcRows[0];
+  const od=r?ctDcOd(r):0;
+  if(!r||!(od>0)){t.innerHTML="";$("ctDcCapTitle").textContent="String capacity per tray size";return}
+  $("ctDcCapTitle").textContent=`String capacity per tray — ${D.dcCables[r.i]?.name||"cable"} · Ø ${fmt(od)} mm · ${fmt(free,0)}% free space`;
+  const perStr=2*Math.PI/4*od*od, maxFill=(100-free)/100;   /* 1 string = 2 cables */
+  let h=`<tr><th>CT size (mm)</th><th class="n">Max strings (2 cables ±)</th><th class="n">Free space at max</th></tr>`;
+  D.trays.forEach(tr=>{
+    const strings=tr.h>=od?Math.floor(tr.w*tr.h*maxFill/perStr):0;
+    const actualFree=strings>0?100*(1-strings*perStr/(tr.w*tr.h)):100;
+    const hl=ctDcBestTray&&ctDcBestTray.w===tr.w&&ctDcBestTray.h===tr.h;
+    h+=`<tr${hl?' class="hl"':''}><td style="font-family:var(--mono);font-weight:600">${tr.w} × ${tr.h}</td>
+      <td class="n">${strings}</td><td class="n">${strings>0?fmt(actualFree,1)+" %":"—"}</td></tr>`;
+  });
+  t.innerHTML=h;
+}
+
+/* ---- 6d · DC section-view drawing (packed layers, ± colours) ---- */
+function drawCtDc(tray){
+  const byStr=ctDcCount==="strings";
+  const cables=[];
+  ctDcRows.forEach(r=>{
+    const od=ctDcOd(r);
+    if(!(od>0)||!(r.qty>0))return;
+    for(let q=0;q<r.qty;q++){
+      if(byStr){cables.push({od,pol:"+"});cables.push({od,pol:"-"})}
+      else cables.push({od,pol:"c"});
+    }
+  });
+  if(!cables.length){$("ctDcDraw").innerHTML="";return}
+  cables.sort((a,b)=>b.od-a.od||a.pol.localeCompare(b.pol));
+  let W,H;
+  if(tray){W=tray.w;H=tray.h}
+  else{W=600;const area=cables.reduce((s,c)=>s+Math.PI/4*c.od*c.od,0);H=Math.max(100,Math.ceil(area/(W*0.7)/10)*10)}
+  const pad=18,wallT=3,lipH=8,vw=W+2*pad,vh=H+pad+34,baseY=pad+H;
+  let x=pad+1,rowMax=0,y=baseY,circ="",overflow=false;
+  cables.forEach(c=>{
+    if(x+c.od>pad+W-1){y-=rowMax;rowMax=0;x=pad+1}
+    const r=c.od/2,cy=y-r;
+    if(cy-r<pad)overflow=true;
+    const f=c.pol==="+"?"#C2402F":c.pol==="-"?"#232B33":"#66727F";
+    const st=c.pol==="+"?"#93291B":c.pol==="-"?"#0D1319":"#414D59";
+    circ+=`<circle cx="${x+r}" cy="${cy}" r="${r}" fill="${f}" stroke="${st}" stroke-width="1"/>`;
+    x+=c.od;rowMax=Math.max(rowMax,c.od);
+  });
+  $("ctDcDrawHint").textContent=byStr?"Red = + · black = − (strings) · laid touching, layered":"Grey = cables · laid touching, layered";
+  $("ctDcDraw").innerHTML=ctTraySvg(W,H,pad,wallT,lipH,vw,vh,baseY,circ,`${W} mm × ${H} mm${overflow?" — overfilled!":""}`);
+}
+
+/* shared tray SVG frame */
+function ctTraySvg(W,H,pad,wallT,lipH,vw,vh,baseY,inner,label){
+  const c="#B9C4CD";
+  return `<svg viewBox="0 0 ${vw} ${vh}" xmlns="http://www.w3.org/2000/svg">
+    <rect x="${pad}" y="${baseY}" width="${W}" height="${wallT}" fill="${c}"/>
+    <rect x="${pad-wallT}" y="${pad}" width="${wallT}" height="${H+wallT}" fill="${c}"/>
+    <rect x="${pad+W}" y="${pad}" width="${wallT}" height="${H+wallT}" fill="${c}"/>
+    <rect x="${pad}" y="${pad}" width="${lipH}" height="${wallT}" fill="${c}"/>
+    <rect x="${pad+W-lipH}" y="${pad}" width="${lipH}" height="${wallT}" fill="${c}"/>
+    ${inner}
+    <line x1="${pad}" y1="${baseY+16}" x2="${pad+W}" y2="${baseY+16}" stroke="#66727F" stroke-width="1"/>
+    <line x1="${pad}" y1="${baseY+11}" x2="${pad}" y2="${baseY+21}" stroke="#66727F" stroke-width="1"/>
+    <line x1="${pad+W}" y1="${baseY+11}" x2="${pad+W}" y2="${baseY+21}" stroke="#66727F" stroke-width="1"/>
+    <text x="${pad+W/2}" y="${baseY+30}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="${Math.max(10,W/28)}" fill="#17212B" font-weight="600">${label}</text>
+  </svg>`;
+}
+
+/* ---- 6e · AC cable rows (arm toggle · earth auto · qty last) ---- */
+$("ctAcArmSeg").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  document.querySelectorAll("#ctAcArmSeg button").forEach(x=>x.classList.toggle("on",x===b));
+  ctAcArm=b.dataset.a==="arm";
+  ctAcRows.forEach(r=>r.od=null);   /* re-pull defaults for new mode */
+  renderCtAc();
+});
+function renderCtAc(){
+  const t=$("ctAcTable");
+  ctAcRows.forEach(r=>{if(r.i>=D.acCables.length)r.i=0});
+  let h=`<tr><th>Cable</th><th class="n">Dia (mm)</th><th>Earth (auto)</th><th class="n">Earth dia</th><th class="n">Qty</th><th></th></tr>`;
+  ctAcRows.forEach((r,ri)=>{
+    h+=`<tr>
+      <td><select data-r="${ri}" data-k="i">${D.acCables.map((c,ci)=>`<option value="${ci}"${ci===r.i?" selected":""}>${c.name}</option>`).join("")}</select></td>
+      <td class="n"><input type="number" step="0.5" min="1" value="${fmt(ctAcOd(r),1)}" data-r="${ri}" data-k="od"></td>
+      <td style="font-size:12.5px;font-family:var(--mono);white-space:nowrap">${ctEarth(r).name}</td>
+      <td class="n"><input type="number" step="0.1" min="0" value="${fmt(ctAcEod(r),1)}" data-r="${ri}" data-k="eod"></td>
+      <td class="n"><input type="number" step="1" min="0" value="${r.qty}" data-r="${ri}" data-k="qty" class="qtyEdit" style="min-width:52px"></td>
+      <td><button class="btn sm danger" data-del="${ri}">×</button></td></tr>`;
+  });
+  t.innerHTML=h;
+  t.querySelectorAll("select,input").forEach(el=>el.addEventListener("input",()=>{
+    const r=ctAcRows[+el.dataset.r],k=el.dataset.k;
+    if(k==="i"){r.i=+el.value;r.od=null;r.eod=null;renderCtAc();return}
+    r[k]=parseFloat(el.value)||0;calcCtAc();
+  }));
+  t.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",()=>{ctAcRows.splice(+b.dataset.del,1);renderCtAc()}));
+  calcCtAc();
+}
+$("ctAcAdd").addEventListener("click",()=>{ctAcRows.push({i:0,od:null,eod:null,qty:1});renderCtAc()});
+$("ctAcSpace").addEventListener("input",calcCtAc);
+
+/* ---- 6f · AC calculation ---- */
+function calcCtAc(){
+  const sp=Math.max(0,parseFloat($("ctAcSpace").value)||0);
+  const groups=[];
+  ctAcRows.forEach(r=>{
+    const od=ctAcOd(r),eod=ctAcEod(r);
+    for(let q=0;q<(r.qty||0);q++)if(od>0)groups.push({od,eod});
+  });
+  if(!groups.length){$("ctAcSel").textContent="—";$("ctAcSelHint").textContent="";$("ctAcReq").innerHTML="—<small>mm</small>";$("ctAcReqHint").textContent="";$("ctAcOpts").textContent="—";$("ctAcDraw").innerHTML="";return}
+  groups.sort((a,b)=>b.od-a.od);
+  const groupW=groups.reduce((s,g)=>s+g.od+g.eod,0);
+  const gapSum=sp*(groups.length-1);
+  const req=groupW+gapSum;
+  const maxOd=Math.max(...groups.map(g=>g.od));
+  $("ctAcReq").innerHTML=fmt(req,0)+"<small>mm</small>";
+  $("ctAcReqHint").textContent=`${groups.length} circuits · cables+earths ${fmt(groupW,0)} mm + spacing ${fmt(gapSum,0)} mm (${fmt(sp,0)} mm × ${groups.length-1})`;
+  const cands=[...D.trays].filter(t=>t.w>=req&&t.h>=maxOd).sort((a,b)=>a.w-b.w||a.h-b.h);
+  let best=null;
+  if(!cands.length){
+    $("ctAcSel").textContent="> 600×100";
+    $("ctAcSelHint").textContent="Exceeds largest tray — split circuits across trays";
+    $("ctAcOpts").textContent="—";
+  }else{
+    best=cands[0];
+    $("ctAcSel").textContent=`${best.w} × ${best.h} mm`;
+    $("ctAcSelHint").textContent=`Used ${fmt(req,0)} mm of ${best.w} mm · spare ${fmt(best.w-req,0)} mm (${fmt(100*(best.w-req)/best.w,0)}%)`;
+    const others=cands.slice(1,3);
+    $("ctAcOpts").innerHTML=others.length?others.map(t=>
+      `<div class="opt"><span class="osize">${t.w} × ${t.h}</span><span class="ores">spare ${fmt(t.w-req,0)} mm (${fmt(100*(t.w-req)/t.w,0)}%)</span></div>`).join(""):"—";
+  }
+  drawCtAc(groups,sp,req,best);
+}
+
+/* ---- 6g · AC section-view drawing ---- */
+function drawCtAc(groups,sp,req,tray){
+  const W=tray?tray.w:Math.ceil(req/50)*50, H=tray?tray.h:100;
+  const pad=18,wallT=3,lipH=8,vw=W+2*pad,vh=H+pad+34,baseY=pad+H;
+  const contentW=groups.reduce((s,g)=>s+g.od+g.eod,0)+sp*(groups.length-1);
+  let x=pad+Math.max(0,Math.min(wallT+4,(W-contentW)/2)); /* inset clamped inside tray */
+  let circ="";
+  groups.forEach(g=>{
+    const rP=g.od/2;
+    circ+=`<circle cx="${x+rP}" cy="${baseY-rP}" r="${rP}" fill="#66727F" stroke="#414D59" stroke-width="1.2"/>`;
+    circ+=`<circle cx="${x+rP}" cy="${baseY-rP}" r="${Math.max(rP-3,1.5)}" fill="none" stroke="#9AA6B1" stroke-width="1"/>`;
+    x+=g.od;
+    if(g.eod>0){
+      const rE=g.eod/2;
+      circ+=`<circle cx="${x+rE}" cy="${baseY-rE}" r="${rE}" fill="#2E9E4F" stroke="#1E7A39" stroke-width="1"/>`;
+      x+=g.eod;
+    }
+    x+=sp;
+  });
+  $("ctAcDraw").innerHTML=ctTraySvg(W,H,pad,wallT,lipH,vw,vh,baseY,circ,`${W} mm × ${H} mm${tray?"":" (min req "+fmt(req,0)+" mm)"}`);
+}
+
+/* ============================================================
+   S7 · PAGE 5 — CHECKLISTS
+   ============================================================ */
+function renderChecklists(){
+  const w=$("chkWrap");w.innerHTML="";
+  D.checklists.forEach((g,gi)=>{
+    const d=document.createElement("details");d.className="acc";if(gi===0)d.open=true;
+    d.innerHTML=`<summary>${g.title}<span class="count">${g.items.length} items</span>
+      <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></summary>
+      <div class="body"><ol class="plain">${g.items.map(it=>{
+        const[txt,rem]=it.split("|");
+        return `<li><span>${txt}${rem?`<span class="rem">${rem}</span>`:""}</span></li>`}).join("")}</ol></div>`;
+    w.appendChild(d);
+  });
+}
+
+/* ============================================================
+   S8 · PAGE 6 — DATA EDITOR (edit · save · export · import)
+   ============================================================ */
+function editTable(rows,cols,onChange){
+  const tw=document.createElement("div");tw.className="tw";
+  const t=document.createElement("table");tw.appendChild(t);
+  function draw(){
+    let h="<tr>"+cols.map(c=>`<th${c.num?' class="n"':''}>${c.label}</th>`).join("")+"<th></th></tr>";
+    rows.forEach((r,i)=>{
+      h+="<tr>"+cols.map(c=>{
+        const v=r[c.key]??"";
+        return `<td${c.num?' class="n"':''}><input ${c.num?'type="number" step="any"':'type="text"'} value="${v}" data-r="${i}" data-k="${c.key}"></td>`;
+      }).join("")+`<td><button class="btn sm danger" data-del="${i}">×</button></td></tr>`;
+    });
+    t.innerHTML=h;
+    t.querySelectorAll("input").forEach(inp=>inp.addEventListener("input",()=>{
+      const r=rows[+inp.dataset.r],k=inp.dataset.k;
+      r[k]=inp.type==="number"?(inp.value===""?null:parseFloat(inp.value)):inp.value;
+    }));
+    t.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",()=>{rows.splice(+b.dataset.del,1);draw()}));
+  }
+  draw();
+  const add=document.createElement("button");add.className="btn sm ghost mt";add.textContent="+ Add row";
+  add.addEventListener("click",()=>{const o={};cols.forEach(c=>o[c.key]=c.num?0:"");rows.push(o);draw()});
+  const frag=document.createDocumentFragment();frag.appendChild(tw);frag.appendChild(add);
+  return frag;
+}
+function accWrap(title,node,open){
+  const d=document.createElement("details");d.className="acc";if(open)d.open=true;
+  d.innerHTML=`<summary>${title}<svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></summary>`;
+  const b=document.createElement("div");b.className="body";b.appendChild(node);d.appendChild(b);
+  return d;
+}
+function renderData(){
+  const w=$("dataWrap");w.innerHTML="";
+  w.appendChild(accWrap("Inverter database",editTable(D.inverters,[
+    {key:"model",label:"Model"},{key:"series",label:"Series (CX/RT)"},{key:"kw",label:"Rated kW",num:1},{key:"dc",label:"Max DC kWp",num:1},{key:"mppt",label:"MPPT",num:1},
+    {key:"str",label:"Str/MPPT"},{key:"kva",label:"AC kVA",num:1},{key:"amp",label:"Max AC A",num:1},
+    {key:"brk",label:"Breaker A (DEWA)",num:1}]),true));
+  w.appendChild(accWrap("Breaker → cable lookup (DEWA)",editTable(D.brkCable,[
+    {key:"a",label:"Breaker A",num:1},{key:"c",label:"Cable"},{key:"e",label:"Earthing"},{key:"t",label:"Type"}])));
+  w.appendChild(accWrap("ADDC standard — kW → breaker → cable (Abu Dhabi)",editTable(D.addc,[
+    {key:"kw",label:"Max load kW",num:1},{key:"a",label:"Breaker A",num:1},{key:"c",label:"Cable (4C)"}])));
+  w.appendChild(accWrap("DEWA capacity tiers",editTable(D.tiers,[
+    {key:"upto",label:"Up to kW (blank = ∞)",num:1},{key:"pct",label:"%",num:1}])));
+  w.appendChild(accWrap("DC cable resistance — R₂₀ (Ω/km)",editTable(D.r20,[
+    {key:"sq",label:"Size sqmm",num:1},{key:"r",label:"R₂₀ Ω/km",num:1}])));
+  w.appendChild(accWrap("AC cable voltage drop — NCI (mV/A/m)",editTable(D.nci,[
+    {key:"name",label:"Cable"},{key:"vd",label:"VD mV/A/m",num:1}])));
+  w.appendChild(accWrap("Tray — DC cable ODs (mm)",editTable(D.dcCables,[
+    {key:"name",label:"Cable"},{key:"od",label:"OD mm",num:1}])));
+  w.appendChild(accWrap("Tray — AC cable ODs & earth pairing",editTable(D.acCables,[
+    {key:"name",label:"Cable"},{key:"od",label:"OD unarm. mm",num:1},{key:"arm",label:"OD arm. mm",num:1},{key:"earth",label:"Earth cable"}])));
+  w.appendChild(accWrap("Tray — earth cable ODs (mm)",editTable(D.earthCables,[
+    {key:"name",label:"Cable"},{key:"od",label:"OD mm",num:1}])));
+  w.appendChild(accWrap("Tray sizes — W × H (mm)",editTable(D.trays,[
+    {key:"w",label:"Width mm",num:1},{key:"h",label:"Height mm",num:1}])));
+}
+$("saveData").addEventListener("click",()=>{
+  D.tiers=D.tiers.filter(t=>t.pct!=null).sort((a,b)=>(a.upto??Infinity)-(b.upto??Infinity));
+  D.brkCable.sort((a,b)=>a.a-b.a);
+  store();refreshAll();toast("Saved — tables updated everywhere");
+});
+$("exportData").addEventListener("click",()=>{
+  const blob=new Blob([JSON.stringify(D,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="pv-design-data.json";a.click();
+});
+$("importData").addEventListener("click",()=>$("importFile").click());
+$("importFile").addEventListener("change",e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{D={...clone(DEFAULTS),...JSON.parse(r.result)};store();refreshAll();toast("Imported")}catch(err){toast("Invalid JSON file")}};
+  r.readAsText(f);
+});
+$("resetData").addEventListener("click",()=>{
+  if(confirm("Reset all tables to original values?")){D=clone(DEFAULTS);store();refreshAll();toast("Reset to defaults")}
+});
+
+/* ============================================================
+   S9 · INIT
+   ============================================================ */
+function refreshAll(){
+  const v=D.vd;
+  $("vdImpp").value=v.impp;$("vdVmpp").value=v.vmpp;$("vdN").value=v.n;
+  $("vdLp").value=v.lp;$("vdLn").value=v.ln;$("vdT").value=v.temp;$("vdLim").value=v.lim;
+  fillVdSizes();$("vdSize").value=v.size;
+  $("acVolt").value=D.sysVolt;
+  applyAuthority();
+  renderVd();renderAc();renderCtDc();renderCtAc();renderChecklists();renderData();
+}
+loadS();
+refreshAll();
+</script>
+</body>
+</html>
