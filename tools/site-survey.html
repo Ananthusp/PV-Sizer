@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Solar Site Survey — SE-IMS-OP-01-FRM-XX</title>
+<style>
+  :root{
+    --ink:#15221f; --ink-soft:#4c5a56;
+    --paper:#f5f6f4; --card:#ffffff; --line:#dde3df;
+    --brand:#0b5c46; --brand-soft:#e2efe9;
+    --sun:#f2a20c; --sun-soft:#fdf1d8;
+    --danger:#b3372c; --radius:14px;
+    font-size:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--paper);color:var(--ink);padding-bottom:90px}
+
+  header{background:var(--brand);color:#fff;padding:14px 16px 12px;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  .head-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  header h1{font-size:1.02rem;font-weight:700}
+  header .doc{display:flex;gap:10px;margin-top:3px;font-size:.68rem;opacity:.85}
+  .mode-switch{display:flex;background:rgba(255,255,255,.18);border-radius:99px;padding:3px;flex:none}
+  .mode-switch button{border:none;background:none;color:#fff;font-size:.75rem;font-weight:700;padding:6px 12px;border-radius:99px;cursor:pointer;opacity:.75}
+  .mode-switch button.on{background:#fff;color:var(--brand);opacity:1}
+  .progress-wrap{margin-top:10px;background:rgba(255,255,255,.2);border-radius:99px;height:6px;overflow:hidden}
+  .progress-bar{height:100%;width:0%;background:var(--sun);border-radius:99px;transition:width .3s}
+  .progress-label{font-size:.68rem;margin-top:4px;opacity:.85}
+
+  main{max-width:720px;margin:0 auto;padding:12px}
+
+  details.section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:10px;overflow:hidden}
+  details.section>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:14px;font-weight:700;font-size:.95rem;user-select:none}
+  details.section>summary::-webkit-details-marker{display:none}
+  .sec-num{flex:none;width:26px;height:26px;border-radius:8px;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800}
+  .chev{margin-left:auto;transition:transform .2s;color:var(--ink-soft);font-size:.8rem}
+  details[open]>summary .chev{transform:rotate(180deg)}
+  .sec-body{padding:4px 14px 16px;border-top:1px solid var(--line)}
+
+  .field{margin-top:12px}
+  .field label{display:block;font-size:.78rem;font-weight:600;color:var(--ink-soft);margin-bottom:5px}
+  input[type=text],input[type=date],input[type=number],input[type=tel],textarea,select{
+    width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;
+    font-size:.95rem;background:#fbfcfb;color:var(--ink);appearance:none}
+  textarea{min-height:64px;resize:vertical}
+  input:focus,textarea:focus,select:focus{outline:2px solid var(--brand);outline-offset:0;border-color:var(--brand)}
+  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234c5a56' stroke-width='2' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+  @media(max-width:430px){.grid2{grid-template-columns:1fr}}
+
+  .rep-card{border:1px solid var(--line);border-radius:12px;padding:2px 12px 14px;margin-top:12px;background:#fbfcfb}
+  .rep-head{display:flex;align-items:center;justify-content:space-between;padding-top:12px}
+  .rep-head h3{font-size:.9rem;color:var(--brand)}
+  .rep-head .type-tag{font-size:.65rem;font-weight:800;background:var(--sun-soft);color:#8a5b00;padding:3px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.04em}
+  .rep-del{border:none;background:none;color:var(--danger);font-size:.78rem;font-weight:600;cursor:pointer;padding:4px 6px}
+  .add-btn{margin-top:14px;width:100%;border:1.5px dashed var(--brand);background:var(--brand-soft);color:var(--brand);font-weight:700;font-size:.9rem;padding:12px;border-radius:10px;cursor:pointer}
+  .setup-box{border:1.5px solid var(--sun);background:var(--sun-soft);border-radius:12px;padding:2px 12px 14px;margin-top:12px}
+  .setup-box .field label{color:#7a5200}
+
+  /* checklists */
+  .check-row{padding:11px 0;border-bottom:1px solid var(--line)}
+  .check-row:last-child{border-bottom:none}
+  .check-main{display:flex;align-items:flex-start;gap:10px}
+  .check-row .txt{flex:1;font-size:.88rem;line-height:1.35;padding-top:4px}
+  .yn{display:flex;gap:6px;flex:none}
+  .yn button{width:44px;padding:7px 0;border-radius:8px;border:1px solid var(--line);background:#fbfcfb;font-size:.8rem;font-weight:700;color:var(--ink-soft);cursor:pointer}
+  .yn button.yes.on{background:var(--brand);border-color:var(--brand);color:#fff}
+  .yn button.no.on{background:var(--danger);border-color:var(--danger);color:#fff}
+  .cmt-toggle{border:none;background:none;color:var(--brand);font-size:.72rem;font-weight:700;cursor:pointer;padding:6px 0 0;display:block}
+  .cmt-box{display:none;margin-top:8px}
+  .cmt-box.open{display:block}
+  .cmt-box textarea{min-height:48px;font-size:.85rem}
+
+  /* final checklist (tick list) */
+  .todo-row{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer;user-select:none}
+  .todo-row:last-child{border-bottom:none}
+  .todo-box{flex:none;width:26px;height:26px;border-radius:8px;border:2px solid var(--line);background:#fbfcfb;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:.85rem;transition:all .12s;margin-top:1px}
+  .todo-row.checked .todo-box{background:var(--brand);border-color:var(--brand)}
+  .todo-row .txt{flex:1;font-size:.88rem;line-height:1.4;padding-top:3px}
+  .todo-row.checked .txt{color:var(--ink-soft);text-decoration:line-through}
+
+  .actionbar{position:fixed;bottom:0;left:0;right:0;z-index:60;background:var(--card);border-top:1px solid var(--line);display:flex;gap:10px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto}
+  .actionbar button{flex:1;padding:13px;border-radius:12px;font-weight:700;font-size:.92rem;cursor:pointer;border:none}
+  .btn-secondary{background:var(--sun-soft);color:#8a5b00}
+  .btn-primary{background:var(--brand);color:#fff}
+
+  .modal{position:fixed;inset:0;background:rgba(21,34,31,.55);z-index:100;display:none;align-items:flex-end;justify-content:center}
+  .modal.open{display:flex}
+  .modal-card{background:var(--card);width:100%;max-width:720px;border-radius:18px 18px 0 0;max-height:85vh;display:flex;flex-direction:column}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
+  .modal-head h2{font-size:1rem}
+  .modal-close{border:none;background:none;font-size:1.3rem;cursor:pointer;color:var(--ink-soft);padding:4px 8px}
+  .modal-body{overflow-y:auto;padding:14px 16px}
+  pre#reportText{white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.78rem;line-height:1.5;background:#fbfcfb;border:1px solid var(--line);border-radius:10px;padding:12px}
+  .modal-foot{display:flex;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+  .modal-foot button{flex:1;padding:12px;border-radius:10px;border:none;font-weight:700;cursor:pointer}
+  .hint{font-size:.75rem;color:var(--ink-soft);margin-top:8px;font-style:italic}
+
+  /* ============ GUIDED MODE ============ */
+  #wizard{position:fixed;inset:0;z-index:80;background:var(--paper);display:none;flex-direction:column}
+  #wizard.open{display:flex}
+  .wiz-screen{flex:1;overflow-y:auto;display:none;flex-direction:column}
+  .wiz-screen.on{display:flex}
+  .wiz-topbar{background:var(--brand);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;flex:none}
+  .wiz-topbar h2{font-size:1rem;flex:1}
+  .wiz-topbar button{border:none;background:rgba(255,255,255,.18);color:#fff;font-size:.78rem;font-weight:700;padding:8px 14px;border-radius:99px;cursor:pointer}
+  .sec-grid{padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:720px;margin:0 auto;width:100%}
+  @media(min-width:520px){.sec-grid{grid-template-columns:1fr 1fr 1fr}}
+  .sec-tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 12px;cursor:pointer;position:relative;min-height:104px;display:flex;flex-direction:column;transition:transform .08s}
+  .sec-tile:active{transform:scale(.97)}
+  .sec-tile .tnum{font-size:.68rem;font-weight:800;color:var(--brand);background:var(--brand-soft);width:fit-content;padding:2px 8px;border-radius:6px}
+  .sec-tile .tname{font-size:.82rem;font-weight:700;margin-top:8px;line-height:1.25;flex:1}
+  .sec-tile .tcount{font-size:.7rem;color:var(--ink-soft);margin-top:8px}
+  .sec-tile .mini{height:4px;border-radius:99px;background:var(--line);margin-top:6px;overflow:hidden}
+  .sec-tile .mini i{display:block;height:100%;background:var(--sun);border-radius:99px}
+  .sec-tile.done{border-color:var(--brand)}
+  .sec-tile.done::after{content:"✓";position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:99px;background:var(--brand);color:#fff;font-size:.75rem;font-weight:800;display:flex;align-items:center;justify-content:center}
+
+  .q-top{background:var(--brand);color:#fff;padding:12px 16px;flex:none}
+  .q-top-row{display:flex;align-items:center;gap:10px}
+  .q-top-row button{border:none;background:rgba(255,255,255,.18);color:#fff;font-size:.75rem;font-weight:700;padding:7px 12px;border-radius:99px;cursor:pointer}
+  .q-top-row .q-sec{flex:1;font-size:.85rem;font-weight:700;text-align:center}
+  .q-progress{margin-top:10px;background:rgba(255,255,255,.2);border-radius:99px;height:6px;overflow:hidden}
+  .q-progress i{display:block;height:100%;background:var(--sun);border-radius:99px;transition:width .25s}
+  .q-count{font-size:.68rem;opacity:.85;margin-top:4px;text-align:center}
+
+  .q-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;justify-content:center;padding:24px 20px;max-width:640px;margin:0 auto;width:100%}
+  .q-card{animation:slideIn .22s ease}
+  @keyframes slideIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+  .q-context{font-size:.72rem;font-weight:800;color:var(--sun);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+  .q-question{font-size:1.3rem;font-weight:800;line-height:1.3;margin-bottom:22px}
+  .q-input input,.q-input textarea{width:100%;padding:15px 14px;font-size:1.05rem;border:2px solid var(--line);border-radius:14px;background:var(--card)}
+  .q-input textarea{min-height:110px}
+  .q-input input:focus,.q-input textarea:focus{outline:none;border-color:var(--brand)}
+  .q-options{display:flex;flex-direction:column;gap:10px}
+  .q-options button{padding:15px 16px;border-radius:14px;border:2px solid var(--line);background:var(--card);font-size:1rem;font-weight:600;text-align:left;cursor:pointer;transition:all .12s}
+  .q-options button.picked{border-color:var(--brand);background:var(--brand-soft);color:var(--brand)}
+  .q-yn{display:flex;gap:12px}
+  .q-yn button{flex:1;padding:20px;border-radius:16px;border:2px solid var(--line);background:var(--card);font-size:1.15rem;font-weight:800;cursor:pointer}
+  .q-yn button.yes.picked{border-color:var(--brand);background:var(--brand);color:#fff}
+  .q-yn button.no.picked{border-color:var(--danger);background:var(--danger);color:#fff}
+  .q-comment{margin-top:16px}
+  .q-comment label{display:block;font-size:.75rem;font-weight:700;color:var(--ink-soft);margin-bottom:6px}
+  .q-comment textarea{width:100%;padding:12px;font-size:.95rem;border:2px solid var(--line);border-radius:12px;background:var(--card);min-height:70px}
+  .q-check{width:100%;padding:22px;border-radius:16px;border:2px solid var(--line);background:var(--card);font-size:1.1rem;font-weight:800;cursor:pointer;color:var(--ink-soft)}
+  .q-check.picked{border-color:var(--brand);background:var(--brand);color:#fff}
+
+  .q-foot{flex:none;display:flex;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);max-width:640px;margin:0 auto;width:100%}
+  .q-foot button{padding:14px;border-radius:12px;border:none;font-weight:800;font-size:.95rem;cursor:pointer}
+  .q-back{flex:0 0 90px;background:var(--paper);color:var(--ink-soft);border:1px solid var(--line) !important}
+  .q-skip{flex:0 0 90px;background:var(--sun-soft);color:#8a5b00}
+  .q-ok{flex:1;background:var(--brand);color:#fff}
+
+  .done-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;animation:slideIn .25s ease}
+  .done-badge{width:84px;height:84px;border-radius:99px;background:var(--brand);color:#fff;font-size:2.4rem;display:flex;align-items:center;justify-content:center;margin-bottom:18px;box-shadow:0 8px 24px rgba(11,92,70,.35)}
+  .done-wrap h3{font-size:1.3rem;margin-bottom:6px}
+  .done-wrap p{color:var(--ink-soft);font-size:.9rem;margin-bottom:26px}
+  .done-wrap .done-actions{display:flex;flex-direction:column;gap:10px;width:100%;max-width:340px}
+  .done-actions button{padding:15px;border-radius:14px;border:none;font-weight:800;font-size:.98rem;cursor:pointer}
+  .done-add{background:var(--sun-soft);color:#8a5b00}
+  .done-next{background:var(--brand);color:#fff}
+  .done-form{background:var(--card);color:var(--ink-soft);border:1px solid var(--line) !important}
+
+  @media print{header,.actionbar,#wizard{display:none !important}details.section{page-break-inside:avoid}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-top">
+    <div>
+      <h1>Solar Site Survey</h1>
+      <div class="doc"><span>SE-IMS-OP-01-FRM-XX</span><span>Rev 00</span></div>
+    </div>
+    <div class="mode-switch">
+      <button id="modeForm" class="on" onclick="setMode('form')">Form</button>
+      <button id="modeGuided" onclick="setMode('guided')">Guided</button>
+    </div>
+  </div>
+  <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="progress-label" id="progressLabel">0% complete</div>
+</header>
+
+<main id="app">
+
+  <!-- 1. GENERAL + PROPERTY (merged) -->
+  <details class="section" open data-sec="General & Property Information">
+    <summary><span class="sec-num">1</span>General &amp; Property Info<span class="chev">▼</span></summary>
+    <div class="sec-body">
+      <div class="grid2">
+        <div class="field"><label>Inspection Date</label><input type="date" data-k="Inspection date"></div>
+        <div class="field"><label>Project Reference No.</label><input type="text" data-k="Project reference no"></div>
+      </div>
+      <div class="field"><label>Project Name</label><input type="text" data-k="Project name"></div>
+      <div class="grid2">
+        <div class="field"><label>Inspected By</label><input type="text" data-k="Inspected by"></div>
+        <div class="field"><label>Site Coordinator Contact</label><input type="tel" data-k="Site coordinator contact"></div>
+      </div>
+      <div class="field"><label>Property Name</label><input type="text" data-k="Property name"></div>
+      <div class="field"><label>Area / Municipality</label><input type="text" data-k="Area municipality"></div>
+      <div class="field"><label>Google Map Location</label><input type="text" data-k="Google map location" placeholder="Paste link or coordinates"></div>
+    </div>
+  </details>
+
+  <!-- 2. LOCAL CONTACT -->
+  <details class="section" data-sec="Local Contact Person">
+    <summary><span class="sec-num">2</span>Local Contact Person<span class="chev">▼</span></summary>
+    <div class="sec-body">
+      <div class="field"><label>Name</label><input type="text" data-k="Contact name"></div>
+      <div class="field"><label>Company</label><input type="text" data-k="Contact company"></div>
+      <div class="field"><label>Contact Number</label><input type="tel" data-k="Contact number"></div>
+    </div>
+  </details>
+
+  <!-- 3. ROOF AREAS (setup + generated cards) -->
+  <details class="section" data-sec="Roof / Installation Areas">
+    <summary><span class="sec-num">3</span>Roof / Installation Areas<span class="chev">▼</span></summary>
+    <div class="sec-body">
+      <div class="setup-box">
+        <div class="field">
+          <label>How many roof / installation areas?</label>
+          <input type="number" min="0" max="20" id="areaCount" data-k="Number of areas" data-regen="1">
+        </div>
+        <div id="typeRows"></div>
+      </div>
+      <div id="areaCards"></div>
+    </div>
+  </details>
+
+  <!-- 4. POC / LV PANELS -->
+  <details class="section" data-sec="POC Details — LV/MDB Panels" data-rep-label="LV/MDB Panel">
+    <summary><span class="sec-num">4</span>POC — LV/MDB Panels<span class="chev">▼</span></summary>
+    <div class="sec-body">
+      <div id="lvList"></div>
+      <button class="add-btn" onclick="addLV()">＋ Add LV/MDB Panel</button>
+    </div>
+  </details>
+
+  <!-- 5. SAFETY -->
+  <details class="section" data-sec="Safety Issues / Checklist">
+    <summary><span class="sec-num">5</span>Safety Checklist<span class="chev">▼</span></summary>
+    <div class="sec-body" id="safetyList">
+      <div class="field"><label>Height of the Roofs (meters)</label><input type="text" data-k="Roof heights m"></div>
+      <div class="field"><label>Describe How Roof is Accessed</label><textarea data-k="Roof access description"></textarea></div>
+      <div class="field"><label>Additional Safety Notes</label><textarea data-k="Safety notes"></textarea></div>
+    </div>
+  </details>
+
+  <!-- 6. FINAL CHECKLIST (tick list) -->
+  <details class="section" data-sec="Final Checklist">
+    <summary><span class="sec-num">6</span>Final Checklist<span class="chev">▼</span></summary>
+    <div class="sec-body" id="finalList"></div>
+  </details>
+
+  <p class="hint">Data stays in this page until you export — generate the report before closing.</p>
+</main>
+
+<div class="actionbar">
+  <button class="btn-secondary" onclick="window.print()">Print / PDF</button>
+  <button class="btn-primary" onclick="openReport()">Generate Report</button>
+</div>
+
+<!-- ================= GUIDED MODE ================= -->
+<div id="wizard">
+  <div class="wiz-screen on" id="wizSections">
+    <div class="wiz-topbar">
+      <h2>Choose a section</h2>
+      <button onclick="setMode('form')">Form view</button>
+    </div>
+    <div class="sec-grid" id="secGrid"></div>
+  </div>
+
+  <div class="wiz-screen" id="wizQ">
+    <div class="q-top">
+      <div class="q-top-row">
+        <button onclick="exitToSections()">‹ Sections</button>
+        <div class="q-sec" id="qSecName"></div>
+        <button onclick="setMode('form')">Form</button>
+      </div>
+      <div class="q-progress"><i id="qBar"></i></div>
+      <div class="q-count" id="qCount"></div>
+    </div>
+    <div class="q-body"><div class="q-card" id="qCard"></div></div>
+    <div class="q-foot" id="qFoot">
+      <button class="q-back" onclick="prevQ()">‹ Back</button>
+      <button class="q-skip" onclick="nextQ(true)">Skip</button>
+      <button class="q-ok" onclick="okQ()">OK ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- Report modal -->
+<div class="modal" id="reportModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2>Survey Report</h2>
+      <button class="modal-close" onclick="closeReport()">✕</button>
+    </div>
+    <div class="modal-body"><pre id="reportText"></pre></div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="copyReport()" id="copyBtn">Copy Text</button>
+      <button class="btn-primary" onclick="downloadReport()">Download .txt</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= AREA TYPES & TEMPLATES ================= */
+const AREA_TYPES=["Flat Concrete Roof","Metal Sheet Roof","Carport","Ground Mount"];
+
+function commonRoofFields(){
+  return `
+    <div class="grid2">
+      <div class="field"><label>Roof Slope</label><input type="text" data-k="Roof slope"></div>
+      <div class="field"><label>Estimated Available Area (m²)</label><input type="text" data-k="Available area"></div>
+      <div class="field"><label>Height Above Ground (m)</label><input type="text" data-k="Height above ground"></div>
+      <div class="field"><label>Parapet Height (m)</label><input type="text" data-k="Parapet height"></div>
+    </div>
+    <div class="field"><label>Loading Method</label><input type="text" data-k="Loading method"></div>
+    <div class="grid2">
+      <div class="field"><label>Age of Building</label><input type="text" data-k="Building age"></div>
+      <div class="field"><label>Skylights Available</label><input type="text" data-k="Skylights"></div>
+      <div class="field"><label>Lifeline Available</label><input type="text" data-k="Lifeline"></div>
+      <div class="field"><label>Walkways Available</label><input type="text" data-k="Walkways"></div>
+    </div>
+    <div class="field"><label>High-rise Buildings Nearby — Height</label><input type="text" data-k="Highrise nearby"></div>
+    <div class="field"><label>Electrical Shaft from Roof to Ground</label><input type="text" data-k="Electrical shaft"></div>
+    <div class="field"><label>Access to Rooftop</label><input type="text" data-k="Rooftop access"></div>`;
+}
+function proposalFields(systems){
+  const opts=systems.map(s=>`<option>${s}</option>`).join('');
+  return `
+    <div class="field"><label>Proposed Solar System</label>
+      <select data-k="Proposed system"><option value="">— Select —</option>${opts}</select></div>
+    <div class="field"><label>Proposed Inverter Location</label><input type="text" data-k="Inverter location"></div>
+    <div class="field"><label>Proposed POC (MDB/SMDB)</label><input type="text" data-k="POC"></div>`;
+}
+function flatTemplate(i){
+  return `<div class="rep-card" data-area="${i}" data-type="Flat Concrete Roof" data-rep="Area ${i} — Flat Concrete Roof">
+    <div class="rep-head"><h3>Area ${i}</h3><span class="type-tag">Flat Concrete Roof</span></div>
+    ${commonRoofFields()}
+    ${proposalFields(["Minirail + long rail","Low tilt ballast","Raised structures","Canopy"])}
+  </div>`;
+}
+function metalRoofTemplate(i){
+  return `<div class="rep-card" data-area="${i}" data-type="Metal Sheet Roof" data-rep="Area ${i} — Metal Sheet Roof">
+    <div class="rep-head"><h3>Area ${i}</h3><span class="type-tag">Metal Sheet Roof</span></div>
+    <div class="grid2">
+      <div class="field"><label>Sheet Type</label>
+        <select data-k="Sheet type"><option value="">— Select —</option><option>Aluminium</option><option>HDG</option></select></div>
+      <div class="field"><label>Sheet Style</label>
+        <select data-k="Sheet style"><option value="">— Select —</option><option>Corrugated</option><option>Standing Seam</option></select></div>
+    </div>
+    <div class="field"><label>Roof Construction</label>
+      <select data-k="Roof construction"><option value="">— Select —</option><option>Single skin</option><option>Sandwich</option><option>Standing seam</option></select></div>
+    ${commonRoofFields()}
+    <div class="field"><label>Condition of Roof — Damages</label>
+      <select data-k="Roof damage level"><option value="">— Select —</option><option>No</option><option>Low</option><option>Medium</option><option>High</option></select></div>
+    <div class="field"><label>Any History of Water Leakage</label><input type="text" data-k="Water leakage history"></div>
+    <div class="field"><label>Physical Damages on Roof Sheet</label><input type="text" data-k="Damage roof sheet"></div>
+    <div class="field"><label>Physical Damages on Skylights</label><input type="text" data-k="Damage skylights"></div>
+    <div class="field"><label>Physical Damages on Ventilation System</label><input type="text" data-k="Damage ventilation"></div>
+    ${proposalFields(["Minirail + long rail","Low tilt ballast","Raised structures","Canopy"])}
+  </div>`;
+}
+function carportTemplate(i){
+  return `<div class="rep-card" data-area="${i}" data-type="Carport" data-rep="Area ${i} — Carport">
+    <div class="rep-head"><h3>Area ${i}</h3><span class="type-tag">Carport</span></div>
+    <div class="field"><label>Carpark Type</label>
+      <select data-k="Carpark type"><option value="">— Select —</option><option>Single</option><option>Double</option><option>Single + Double</option></select></div>
+    <div class="grid2">
+      <div class="field"><label>No. of Single Carpark Arrays</label><input type="number" data-k="Single carpark arrays"></div>
+      <div class="field"><label>No. of Double Carpark Arrays</label><input type="number" data-k="Double carpark arrays"></div>
+      <div class="field"><label>No. of Foundations to Remove</label><input type="number" data-k="Foundations to remove"></div>
+      <div class="field"><label>No. of Carpark Shades to Remove</label><input type="number" data-k="Carpark shades to remove"></div>
+    </div>
+    <div class="field"><label>High-rise Building Nearby — Height</label><input type="text" data-k="Highrise nearby"></div>
+    <div class="grid2">
+      <div class="field"><label>No. of Trees to Remove</label><input type="number" data-k="Trees to remove"></div>
+      <div class="field"><label>No. of Street Lights to Remove</label><input type="number" data-k="Street lights to remove"></div>
+    </div>
+    <div class="field"><label>Cable Trench from Carpark to LV Room</label><input type="text" data-k="Cable trench"></div>
+    ${proposalFields(["Diagonal","Parallel","Garage"])}
+  </div>`;
+}
+function groundTemplate(i){
+  return `<div class="rep-card" data-area="${i}" data-type="Ground Mount" data-rep="Area ${i} — Ground Mount">
+    <div class="rep-head"><h3>Area ${i}</h3><span class="type-tag">Ground Mount</span></div>
+    <div class="field"><label>Ground Type</label>
+      <select data-k="Ground type"><option value="">— Select —</option><option>Terrain</option><option>Flat ground</option><option>Canopy</option></select></div>
+    <div class="grid2">
+      <div class="field"><label>Soil Report Available</label><input type="text" data-k="Soil report"></div>
+      <div class="field"><label>Land Levelling Required</label><input type="text" data-k="Land levelling"></div>
+      <div class="field"><label>Fence Available</label><input type="text" data-k="Fence"></div>
+      <div class="field"><label>Street Lights Available</label><input type="text" data-k="Street lights available"></div>
+    </div>
+    <div class="field"><label>High-rise Building Nearby — Height</label><input type="text" data-k="Highrise nearby"></div>
+    <div class="grid2">
+      <div class="field"><label>No. of Trees to Remove</label><input type="number" data-k="Trees to remove"></div>
+      <div class="field"><label>No. of Street Lights to Remove</label><input type="number" data-k="Street lights to remove"></div>
+    </div>
+    <div class="field"><label>Cable Trench from Ground to LV Room</label><input type="text" data-k="Cable trench"></div>
+    ${proposalFields(["Ballast system","Pile foundation","Ramming pile"])}
+  </div>`;
+}
+const TEMPLATES={
+  "Flat Concrete Roof":flatTemplate,
+  "Metal Sheet Roof":metalRoofTemplate,
+  "Carport":carportTemplate,
+  "Ground Mount":groundTemplate
+};
+
+/* ---- roof setup logic ---- */
+function renderTypeRows(n){
+  const wrap=document.getElementById('typeRows');
+  const existing=wrap.querySelectorAll('.area-type-row').length;
+  // remove extras
+  for(let i=existing;i>n;i--){
+    wrap.querySelector(`.area-type-row[data-area="${i}"]`)?.remove();
+    document.querySelector(`#areaCards .rep-card[data-area="${i}"]`)?.remove();
+  }
+  // add missing
+  for(let i=existing+1;i<=n;i++){
+    const opts=AREA_TYPES.map(t=>`<option>${t}</option>`).join('');
+    wrap.insertAdjacentHTML('beforeend',
+      `<div class="field area-type-row" data-area="${i}">
+        <label>Area ${i} — Type</label>
+        <select data-k="Area ${i} type" data-regen="1" onchange="createAreaCard(${i},this.value)">
+          <option value="">— Select type —</option>${opts}
+        </select>
+      </div>`);
+  }
+  updateProgress();
+}
+function createAreaCard(i,type){
+  const holder=document.getElementById('areaCards');
+  const old=holder.querySelector(`.rep-card[data-area="${i}"]`);
+  if(old){
+    if(old.dataset.type===type)return;
+    old.remove();
+  }
+  if(!type||!TEMPLATES[type])return;
+  // insert in area order
+  const after=[...holder.querySelectorAll('.rep-card')].find(c=>+c.dataset.area>i);
+  const html=TEMPLATES[type](i);
+  if(after)after.insertAdjacentHTML('beforebegin',html);
+  else holder.insertAdjacentHTML('beforeend',html);
+  updateProgress();
+}
+document.getElementById('areaCount').addEventListener('input',e=>{
+  const n=Math.max(0,Math.min(20,parseInt(e.target.value)||0));
+  renderTypeRows(n);
+});
+
+/* ================= LV PANELS ================= */
+let lvN=0;
+function lvTemplate(n){
+  return `
+  <div class="rep-card" data-rep="LV/MDB Panel ${n}">
+    <div class="rep-head"><h3>LV/MDB Panel ${n}</h3><button class="rep-del" onclick="delRep(this)">Remove</button></div>
+    <div class="grid2">
+      <div class="field"><label>LV Panel Reference No.</label><input type="text" data-k="Panel ref no"></div>
+      <div class="field"><label>Location</label><input type="text" data-k="Location"></div>
+      <div class="field"><label>Incomer Rating — Breaker Size</label><input type="text" data-k="Incomer rating"></div>
+      <div class="field"><label>Account Number</label><input type="text" data-k="Account number"></div>
+    </div>
+    <div class="field"><label>SLD and Load Schedule Available</label><input type="text" data-k="SLD available"></div>
+    <div class="field"><label>Annual Electricity Consumption</label><input type="text" data-k="Annual consumption"></div>
+    <div class="field"><label>Fed From</label><input type="text" data-k="Fed from"></div>
+    <div class="field"><label>Incomer Cable Size and Run</label><input type="text" data-k="Incomer cable"></div>
+    <div class="field"><label>POC Option 1 — LV Panel Extension / SMDB Modification</label><input type="text" data-k="POC option 1"></div>
+    <div class="field"><label>POC Option 2 — LV Extension + Capacitor Bank Shifting</label><input type="text" data-k="POC option 2"></div>
+    <div class="field"><label>POC Option 3 — Space in LV Panel / Spare Breakers</label><input type="text" data-k="POC option 3"></div>
+    <div class="field"><label>POC Option 4 — MDB/SMDB Breaker Rearrangement</label><input type="text" data-k="POC option 4"></div>
+    <div class="grid2">
+      <div class="field"><label>Space for ACDB</label><input type="text" data-k="Space ACDB"></div>
+      <div class="field"><label>Space for Meter Cabinet</label><input type="text" data-k="Space meter cabinet"></div>
+    </div>
+    <div class="field"><label>Proposed Buildings for POC</label><input type="text" data-k="Proposed buildings"></div>
+  </div>`;
+}
+function addLV(){lvN++;document.getElementById('lvList').insertAdjacentHTML('beforeend',lvTemplate(lvN));updateProgress();return lvN}
+function delRep(btn){btn.closest('.rep-card').remove();updateProgress()}
+
+/* ================= SAFETY (yes/no + comment) ================= */
+const safetyItems=[
+  "Work at heights",
+  "Use / operation of facility may interfere with work or safety of employees / customers",
+  "High traffic area",
+  "Toxic fumes or chemicals",
+  "Chemical factory nearby",
+  "Safety of existing electrical network (organized or needs repair)",
+  "Trenching works required (may interfere with other services)",
+  "Documentation of underground services exists",
+  "Client has HSE policies and procedures in place"
+];
+function ynRow(text){
+  return `<div class="check-row" data-check="${text}">
+    <div class="check-main">
+      <div class="txt">${text}</div>
+      <div class="yn">
+        <button class="yes" onclick="setYN(this,'Yes')">Yes</button>
+        <button class="no" onclick="setYN(this,'No')">No</button>
+      </div>
+    </div>
+    <button class="cmt-toggle" onclick="toggleCmt(this)">＋ Add comment</button>
+    <div class="cmt-box"><textarea data-opt="1" placeholder="Comment…" oninput="this.closest('.check-row').dataset.cmt=this.value"></textarea></div>
+  </div>`;
+}
+function setYN(btn,val){
+  const row=btn.closest('.check-row');
+  row.querySelectorAll('.yn button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  row.dataset.val=val;
+  updateProgress();
+}
+function applyYN(row,val){
+  row.querySelectorAll('.yn button').forEach(b=>b.classList.remove('on'));
+  const btn=row.querySelector(val==='Yes'?'.yes':'.no');
+  if(btn)btn.classList.add('on');
+  row.dataset.val=val;
+  updateProgress();
+}
+function toggleCmt(btn){
+  const box=btn.nextElementSibling;
+  const open=box.classList.toggle('open');
+  btn.textContent=open?'－ Hide comment':'＋ Add comment';
+  if(open)box.querySelector('textarea').focus();
+}
+
+/* ================= FINAL CHECKLIST (tick list) ================= */
+const finalItems=[
+  "Coordinates of premises (for Google Map placement)",
+  "Copy of last 12 months' electricity bills",
+  "As-built architectural and electrical drawings",
+  "Load schedule for the LV and SMDB panels",
+  "Pictures and videos of roof — folder wise",
+  "Pictures of main breaker and proposed connection point",
+  "Pictures and videos of LV room and electrical room — folder wise"
+];
+function todoRow(text){
+  return `<div class="todo-row" data-check="${text}" onclick="toggleTodo(this)">
+    <div class="todo-box">✓</div><div class="txt">${text}</div>
+  </div>`;
+}
+function toggleTodo(row){
+  row.classList.toggle('checked');
+  row.dataset.val=row.classList.contains('checked')?'Yes':'';
+  updateProgress();
+}
+function applyTodo(row,on){
+  row.classList.toggle('checked',on);
+  row.dataset.val=on?'Yes':'';
+  updateProgress();
+}
+
+(function init(){
+  const safetyBody=document.getElementById('safetyList');
+  const notesField=safetyBody.querySelector('[data-k="Safety notes"]').closest('.field');
+  safetyItems.forEach(t=>notesField.insertAdjacentHTML('beforebegin',ynRow(t)));
+  const fin=document.getElementById('finalList');
+  finalItems.forEach(t=>fin.insertAdjacentHTML('beforeend',todoRow(t)));
+  addLV();
+})();
+
+/* ================= PROGRESS ================= */
+function sectionStats(sec){
+  const inputs=[...sec.querySelectorAll('input,select,textarea')].filter(el=>!el.dataset.opt);
+  const checks=[...sec.querySelectorAll('.check-row')];
+  const todos=[...sec.querySelectorAll('.todo-row')];
+  const total=inputs.length+checks.length+todos.length;
+  const done=inputs.filter(i=>i.value.trim()!=='').length
+    +checks.filter(c=>c.dataset.val).length
+    +todos.filter(t=>t.classList.contains('checked')).length;
+  return {done,total};
+}
+function updateProgress(){
+  let done=0,total=0;
+  document.querySelectorAll('details.section').forEach(sec=>{
+    const s=sectionStats(sec);done+=s.done;total+=s.total;
+  });
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('progressBar').style.width=pct+'%';
+  document.getElementById('progressLabel').textContent=pct+'% complete';
+  if(document.getElementById('wizard').classList.contains('open')&&
+     document.getElementById('wizSections').classList.contains('on'))renderSecGrid();
+}
+document.addEventListener('input',updateProgress);
+
+/* ================= MODE SWITCH ================= */
+function setMode(m){
+  const wiz=document.getElementById('wizard');
+  document.getElementById('modeForm').classList.toggle('on',m==='form');
+  document.getElementById('modeGuided').classList.toggle('on',m==='guided');
+  if(m==='guided'){wiz.classList.add('open');showWizScreen('wizSections');renderSecGrid();}
+  else{wiz.classList.remove('open');}
+}
+function showWizScreen(id){
+  document.querySelectorAll('.wiz-screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+
+/* ================= SECTION GRID ================= */
+function renderSecGrid(){
+  const grid=document.getElementById('secGrid');
+  grid.innerHTML='';
+  document.querySelectorAll('details.section').forEach((sec,i)=>{
+    const s=sectionStats(sec);
+    const pct=s.total?Math.round(s.done/s.total*100):0;
+    const tile=document.createElement('div');
+    tile.className='sec-tile'+(s.total&&s.done===s.total?' done':'');
+    tile.innerHTML=`<span class="tnum">${i+1}</span>
+      <div class="tname">${sec.dataset.sec}</div>
+      <div class="tcount">${s.done}/${s.total} answered</div>
+      <div class="mini"><i style="width:${pct}%"></i></div>`;
+    tile.onclick=()=>startSection(sec);
+    grid.appendChild(tile);
+  });
+}
+function exitToSections(){showWizScreen('wizSections');renderSecGrid();}
+
+/* ================= QUESTION FLOW ================= */
+let wq={sec:null,list:[],idx:0};
+
+function fieldLabel(el){
+  const f=el.closest('.field');
+  return f?f.querySelector('label').textContent:el.dataset.k;
+}
+function collectQuestions(sec){
+  const list=[];
+  sec.querySelectorAll('[data-k]').forEach(el=>{
+    if(el.dataset.opt)return;
+    const card=el.closest('.rep-card');
+    list.push({
+      kind: el.tagName==='SELECT'?'select':(el.tagName==='TEXTAREA'?'textarea':'input'),
+      el, ctx: card?card.dataset.rep:'', label: fieldLabel(el)
+    });
+  });
+  sec.querySelectorAll('.check-row').forEach(row=>{
+    list.push({kind:'yn',row,ctx:'',label:row.dataset.check});
+  });
+  sec.querySelectorAll('.todo-row').forEach(row=>{
+    list.push({kind:'check',row,ctx:'',label:row.dataset.check});
+  });
+  return list;
+}
+function startSection(sec,startIdx=0){
+  wq.sec=sec;wq.list=collectQuestions(sec);wq.idx=Math.min(startIdx,Math.max(0,wq.list.length-1));
+  if(!wq.list.length){exitToSections();return;}
+  document.getElementById('qSecName').textContent=sec.dataset.sec;
+  showWizScreen('wizQ');
+  renderQ();
+}
+function renderQ(){
+  const q=wq.list[wq.idx];
+  const card=document.getElementById('qCard');
+  document.getElementById('qFoot').style.display='flex';
+  document.getElementById('qBar').style.width=Math.round((wq.idx/wq.list.length)*100)+'%';
+  document.getElementById('qCount').textContent=`Question ${wq.idx+1} of ${wq.list.length}`;
+  card.style.animation='none';card.offsetHeight;card.style.animation='';
+
+  let html='';
+  if(q.ctx)html+=`<div class="q-context">${q.ctx}</div>`;
+  html+=`<div class="q-question">${q.label}</div>`;
+
+  if(q.kind==='yn'){
+    const v=q.row.dataset.val||'';
+    const cmt=q.row.dataset.cmt||'';
+    html+=`<div class="q-yn">
+      <button class="yes ${v==='Yes'?'picked':''}" onclick="pickYN(this,'Yes')">Yes</button>
+      <button class="no ${v==='No'?'picked':''}" onclick="pickYN(this,'No')">No</button>
+    </div>
+    <div class="q-comment">
+      <label>Comment (optional)</label>
+      <textarea id="qCmt" placeholder="Add a comment if needed…">${cmt}</textarea>
+    </div>`;
+  }else if(q.kind==='check'){
+    const on=q.row.classList.contains('checked');
+    html+=`<button class="q-check ${on?'picked':''}" onclick="pickCheck(this)">${on?'✓ Collected':'Tap to mark as collected'}</button>`;
+  }else if(q.kind==='select'){
+    html+='<div class="q-options">';
+    [...q.el.options].forEach(o=>{
+      if(!o.value)return;
+      html+=`<button class="${q.el.value===o.value?'picked':''}" onclick="answerSelect(this.textContent)">${o.textContent}</button>`;
+    });
+    html+='</div>';
+  }else if(q.kind==='textarea'){
+    html+=`<div class="q-input"><textarea id="qField" placeholder="Type your answer…">${q.el.value}</textarea></div>`;
+  }else{
+    const t=q.el.type==='date'?'date':(q.el.type==='number'?'number':(q.el.type==='tel'?'tel':'text'));
+    html+=`<div class="q-input"><input id="qField" type="${t}" value="${(q.el.value||'').replace(/"/g,'&quot;')}" placeholder="Type your answer…"></div>`;
+  }
+  card.innerHTML=html;
+
+  const f=document.getElementById('qField');
+  if(f){
+    f.focus();
+    f.addEventListener('keydown',e=>{
+      if(e.key==='Enter'&&q.kind!=='textarea'){e.preventDefault();okQ();}
+    });
+  }
+}
+function pickYN(btn,val){
+  const q=wq.list[wq.idx];
+  applyYN(q.row,val);
+  document.querySelectorAll('#qCard .q-yn button').forEach(b=>b.classList.remove('picked'));
+  btn.classList.add('picked');
+  // don't auto-advance — user may add a comment; OK continues
+}
+function pickCheck(btn){
+  const q=wq.list[wq.idx];
+  const on=!q.row.classList.contains('checked');
+  applyTodo(q.row,on);
+  btn.classList.toggle('picked',on);
+  btn.textContent=on?'✓ Collected':'Tap to mark as collected';
+  if(on)setTimeout(()=>nextQ(),200);
+}
+function answerSelect(val){
+  const q=wq.list[wq.idx];
+  q.el.value=val;
+  q.el.dispatchEvent(new Event('input',{bubbles:true}));
+  q.el.dispatchEvent(new Event('change',{bubbles:true}));
+  const regen=!!q.el.dataset.regen;
+  document.querySelectorAll('#qCard .q-options button').forEach(b=>{
+    b.classList.toggle('picked',b.textContent===val);
+  });
+  setTimeout(()=>{regen?regenAndNext():nextQ();},180);
+}
+function okQ(){
+  const q=wq.list[wq.idx];
+  if(q.kind==='yn'){
+    const cmt=document.getElementById('qCmt');
+    if(cmt){
+      q.row.dataset.cmt=cmt.value;
+      const ta=q.row.querySelector('.cmt-box textarea');
+      if(ta){ta.value=cmt.value;if(cmt.value)q.row.querySelector('.cmt-box').classList.add('open'),q.row.querySelector('.cmt-toggle').textContent='－ Hide comment';}
+    }
+    nextQ();return;
+  }
+  if(q.kind==='check'){nextQ();return;}
+  const f=document.getElementById('qField');
+  if(f){
+    q.el.value=f.value;
+    q.el.dispatchEvent(new Event('input',{bubbles:true}));
+    q.el.dispatchEvent(new Event('change',{bubbles:true}));
+    if(q.el.dataset.regen){regenAndNext();return;}
+  }
+  nextQ();
+}
+function regenAndNext(){
+  // question list changed (new type rows / area cards) — re-collect, keep position
+  const cur=wq.idx;
+  wq.list=collectQuestions(wq.sec);
+  wq.idx=cur;
+  nextQ();
+}
+function nextQ(){
+  if(wq.idx<wq.list.length-1){wq.idx++;renderQ();}
+  else{showDone();}
+}
+function prevQ(){
+  if(wq.idx>0){wq.idx--;renderQ();}
+  else{exitToSections();}
+}
+function showDone(){
+  const sec=wq.sec;
+  const s=sectionStats(sec);
+  const repLabel=sec.dataset.repLabel;
+  const card=document.getElementById('qCard');
+  document.getElementById('qBar').style.width='100%';
+  document.getElementById('qCount').textContent='Done';
+  document.getElementById('qFoot').style.display='none';
+  let addBtn='';
+  if(repLabel)addBtn=`<button class="done-add" onclick="wizAddAnother()">＋ Add another ${repLabel}</button>`;
+  card.innerHTML=`<div class="done-wrap">
+    <div class="done-badge">✓</div>
+    <h3>Section complete</h3>
+    <p>${sec.dataset.sec} — ${s.done}/${s.total} answered</p>
+    <div class="done-actions">
+      ${addBtn}
+      <button class="done-next" onclick="exitToSections()">Choose next section</button>
+      <button class="done-form" onclick="setMode('form')">Review in form view</button>
+    </div>
+  </div>`;
+}
+function wizAddAnother(){
+  const sec=wq.sec;
+  const before=collectQuestions(sec).length;
+  addLV();
+  startSection(sec,before);
+}
+
+/* ================= REPORT ================= */
+function buildReport(){
+  const L=[];
+  L.push("SOLAR SITE SURVEY REPORT");
+  L.push("Doc No: SE-IMS-OP-01-FRM-XX | Rev 00");
+  L.push("Generated: "+new Date().toLocaleString());
+  L.push("=".repeat(46));
+  document.querySelectorAll('details.section').forEach(sec=>{
+    const title=sec.dataset.sec;
+    const lines=[];
+    sec.querySelectorAll('.rep-card').forEach(cardEl=>{
+      const sub=[];
+      cardEl.querySelectorAll('[data-k]').forEach(el=>{
+        if(el.value.trim())sub.push("   "+el.dataset.k+": "+el.value.trim());
+      });
+      if(sub.length){lines.push(" • "+cardEl.dataset.rep);lines.push(...sub);}
+    });
+    sec.querySelectorAll('[data-k]').forEach(el=>{
+      if(el.closest('.rep-card')||el.dataset.opt)return;
+      if(el.value.trim())lines.push(" "+el.dataset.k+": "+el.value.trim());
+    });
+    sec.querySelectorAll('.check-row').forEach(row=>{
+      if(row.dataset.val){
+        let line=" ["+row.dataset.val+"] "+row.dataset.check;
+        lines.push(line);
+        if(row.dataset.cmt&&row.dataset.cmt.trim())lines.push("      ↳ "+row.dataset.cmt.trim());
+      }
+    });
+    sec.querySelectorAll('.todo-row').forEach(row=>{
+      lines.push(" ["+(row.classList.contains('checked')?"x":" ")+"] "+row.dataset.check);
+    });
+    if(lines.length){L.push("");L.push(title.toUpperCase());L.push("-".repeat(title.length));L.push(...lines);}
+  });
+  return L.join("\n");
+}
+function openReport(){
+  document.getElementById('reportText').textContent=buildReport();
+  document.getElementById('reportModal').classList.add('open');
+}
+function closeReport(){document.getElementById('reportModal').classList.remove('open')}
+function copyReport(){
+  navigator.clipboard.writeText(document.getElementById('reportText').textContent).then(()=>{
+    const b=document.getElementById('copyBtn');b.textContent="Copied ✓";
+    setTimeout(()=>b.textContent="Copy Text",1500);
+  });
+}
+function downloadReport(){
+  const proj=(document.querySelector('[data-k="Project name"]').value.trim()||"site-survey").replace(/[^\w\-]+/g,"-");
+  const blob=new Blob([buildReport()],{type:"text/plain"});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=proj+"-survey.txt";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+document.getElementById('reportModal').addEventListener('click',e=>{
+  if(e.target.id==='reportModal')closeReport();
+});
+</script>
+</body>
+</html>
