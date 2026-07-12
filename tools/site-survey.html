@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 <title>Solar Site Survey — SE-IMS-OP-01-FRM-XX</title>
 <style>
   :root{
@@ -71,13 +71,15 @@
   .cmt-box.open{display:block}
   .cmt-box textarea{min-height:48px;font-size:.85rem}
 
-  /* final checklist (tick list) */
-  .todo-row{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer;user-select:none}
+  /* final checklist (3-state) */
+  .todo-row{padding:12px 0;border-bottom:1px solid var(--line)}
   .todo-row:last-child{border-bottom:none}
-  .todo-box{flex:none;width:26px;height:26px;border-radius:8px;border:2px solid var(--line);background:#fbfcfb;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:.85rem;transition:all .12s;margin-top:1px}
-  .todo-row.checked .todo-box{background:var(--brand);border-color:var(--brand)}
-  .todo-row .txt{flex:1;font-size:.88rem;line-height:1.4;padding-top:3px}
-  .todo-row.checked .txt{color:var(--ink-soft);text-decoration:line-through}
+  .todo-row .txt{font-size:.88rem;line-height:1.4;margin-bottom:8px}
+  .todo-opts{display:flex;gap:6px;flex-wrap:wrap}
+  .todo-opts button{flex:1;min-width:96px;padding:9px 8px;border-radius:9px;border:1.5px solid var(--line);background:#fbfcfb;font-size:.72rem;font-weight:700;cursor:pointer;color:var(--ink-soft);transition:all .12s}
+  .todo-opts button[data-v="Collected"].on{background:var(--brand);border-color:var(--brand);color:#fff}
+  .todo-opts button[data-v="To be requested"].on{background:#8a5b00;border-color:#8a5b00;color:#fff}
+  .todo-opts button[data-v="Requested"].on{background:var(--sun);border-color:var(--sun);color:#3d2a00}
 
   .actionbar{position:fixed;bottom:0;left:0;right:0;z-index:60;background:var(--card);border-top:1px solid var(--line);display:flex;gap:10px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto}
   .actionbar button{flex:1;padding:13px;border-radius:12px;font-weight:700;font-size:.92rem;cursor:pointer;border:none}
@@ -124,13 +126,16 @@
   .q-progress i{display:block;height:100%;background:var(--sun);border-radius:99px;transition:width .25s}
   .q-count{font-size:.68rem;opacity:.85;margin-top:4px;text-align:center}
 
-  .q-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;padding:24px 20px;max-width:640px;margin:0 auto;width:100%}
-  .q-card{animation:slideIn .22s ease;margin-top:auto;margin-bottom:auto}
+  .q-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;padding:16px 20px 30px;max-width:640px;margin:0 auto;width:100%;-webkit-overflow-scrolling:touch}
+  .q-card{animation:slideIn .22s ease}
   @keyframes slideIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+  .q-where{font-size:.7rem;font-weight:700;color:var(--ink-soft);margin-bottom:10px}
+  .q-where b{color:var(--brand)}
   .q-context{font-size:.72rem;font-weight:800;color:var(--sun);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
-  .q-question{font-size:1.3rem;font-weight:800;line-height:1.3;margin-bottom:22px}
-  .q-input input,.q-input textarea{width:100%;padding:15px 14px;font-size:1.05rem;border:2px solid var(--line);border-radius:14px;background:var(--card)}
-  .q-input textarea{min-height:110px}
+  .q-question{font-size:1.15rem;font-weight:800;line-height:1.3;margin-bottom:14px}
+  .q-input input,.q-input textarea{width:100%;padding:14px;font-size:1.05rem;border:2px solid var(--line);border-radius:14px;background:var(--card);-webkit-user-select:text;user-select:text}
+  .q-input textarea{min-height:100px}
+  .q-paste{margin-top:8px;padding:9px 14px;border-radius:10px;border:1.5px dashed var(--line);background:#fbfcfb;font-size:.78rem;font-weight:700;color:var(--ink-soft);cursor:pointer}
   .q-input input:focus,.q-input textarea:focus{outline:none;border-color:var(--brand)}
   .q-options{display:flex;flex-direction:column;gap:10px}
   .q-options button{padding:15px 16px;border-radius:14px;border:2px solid var(--line);background:var(--card);font-size:1rem;font-weight:600;text-align:left;cursor:pointer;transition:all .12s}
@@ -145,10 +150,10 @@
   .q-check{width:100%;padding:22px;border-radius:16px;border:2px solid var(--line);background:var(--card);font-size:1.1rem;font-weight:800;cursor:pointer;color:var(--ink-soft)}
   .q-check.picked{border-color:var(--brand);background:var(--brand);color:#fff}
 
-  .q-foot{flex:none;display:flex;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);max-width:640px;margin:0 auto;width:100%}
-  .q-foot button{padding:14px;border-radius:12px;border:none;font-weight:800;font-size:.95rem;cursor:pointer}
-  .q-back{flex:0 0 90px;background:var(--paper);color:var(--ink-soft);border:1px solid var(--line) !important}
-  .q-skip{flex:0 0 90px;background:var(--sun-soft);color:#8a5b00}
+  .q-actions{display:flex;gap:10px;margin-top:18px}
+  .q-actions button{padding:14px;border-radius:12px;border:none;font-weight:800;font-size:.95rem;cursor:pointer}
+  .q-back{flex:0 0 84px;background:var(--paper);color:var(--ink-soft);border:1px solid var(--line) !important}
+  .q-skip{flex:0 0 84px;background:var(--sun-soft);color:#8a5b00}
   .q-ok{flex:1;background:var(--brand);color:#fff}
 
   .done-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;animation:slideIn .25s ease}
@@ -240,7 +245,7 @@
   <details class="section" data-sec="Safety Issues / Checklist">
     <summary><span class="sec-num">5</span>Safety Checklist<span class="chev">▼</span></summary>
     <div class="sec-body" id="safetyList">
-      <div class="field"><label>Height of the Roofs (meters)</label><input type="text" data-k="Roof heights m"></div>
+      <div class="field"><label>Height of the Roofs (meters)</label><input type="text" inputmode="decimal" data-k="Roof heights m"></div>
       <div class="field"><label>Describe How Roof is Accessed</label><textarea data-k="Roof access description"></textarea></div>
       <div class="field"><label>Additional Safety Notes</label><textarea data-k="Safety notes"></textarea></div>
     </div>
@@ -281,11 +286,6 @@
       <div class="q-count" id="qCount"></div>
     </div>
     <div class="q-body"><div class="q-card" id="qCard"></div></div>
-    <div class="q-foot" id="qFoot">
-      <button class="q-back" onclick="prevQ()">‹ Back</button>
-      <button class="q-skip" onclick="nextQ(true)">Skip</button>
-      <button class="q-ok" onclick="okQ()">OK ✓</button>
-    </div>
   </div>
 </div>
 
@@ -312,18 +312,18 @@ function commonRoofFields(){
   return `
     <div class="grid2">
       <div class="field"><label>Roof Slope</label><input type="text" data-k="Roof slope"></div>
-      <div class="field"><label>Estimated Available Area (m²)</label><input type="text" data-k="Available area"></div>
-      <div class="field"><label>Height Above Ground (m)</label><input type="text" data-k="Height above ground"></div>
-      <div class="field"><label>Parapet Height (m)</label><input type="text" data-k="Parapet height"></div>
+      <div class="field"><label>Estimated Available Area (m²)</label><input type="text" inputmode="decimal" data-k="Available area"></div>
+      <div class="field"><label>Height Above Ground (m)</label><input type="text" inputmode="decimal" data-k="Height above ground"></div>
+      <div class="field"><label>Parapet Height (m)</label><input type="text" inputmode="decimal" data-k="Parapet height"></div>
     </div>
     <div class="field"><label>Loading Method</label><input type="text" data-k="Loading method"></div>
     <div class="grid2">
-      <div class="field"><label>Age of Building</label><input type="text" data-k="Building age"></div>
+      <div class="field"><label>Age of Building</label><input type="text" inputmode="numeric" data-k="Building age"></div>
       <div class="field"><label>Skylights Available</label><input type="text" data-k="Skylights"></div>
       <div class="field"><label>Lifeline Available</label><input type="text" data-k="Lifeline"></div>
       <div class="field"><label>Walkways Available</label><input type="text" data-k="Walkways"></div>
     </div>
-    <div class="field"><label>High-rise Buildings Nearby — Height</label><input type="text" data-k="Highrise nearby"></div>
+    <div class="field"><label>High-rise Buildings Nearby — Height</label><input type="text" inputmode="decimal" data-k="Highrise nearby"></div>
     <div class="field"><label>Electrical Shaft from Roof to Ground</label><input type="text" data-k="Electrical shaft"></div>
     <div class="field"><label>Access to Rooftop</label><input type="text" data-k="Rooftop access"></div>`;
 }
@@ -374,7 +374,7 @@ function carportTemplate(i){
       <div class="field"><label>No. of Foundations to Remove</label><input type="number" data-k="Foundations to remove"></div>
       <div class="field"><label>No. of Carpark Shades to Remove</label><input type="number" data-k="Carpark shades to remove"></div>
     </div>
-    <div class="field"><label>High-rise Building Nearby — Height</label><input type="text" data-k="Highrise nearby"></div>
+    <div class="field"><label>High-rise Building Nearby — Height</label><input type="text" inputmode="decimal" data-k="Highrise nearby"></div>
     <div class="grid2">
       <div class="field"><label>No. of Trees to Remove</label><input type="number" data-k="Trees to remove"></div>
       <div class="field"><label>No. of Street Lights to Remove</label><input type="number" data-k="Street lights to remove"></div>
@@ -394,7 +394,7 @@ function groundTemplate(i){
       <div class="field"><label>Fence Available</label><input type="text" data-k="Fence"></div>
       <div class="field"><label>Street Lights Available</label><input type="text" data-k="Street lights available"></div>
     </div>
-    <div class="field"><label>High-rise Building Nearby — Height</label><input type="text" data-k="Highrise nearby"></div>
+    <div class="field"><label>High-rise Building Nearby — Height</label><input type="text" inputmode="decimal" data-k="Highrise nearby"></div>
     <div class="grid2">
       <div class="field"><label>No. of Trees to Remove</label><input type="number" data-k="Trees to remove"></div>
       <div class="field"><label>No. of Street Lights to Remove</label><input type="number" data-k="Street lights to remove"></div>
@@ -423,14 +423,31 @@ function renderTypeRows(n){
   for(let i=existing+1;i<=n;i++){
     const opts=AREA_TYPES.map(t=>`<option>${t}</option>`).join('');
     wrap.insertAdjacentHTML('beforeend',
-      `<div class="field area-type-row" data-area="${i}">
-        <label>Area ${i} — Type</label>
-        <select data-k="Area ${i} type" data-regen="1" onchange="createAreaCard(${i},this.value)">
-          <option value="">— Select type —</option>${opts}
-        </select>
+      `<div class="area-type-row" data-area="${i}">
+        <div class="field">
+          <label>Area ${i} — Name</label>
+          <input type="text" data-k="Area ${i} name" placeholder="e.g. Block A, Old Building" oninput="updateAreaName(${i},this.value)">
+        </div>
+        <div class="field">
+          <label>Area ${i} — Type</label>
+          <select data-k="Area ${i} type" data-regen="1" onchange="createAreaCard(${i},this.value)">
+            <option value="">— Select type —</option>${opts}
+          </select>
+        </div>
       </div>`);
   }
   updateProgress();
+}
+function areaName(i){
+  const inp=document.querySelector(`[data-k="Area ${i} name"]`);
+  return inp?inp.value.trim():'';
+}
+function updateAreaName(i,name){
+  const card=document.querySelector(`#areaCards .rep-card[data-area="${i}"]`);
+  if(!card)return;
+  name=name.trim();
+  card.dataset.rep=`Area ${i}${name?' — '+name:''} — ${card.dataset.type}`;
+  card.querySelector('.rep-head h3').textContent=`Area ${i}${name?' — '+name:''}`;
 }
 function createAreaCard(i,type){
   const holder=document.getElementById('areaCards');
@@ -445,6 +462,7 @@ function createAreaCard(i,type){
   const html=TEMPLATES[type](i);
   if(after)after.insertAdjacentHTML('beforebegin',html);
   else holder.insertAdjacentHTML('beforeend',html);
+  updateAreaName(i,areaName(i));   // apply name (e.g. Block A) to the new card
   updateProgress();
 }
 document.getElementById('areaCount').addEventListener('input',e=>{
@@ -528,7 +546,8 @@ function toggleCmt(btn){
   if(open)box.querySelector('textarea').focus();
 }
 
-/* ================= FINAL CHECKLIST (tick list) ================= */
+/* ================= FINAL CHECKLIST (3-state) ================= */
+const TODO_STATES=["Collected","To be requested","Requested"];
 const finalItems=[
   "Coordinates of premises (for Google Map placement)",
   "Copy of last 12 months' electricity bills",
@@ -539,20 +558,18 @@ const finalItems=[
   "Pictures and videos of LV room and electrical room — folder wise"
 ];
 function todoRow(text){
-  return `<div class="todo-row" data-check="${text}" onclick="toggleTodo(this)">
-    <div class="todo-box">✓</div><div class="txt">${text}</div>
+  const btns=TODO_STATES.map(s=>`<button data-v="${s}" onclick="setTodo(this,'${s}')">${s}</button>`).join('');
+  return `<div class="todo-row" data-check="${text}">
+    <div class="txt">${text}</div>
+    <div class="todo-opts">${btns}</div>
   </div>`;
 }
-function toggleTodo(row){
-  row.classList.toggle('checked');
-  row.dataset.val=row.classList.contains('checked')?'Yes':'';
+function setTodoVal(row,val){
+  row.dataset.val=(row.dataset.val===val)?'':val;   // tap same option again to clear
+  row.querySelectorAll('.todo-opts button').forEach(b=>b.classList.toggle('on',b.dataset.v===row.dataset.val));
   updateProgress();
 }
-function applyTodo(row,on){
-  row.classList.toggle('checked',on);
-  row.dataset.val=on?'Yes':'';
-  updateProgress();
-}
+function setTodo(btn,val){setTodoVal(btn.closest('.todo-row'),val)}
 
 (function init(){
   const safetyBody=document.getElementById('safetyList');
@@ -571,7 +588,7 @@ function sectionStats(sec){
   const total=inputs.length+checks.length+todos.length;
   const done=inputs.filter(i=>i.value.trim()!=='').length
     +checks.filter(c=>c.dataset.val).length
-    +todos.filter(t=>t.classList.contains('checked')).length;
+    +todos.filter(t=>t.dataset.val).length;
   return {done,total};
 }
 function updateProgress(){
@@ -654,12 +671,11 @@ function startSection(sec,startIdx=0){
 function renderQ(){
   const q=wq.list[wq.idx];
   const card=document.getElementById('qCard');
-  document.getElementById('qFoot').style.display='flex';
   document.getElementById('qBar').style.width=Math.round((wq.idx/wq.list.length)*100)+'%';
   document.getElementById('qCount').textContent=`Question ${wq.idx+1} of ${wq.list.length}`;
   card.style.animation='none';card.offsetHeight;card.style.animation='';
 
-  let html='';
+  let html=`<div class="q-where"><b>${wq.sec.dataset.sec}</b> · Question ${wq.idx+1} of ${wq.list.length}</div>`;
   if(q.ctx)html+=`<div class="q-context">${q.ctx}</div>`;
   html+=`<div class="q-question">${q.label}</div>`;
 
@@ -675,8 +691,12 @@ function renderQ(){
       <textarea id="qCmt" placeholder="Add a comment if needed…">${cmt}</textarea>
     </div>`;
   }else if(q.kind==='check'){
-    const on=q.row.classList.contains('checked');
-    html+=`<button class="q-check ${on?'picked':''}" onclick="pickCheck(this)">${on?'✓ Collected':'Tap to mark as collected'}</button>`;
+    const v=q.row.dataset.val||'';
+    html+='<div class="q-options">';
+    TODO_STATES.forEach(o=>{
+      html+=`<button class="${v===o?'picked':''}" onclick="pickTodo('${o}')">${o}</button>`;
+    });
+    html+='</div>';
   }else if(q.kind==='select'){
     html+='<div class="q-options">';
     [...q.el.options].forEach(o=>{
@@ -685,20 +705,38 @@ function renderQ(){
     });
     html+='</div>';
   }else if(q.kind==='textarea'){
-    html+=`<div class="q-input"><textarea id="qField" placeholder="Type your answer…">${q.el.value}</textarea></div>`;
+    html+=`<div class="q-input"><textarea id="qField" placeholder="Type your answer…">${q.el.value}</textarea>
+    <button class="q-paste" onclick="pasteInto()">📋 Paste from clipboard</button></div>`;
   }else{
     const t=q.el.type==='date'?'date':(q.el.type==='number'?'number':(q.el.type==='tel'?'tel':'text'));
-    html+=`<div class="q-input"><input id="qField" type="${t}" value="${(q.el.value||'').replace(/"/g,'&quot;')}" placeholder="Type your answer…"></div>`;
+    const im=q.el.getAttribute('inputmode');
+    const paste=(t==='text'||t==='tel')?'<button class="q-paste" onclick="pasteInto()">📋 Paste from clipboard</button>':'';
+    html+=`<div class="q-input"><input id="qField" type="${t}" ${im?`inputmode="${im}"`:''} value="${(q.el.value||'').replace(/"/g,'&quot;')}" placeholder="Type your answer…">${paste}</div>`;
   }
+
+  html+=`<div class="q-actions">
+    <button class="q-back" onclick="prevQ()">‹ Back</button>
+    <button class="q-skip" onclick="nextQ(true)">Skip</button>
+    <button class="q-ok" onclick="okQ()">OK ✓</button>
+  </div>`;
   card.innerHTML=html;
 
+  document.querySelector('.q-body').scrollTop=0;
   const f=document.getElementById('qField');
   if(f){
-    f.focus();
     f.addEventListener('keydown',e=>{
       if(e.key==='Enter'&&q.kind!=='textarea'){e.preventDefault();okQ();}
     });
   }
+}
+function pasteInto(){
+  const f=document.getElementById('qField');
+  if(!f)return;
+  if(navigator.clipboard&&navigator.clipboard.readText){
+    navigator.clipboard.readText().then(t=>{
+      if(t){f.value=t;f.dispatchEvent(new Event('input',{bubbles:true}));}
+    }).catch(()=>{f.focus();alert("Tap and hold the field, then choose Paste.");});
+  }else{f.focus();alert("Tap and hold the field, then choose Paste.");}
 }
 function pickYN(btn,val){
   const q=wq.list[wq.idx];
@@ -707,13 +745,14 @@ function pickYN(btn,val){
   btn.classList.add('picked');
   // don't auto-advance — user may add a comment; OK continues
 }
-function pickCheck(btn){
+function pickTodo(val){
   const q=wq.list[wq.idx];
-  const on=!q.row.classList.contains('checked');
-  applyTodo(q.row,on);
-  btn.classList.toggle('picked',on);
-  btn.textContent=on?'✓ Collected':'Tap to mark as collected';
-  if(on)setTimeout(()=>nextQ(),200);
+  setTodoVal(q.row,val);
+  const v=q.row.dataset.val;
+  document.querySelectorAll('#qCard .q-options button').forEach(b=>{
+    b.classList.toggle('picked',b.textContent===v);
+  });
+  if(v)setTimeout(()=>nextQ(),180);
 }
 function answerSelect(val){
   const q=wq.list[wq.idx];
@@ -769,7 +808,6 @@ function showDone(){
   const card=document.getElementById('qCard');
   document.getElementById('qBar').style.width='100%';
   document.getElementById('qCount').textContent='Done';
-  document.getElementById('qFoot').style.display='none';
   let addBtn='';
   if(repLabel)addBtn=`<button class="done-add" onclick="wizAddAnother()">＋ Add another ${repLabel}</button>`;
   card.innerHTML=`<div class="done-wrap">
@@ -819,7 +857,7 @@ function buildReport(){
       }
     });
     sec.querySelectorAll('.todo-row').forEach(row=>{
-      lines.push(" ["+(row.classList.contains('checked')?"x":" ")+"] "+row.dataset.check);
+      lines.push(" ["+(row.dataset.val||"—")+"] "+row.dataset.check);
     });
     if(lines.length){L.push("");L.push(title.toUpperCase());L.push("-".repeat(title.length));L.push(...lines);}
   });
