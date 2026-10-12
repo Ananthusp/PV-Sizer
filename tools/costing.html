@@ -289,7 +289,56 @@ details.sec[open] .chev{transform:rotate(90deg)}
 code{font-family:var(--mono);font-size:12px;background:var(--bg);border-radius:5px;padding:1px 5px}
 .note code{background:var(--card)}
 #termPick{margin-bottom:14px}
-@media print{.noprint{display:none!important}}
+
+
+/* v6 — settings sub-pages, terms, quote document */
+.subpage[hidden]{display:none}
+.logoprev{width:150px;height:56px;border:1px dashed var(--line2);border-radius:8px;display:grid;place-items:center;background:#fff;overflow:hidden}
+.logoprev img{max-width:100%;max-height:100%}
+.logoprev span{font-size:11.5px;color:#93A0AC}
+.tgroup{padding:10px 0 6px;border-bottom:1px solid var(--line)}
+.tgroup:last-child{border-bottom:0}
+.tgroup h4,.tph{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--sub);font-weight:700}
+.tph{margin:10px 0 2px}
+.term select{width:auto;padding:6px 8px;font-size:12px;flex:none}
+#offerBox,#termPick{margin-bottom:12px}
+.qwrap{overflow-x:auto;padding-bottom:6px}
+.quote{--qa:#4F81BD;background:#fff;color:#111;max-width:860px;min-width:680px;margin:0 auto;padding:36px 42px 28px;border:1px solid var(--line);box-shadow:var(--sh);
+  font:12.5px/1.4 Cambria,Georgia,"Times New Roman",serif}
+.quote table{border-collapse:collapse;width:100%}
+.quote table tr th,.quote table tr td{border:1px solid #9aa3ad;padding:3px 7px;font-size:12.5px;color:#111;background:#fff;text-align:left;text-transform:none;letter-spacing:0;font-weight:normal}
+.quote table tr th{background:var(--qa);color:#fff;font-weight:700}
+.qtop{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:18px}
+.qbrand img{max-height:72px;max-width:300px;display:block}
+.qco{font:700 26px/1.1 Cambria,Georgia,serif;color:var(--qa)}
+.qtag{font:700 13px/1.3 "Segoe UI",Arial,sans-serif;color:var(--qa);text-transform:uppercase;margin-top:6px;letter-spacing:.02em}
+.qtitle{font:700 46px/1 Cambria,Georgia,serif;color:var(--qa)}
+.qgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px 70px;margin-bottom:16px;align-items:start}
+.qbox td.k{width:22%}
+.qmeta{width:auto!important;margin-left:auto}
+.quote .qmeta tr td{border:0!important;text-align:right!important;padding:2px 8px}
+.quote .qmeta tr td+td{border:1px solid #9aa3ad!important;text-align:left!important;min-width:190px}
+.qitems th{text-align:center!important;vertical-align:middle;padding:6px}
+.qitems td{vertical-align:middle;padding:7px}
+.quote td.c{text-align:center}.quote td.r{text-align:right;font-variant-numeric:tabular-nums}
+.qtot{width:200px!important;margin:10px 0 0 auto}
+.qtot td:nth-child(3){text-align:right;font-variant-numeric:tabular-nums}
+.qtot tr.g td{font-weight:700;border-top:2px solid #111}
+.qwords{font-size:11.5px;font-style:italic;margin:6px 0 16px;text-align:right}
+.qterms .qhead{text-align:left}
+.quote .qterms tr th:not(.qhead){background:#fff;color:#111;font-weight:normal;text-align:center;vertical-align:middle;width:24%}
+.qterms ol{padding-left:18px;margin:0}
+.qclose{margin:18px 0 14px}
+.qsign p{margin:0 0 12px}
+.qprep{font-size:11px}
+.qnote{font-size:10.5px;font-style:italic;margin-top:10px}
+.qfoot{margin-top:30px;background:var(--qa);color:#fff;text-align:center;font:700 12px/1.5 Cambria,Georgia,serif;padding:5px}
+@media print{
+  .noprint,#qtSeg{display:none!important}
+  .qwrap{overflow:visible}
+  .quote{border:0;box-shadow:none;padding:0;min-width:0;max-width:none}
+  @page{margin:14mm}
+}
 </style>
 </head>
 <body>
@@ -318,7 +367,6 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg);border-radius:5
       <button data-p="boq">BOQ</button>
       <button data-p="sum">Summary</button>
       <button data-p="rep">Client Report</button>
-      <button data-p="db">Price Database</button>
       <button data-p="set">Settings</button>
     </nav>
   </div>
@@ -384,23 +432,85 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg);border-radius:5
   </table></div>
 </section>
 
-<!-- ================= 4 · CLIENT REPORT ================= -->
+<!-- ================= 4 · CLIENT QUOTE ================= -->
 <section class="page" id="p-rep">
-  <div class="ph"><div><h2>Client report</h2><p>Category prices include contingency and margin. Your rates are not shown. Company details and terms come from Settings.</p></div>
+  <div class="ph"><div><h2>Client quote</h2><p>Prices include contingency and margin. Your rates are not shown. Company details and terms come from Settings.</p></div>
+    <div class="seg" id="qtSeg"><button data-qt="detailed">Detailed</button><button data-qt="short">Short</button><button data-qt="single">Single line</button></div>
     <button class="btn pri" id="printBtn" hidden>Print / Save PDF</button></div>
+  <details class="sec noprint" id="offerBox" open>
+    <summary><span class="stitle">Offer details<small>Customer, contact and quote number for this project</small></span>
+      <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5"/></svg></summary>
+    <div class="secbody" style="padding:16px 18px">
+      <div class="fgrid">
+        <div class="f"><label for="oCust">Customer</label><input type="text" id="oCust" data-o="customer"></div>
+        <div class="f"><label for="oAddr">Customer city / address</label><input type="text" id="oAddr" data-o="custAddr"></div>
+        <div class="f"><label for="oTel">Customer tel.</label><input type="text" id="oTel" data-o="custTel"></div>
+        <div class="f"><label for="oAttn">Contact person (Attn)</label><input type="text" id="oAttn" data-o="attn"></div>
+        <div class="f"><label for="oMail">Contact email</label><input type="text" id="oMail" data-o="email"></div>
+        <div class="f"><label for="oCref">Customer ref.</label><input type="text" id="oCref" data-o="custRef"></div>
+        <div class="f"><label for="oRev">Quote # / revision</label><input type="text" id="oRev" data-o="rev"></div>
+        <div class="f"><label for="oDel">Delivery</label><input type="text" id="oDel" data-o="delivery" placeholder="Blank = from Settings"></div>
+        <div class="f wide"><label for="oDesc">Project description</label><input type="text" id="oDesc" data-o="desc" placeholder="Blank = written for you from kWp and location"></div>
+        <div class="f"><label for="oPrice">Quoted price excl. VAT <span class="u">AED</span></label><input type="number" id="oPrice" data-o="price" data-num="1" placeholder="Blank = calculated"></div>
+        <div class="f" style="justify-content:flex-end"><p class="spc" id="oPriceHint" style="font-size:12px;color:var(--sub)"></p></div>
+      </div>
+    </div>
+  </details>
   <details class="sec noprint" id="termPick">
-    <summary><span class="stitle">Terms on this offer<small id="termCount"></small></span>
+    <summary><span class="stitle">Terms on this quote<small id="termCount"></small></span>
       <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5"/></svg></summary>
     <div class="secbody" style="padding:12px 18px" id="termList"></div>
   </details>
-  <div class="paper" id="paper"></div>
+  <div class="qwrap"><div class="quote" id="paper"></div></div>
 </section>
 
-<!-- ================= 5 · PRICE DATABASE ================= -->
-<section class="page" id="p-db">
-  <div class="ph"><div><h2>Price database</h2><p>One price per item, shared by every project. Update a rate and every BOQ uses it. The old rate and date are kept.</p></div>
+<!-- ================= 5 · SETTINGS ================= -->
+<section class="page" id="p-set">
+  <div class="ph"><div><h2>Settings</h2><p>Shared by every project.</p></div>
+    <div class="seg" id="setSeg"><button data-st="co">Company &amp; quote</button><button data-st="terms">Terms</button><button data-st="db">Price database</button></div>
     <span class="cloud" id="cloud"><i></i><span>…</span></span></div>
-  <div class="note"><span>ƒ</span><div><b>Formulas:</b> type a rate starting with <b>=</b>, for example <code>=kWp*25</code> or <code>=rate("panel")*wp</code>. You can use
+
+  <div id="set-co" class="subpage">
+    <div class="grid g2">
+      <div class="card">
+        <h3>Company</h3>
+        <div class="fgrid">
+          <div class="f wide"><label for="sCo">Company name</label><input type="text" id="sCo" data-s="company"></div>
+          <div class="f wide"><label for="sTag">Tagline under the logo</label><input type="text" id="sTag" data-s="tagline"></div>
+          <div class="f wide"><label for="sLogo">Logo <span class="u">PNG or JPG</span></label>
+            <div class="flex"><div class="logoprev" id="logoPrev"></div><input type="file" id="sLogo" accept="image/*" style="max-width:240px"><button class="btn ghost sm" id="logoDel" type="button">Remove</button></div></div>
+          <div class="f"><label for="sAcc">Quote colour</label><input type="color" id="sAcc" data-s="accent" style="height:40px;padding:4px"></div>
+          <div class="f"><label for="sTrn">TRN <span class="u">VAT number</span></label><input type="text" id="sTrn" data-s="trn"></div>
+          <div class="f wide"><label for="sAddr">Address <span class="u">footer</span></label><input type="text" id="sAddr" data-s="address"></div>
+          <div class="f"><label for="sPh">Phone</label><input type="text" id="sPh" data-s="phone"></div>
+          <div class="f"><label for="sEm">Email</label><input type="text" id="sEm" data-s="email"></div>
+          <div class="f"><label for="sWeb">Website</label><input type="text" id="sWeb" data-s="web"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Quote defaults</h3>
+        <div class="fgrid">
+          <div class="f"><label for="sSign">Signed by</label><input type="text" id="sSign" data-s="signName"></div>
+          <div class="f"><label for="sSignT">Signatory title</label><input type="text" id="sSignT" data-s="signTitle"></div>
+          <div class="f"><label for="sBy">Prepared by</label><input type="text" id="sBy" data-s="preparedBy"></div>
+          <div class="f"><label for="sVal">Validity <span class="u">days</span></label><input type="number" id="sVal" data-s="validity" data-num="1"></div>
+          <div class="f wide"><label for="sDel">Delivery</label><input type="text" id="sDel" data-s="delivery"></div>
+          <div class="f wide"><label for="sClose">Closing line</label><input type="text" id="sClose" data-s="closing"></div>
+          <div class="f wide"><label for="sFoot">Footnote</label><input type="text" id="sFoot" data-s="footnote"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="set-terms" class="subpage">
+    <div class="card">
+      <p style="font-size:12.5px;color:var(--sub);margin-bottom:6px">Ticked terms go on every new quote. You can still pick terms per project on the Client Quote tab.</p>
+      <div id="termLib"></div>
+    </div>
+  </div>
+
+  <div id="set-db" class="subpage">
+<div class="note"><span>ƒ</span><div><b>Formulas:</b> type a rate starting with <b>=</b>, for example <code>=kWp*25</code> or <code>=rate("panel")*wp</code>. You can use
     <code>kWp</code> <code>MWp</code> <code>kWac</code> <code>kVA</code> <code>mods</code> <code>wp</code> <code>invN</code> <code>roofs</code> <code>poc</code> and <code>rate("item id")</code>. The item id is shown under each description.</div></div>
   <div class="dbbar">
     <input type="search" id="dbSearch" placeholder="Search items, specs, suppliers" aria-label="Search price database">
@@ -410,28 +520,6 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg);border-radius:5
     <label class="flex" style="gap:6px;font-size:12.5px;color:var(--sub);font-weight:600" for="fx">USD → AED <input type="number" id="fx" step="0.0001" style="width:92px"></label>
   </div>
   <div id="dbWrap"></div>
-</section>
-
-<!-- ================= 6 · SETTINGS ================= -->
-<section class="page" id="p-set">
-  <div class="ph"><div><h2>Settings</h2><p>Shared by every project. Used on the client report.</p></div></div>
-  <div class="grid g2">
-    <div class="card">
-      <h3>Company details</h3>
-      <div class="fgrid">
-        <div class="f wide"><label for="sCo">Company name</label><input type="text" id="sCo" data-s="company"></div>
-        <div class="f wide"><label for="sAddr">Address line</label><input type="text" id="sAddr" data-s="address" placeholder="e.g. Office 12, Al Quoz, Dubai, UAE"></div>
-        <div class="f"><label for="sTrn">TRN <span class="u">VAT number</span></label><input type="text" id="sTrn" data-s="trn"></div>
-        <div class="f"><label for="sContact">Phone / email</label><input type="text" id="sContact" data-s="contact"></div>
-        <div class="f"><label for="sBy">Prepared by</label><input type="text" id="sBy" data-s="preparedBy"></div>
-        <div class="f"><label for="sVal">Offer validity <span class="u">days</span></label><input type="number" id="sVal" data-s="validity" data-num="1"></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="flex" style="margin-bottom:12px"><h3 style="margin:0">Terms and conditions</h3><span class="spacer"></span><button class="btn ghost sm" id="addTerm">+ Add term</button></div>
-      <p style="font-size:12.5px;color:var(--sub);margin-bottom:10px">Ticked terms are added to every new offer. You can still pick terms per project on the Client Report tab. <code>{validity}</code> is replaced with the validity days.</p>
-      <div id="termLib"></div>
-    </div>
   </div>
 </section>
 
@@ -501,8 +589,11 @@ const DEMO_PV={
 };
 
 /* ============ S2 · PRICE DATABASE SEED (sample rates, AED) ============ */
-const CATS=["Solar Panel","Mounting Structure","DC Cables","Inverter","Switchgear","AC Cables","AC Earthing","Cable Trays","Cable Tray Accessories",
-  "Other BOQ","Consumables","Installation Works","Monitoring System","Project Management","Permits & Authority Fees","Insurances & Bonds","Spare Parts"];
+const CATS=["PV Modules","Inverters","Mounting Structure","DC Cables","AC Cables","Earthing & LPS","Switchgear","Cable Trays","Cable Tray Accessories",
+  "Monitoring System","Roof Safety & Access","Installation Works","Consumables","Permits & Authority Fees","Project Management","Insurances & Bonds","Spare Parts"];
+const OLD_CAT={"Solar Panel":"PV Modules","Inverter":"Inverters","AC Earthing":"Earthing & LPS","Other BOQ":"Roof Safety & Access"};
+/* Excel rows that move to a better category */
+const XLS_CAT={123:"Switchgear",124:"Monitoring System",125:"Roof Safety & Access",126:"Roof Safety & Access",127:"Earthing & LPS"};
 /* items from your Excel list (rows 114–201) */
 const XLS=[[114,"Other BOQ","Skylight Prot 5*1","2.5 mtr x 1.5 mtr","Nos"],[115,"Other BOQ","Skylight Prot 4.2*1.2","","Nos"],[116,"Other BOQ","Walkways 450mm","FRP Grating","Meters"],[117,"Other BOQ","Safety Line","","Meters"],[118,"Other BOQ","Third part certification per line","","Nos"],[119,"Other BOQ","Permanent staircase - Cat Ladder","9 meter","Nos"],[120,"Other BOQ","Permanent staircase - Spiral Ladder","15 meter","Nos"],[121,"Other BOQ","Permanent staircase - Zig Zag Step ladder","15 meter","Nos"],[122,"Other BOQ","Scaffolding","","Nos"],[123,"Other BOQ","Zero Export Controller along with CTs","","Nos"],[124,"Other BOQ","Fiber Optics","","Nos"],[125,"Other BOQ","Safety materials","","Nos"],[126,"Other BOQ","Edge protection per meter","","Nos"],[127,"Other BOQ","LPS","","Nos"],[128,"Consumables","Canopy for inverter","canopy for 3 nos of inverters and ACCB","Nos"],[129,"Consumables","Fall protection","Barricade","Nos"],[130,"Consumables","Mechanical room - Electrical ACDB","Civil room","Nos"],[131,"Consumables","Mechanical room - Electrical ACDB","Louvers","Nos"],[132,"Consumables","Pole protection","","Nos"],[133,"Consumables","Stand for Inverter inc foundations","No of inverters","Nos"],[134,"Consumables","Earth pits","","Nos"],[135,"Consumables","Cable ties and clips","Enter kWp","kWp"],[136,"Consumables","Miscelleaneous","Enter 1","LS"],[137,"Consumables","Labels","Enter 1","LS"],[138,"Consumables","Fuel Expenses","","Nos"],[139,"Consumables","Water Leakage test with report","Every 200 kWp enter 1","Nos"],[140,"Consumables","Lightning study","","Nos"],[141,"Installation Works","I&C contractor - Labour - Rooftop","Enter kWp","kWp"],[142,"Installation Works","I&C contractor - Labour - Carpark","Enter kWp","kWp"],[143,"Installation Works","Civil works","Interlock","Meters"],[144,"Installation Works","Civil works","Asphalt","Meters"],[145,"Installation Works","Civil works","Sand","Meters"],[146,"Installation Works","Manholes","","Nos"],[147,"Installation Works","Logistics panels and others","Enter 1","Nos"],[148,"Installation Works","Logistics concrete blocks","Enter 1","Nos"],[149,"Installation Works","Forklift","","Nos"],[150,"Monitoring System","Commercial cabinet less than 750Kw","Meteo Control","Nos"],[151,"Monitoring System","Control cabinet more than 750Kwp IN","Meteo Control","Nos"],[152,"Monitoring System","Control cabinet more than 750Kwp OUT","Meteo Control","Nos"],[153,"Monitoring System","Blue log XC200","Meteo Control","Nos"],[154,"Monitoring System","Blue'Log XC-1000 plant controller","Meteo Control","Nos"],[155,"Monitoring System","PT1000 module cabinet","Meteo Control","Nos"],[156,"Monitoring System","MX-Module RS485/422 add-on modules","Meteo Control","Nos"],[157,"Monitoring System","5 Port Ethernet Switch (inl in cabinet","Meteo Control","Nos"],[158,"Monitoring System","Plant setup fee VCOM","Meteo Control","Nos"],[159,"Monitoring System","Onsite commissioning","Meteo Control","Nos"],[160,"Monitoring System","Router","Meteo Control","Nos"],[161,"Monitoring System","Antenna","Meteo Control","Nos"],[162,"Monitoring System","Irradiance sensor with module temp","Meteo Control","Nos"],[163,"Monitoring System","Irradiance sensor with ambiant temp","Meteo Control","Nos"],[164,"Monitoring System","Pyranometer","Meteo Control","Nos"],[165,"Monitoring System","Weather station","Meteo Control","Nos"],[166,"Monitoring System","Export docs","Meteo Control","Nos"],[167,"Monitoring System","Shipping","Meteo Control","Nos"],[168,"Monitoring System","Communication Box - Data logger","Inverter Logger","Nos"],[169,"Monitoring System","Weather station with accessories","Rainwise","Nos"],[170,"Monitoring System","Weather station with accessories","Shamslog","Nos"],[171,"Project Management","Engineering  and Project Management","",""],[172,"Permits & Authority Fees","DEWA/TAQA Meter Inspection approval","No of POC","Nos"],[173,"Permits & Authority Fees","DCD Approval","Enter kWp","kWp"],[174,"Permits & Authority Fees","Municipality/Trakhess approval","Formula","Nos"],[175,"Permits & Authority Fees","Consultant fees - Electrical","No of MWp","MWp"],[176,"Permits & Authority Fees","Consultant fees - Structural","No of Areas","Nos"],[177,"Insurances & Bonds","Professional indemnity Insurance","",""],[178,"Insurances & Bonds","Contractor All Risk & WC","",""],[179,"Insurances & Bonds","Bank Fees LC",0.01,"Nos"],[180,"Insurances & Bonds","Bank Fees PB",0.03,"Nos"],[181,"Insurances & Bonds","Bank Fees overdraft",0,"Nos"],[182,"Insurances & Bonds","Bank Fees",0.01,""],[183,"Spare Parts","Spare SPD","","Nos"],[184,"Spare Parts","Spare breaker","","Nos"],[185,"Spare Parts","Ongrid 3 phased inverter",165000,"Nos"],[186,"Spare Parts","Ongrid 3 phased inverter",125000,"Nos"],[187,"Spare Parts","Ongrid 3 phased inverter",110000,"Nos"],[188,"Spare Parts","Ongrid 3 phased inverter",55000,"Nos"],[189,"Spare Parts","Ongrid 3 phased inverter",44000,"Nos"],[190,"Spare Parts","Ongrid 3 phased inverter",36300,"Nos"],[191,"Spare Parts","Ongrid 3 phased inverter",30000,"Nos"],[192,"Spare Parts","Ongrid 3 phased inverter",25000,"Nos"],[193,"Spare Parts","Ongrid 3 phased inverter",22000,"Nos"],[194,"Spare Parts","Ongrid 3 phased inverter",15000,"Nos"],[195,"Spare Parts","Ongrid 3 phased inverter",12000,"Nos"],[196,"Spare Parts","Ongrid 3 phased inverter",11000,"Nos"],[197,"Spare Parts","1C X 6 SQMM DC - NON ARMOURED","6mm NA","Meters"],[198,"Spare Parts","1C X 6 SQMM DC - ARMOURED","6mm AR","Meters"],[199,"Spare Parts","Solar Panels Area1",0.01,"Nos"],[200,"Spare Parts","Mounting Structure",0.01,"Nos"],[201,"Spare Parts","Irradience Sensor",1,"Nos"]];
 const XLS_SKIP=new Set([114,115,116,117,118,119,120,121,122,128,129,130,131,134,185,186,187,188,189,190,191,192,193,194,195,196]);  /* replaced by dropdown items */
@@ -516,7 +607,7 @@ const r50=n=>Math.round(n/50)*50;
 function buildSeed(){
   const L=[];let ord=0;
   const add=(cat,id,d,spec,u,rate,formula)=>L.push({id,cat,ord:++ord,d,spec,u,rate:formula?0:rate,formula:formula||"",cur:"AED",sup:rate||formula?"Sample price":"",upd:rate||formula?"2026-10-01":"",prev:null});
-  add("Solar Panel","panel","Solar PV module","Price per Wp — BOQ rate = this × module Wp","Wp",0.38);
+  add("PV Modules","panel","Solar PV module","Price per Wp — BOQ rate = this × module Wp","Wp",0.38);
   [["str-metal-trap","Metal roof — trapezoidal",95],["str-metal-klip","Metal roof — Kliplok",105],["str-metal-seam","Metal roof — standing seam",90],
    ["str-flat","Flat roof",160],["str-carpark","Carpark",620],["str-ground","Ground mount",210]]
     .forEach(([id,n,r])=>add("Mounting Structure",id,"Mounting structure — "+n,"Per module","Nos",r));
@@ -532,21 +623,22 @@ function buildSeed(){
   add("DC Cables","mc4","MC4 connectors, male + female","","Pair",14);
   const invRate={"SG5.0RT-P2":2300,"SG6.0RT-P2":2500,"SG7.0RT-P2":2700,"SG8.0RT-P2":2900,"SG10RT-P2":3400,"SG12RT-P2":3900,"SG15RT-P2":4300,"SG17RT-P2":4800,"SG20RT-P2":5200,
     "SG25CX-P2":6300,"SG30CX-P2":6900,"SG33CX-P2":7400,"SG36CX-P2":7800,"SG40CX-P2":8100,"SG50CX-P2":9300,"SG110CX":16200,"SG125CX-P2":17800,"SG150CX":19500};
-  INV_DATA.forEach(v=>add("Inverter","inv-"+v.m,"On-grid 3-phase inverter "+v.m,`${v.kw} kW · ${v.kva} kVA`,"Nos",invRate[v.m]||0));
-  INVISO_RATINGS.forEach(a=>add("Inverter","inviso-"+a,"Inverter AC isolator",`${a} A`,"Nos",r50(250+6*a)));
+  INV_DATA.forEach(v=>add("Inverters","inv-"+v.m,"On-grid 3-phase inverter "+v.m,`${v.kw} kW · ${v.kva} kVA`,"Nos",invRate[v.m]||0));
+  INVISO_RATINGS.forEach(a=>add("Inverters","inviso-"+a,"Inverter AC isolator",`${a} A`,"Nos",r50(250+6*a)));
   RATINGS.forEach(a=>add("Switchgear","accb-"+a,"ACCB — AC combiner box",`Out ${a} A`,"Nos",r50(2500+28*a)));
   RATINGS.forEach(a=>add("Switchgear","mdbm-"+a,"MDB modification",`${a} A breaker`,"Nos",r50(1500+13*a)));
   RATINGS.forEach(a=>add("Switchgear","mdbe-"+a,"MDB extension",`${a} A breaker`,"Nos",r50(4000+18*a)));
   RATINGS.forEach(a=>add("Switchgear","meter-"+a,"Solar meter cabinet",`${a} A`,"Nos",r50(3000+20*a)));
   ISO_RATINGS.forEach(a=>add("Switchgear","iso-"+a,"Isolator",`${a} A`,"Nos",r50(300+3.2*a)));
-  [["4C2.5","1C × 2.5",18],["4C4","1C × 4",24],["4C6","1C × 6",32],["4C10","1C × 6",48],["4C16","1C × 10",65],["4C25","1C × 16",92],["4C35","1C × 16",120],
+  /* earth: DEWA minimum 1C × 16 mm² whatever the cable size */
+  [["4C2.5","1C × 16",18],["4C4","1C × 16",24],["4C6","1C × 16",32],["4C10","1C × 16",48],["4C16","1C × 16",65],["4C25","1C × 16",92],["4C35","1C × 16",120],
    ["4C50","1C × 25",160],["4C70","1C × 35",215],["4C95","1C × 50",285],["4C120","1C × 70",355],["4C150","1C × 70",430],["4C185","1C × 95",520],
    ["4C240","1C × 120",670],["4C300","1C × 150",820],["3C185","1C × 120",450]]
     .forEach(([k,e,r])=>add("AC Cables","ac-"+k,`${k.replace("C","C × ")} mm² armoured with ${e} mm² Y/G earth`,"Cu/XLPE/SWA","m",r));
   add("AC Cables","rs485","Communication cable RS485","2 × 2 × 0.5","m",6);
   add("AC Cables","sec2c","Secondary protection cable","2C × 2.5 mm²","m",5);
-  [[6,9],[10,13],[16,19],[25,28],[35,38],[50,52],[70,72],[95,98],[120,122]].forEach(([s,r])=>add("AC Earthing","earth-1C"+s,`1C × ${s} mm² Y/G earth cable`,"","m",r));
-  add("AC Earthing","earthpit","Earth pit with test chamber","","Nos",1150);
+  [[6,9],[10,13],[16,19],[25,28],[35,38],[50,52],[70,72],[95,98],[120,122]].forEach(([s,r])=>add("Earthing & LPS","earth-1C"+s,`1C × ${s} mm² Y/G earth cable`,"","m",r));
+  add("Earthing & LPS","earthpit","Earth pit with test chamber","","Nos",1150);
   [["50x50x1.2",38],["100x50x1.5",48],["100x100x1.5",70],["150x50x1.5",58],["150x100x1.5",82],["200x50x1.5",68],["200x100x1.5",95],["250x50x1.5",78],["250x100x1.5",108],
    ["300x50x1.5",88],["300x100x1.5",120],["400x50x1.5",110],["400x100x1.5",150],["450x50x1.5",120],["450x100x1.5",165],["500x50x1.5",132],["500x100x1.5",180],
    ["550x50x1.5",145],["550x100x1.5",195],["600x50x1.5",158],["600x100x1.5",210],["750x100x2",290]]
@@ -558,23 +650,23 @@ function buildSeed(){
    ["reducer","Reducer","","Nos",110],["endcap","End cap","","Nos",25],["unistrut","Unistrut channel 41 × 41","","m",28],
    ["rod","Threaded rod M10 with anchor","","Set",12],["bolts","Nuts, bolts and washers","","LS",600]]
     .forEach(([k,d,s,u,r])=>add("Cable Tray Accessories","cta-"+k,d,s,u,r));
-  /* Other BOQ — dropdown families */
-  add("Other BOQ","sky-a","Skylight protection","2.5 × 1.5 m","Nos",1350);
-  add("Other BOQ","sky-b","Skylight protection","4.2 × 1.2 m","Nos",1250);
-  add("Other BOQ","walkway","Walkway 450 mm","FRP grating","m",165);
-  add("Other BOQ","lifeline","Lifeline / safety line","","m",120);
-  add("Other BOQ","lifecert","Third-party certification — lifeline","Per line","Nos",1500);
+  /* Roof safety & access — dropdown families */
+  const RS="Roof Safety & Access";
+  [["3x1","3 × 1 m",1450],["4x1","4 × 1 m",1750],["45x1","4.5 × 1 m",1950],["other","Other size",0]].forEach(([k,n,r])=>add(RS,"sky-"+k,"Skylight protection",n,"Nos",r));
+  [["380","380 mm",145],["400","400 mm",155],["450","450 mm",165]].forEach(([k,n,r])=>add(RS,"walk-"+k,"Walkway — FRP grating",n,"m",r));
+  add(RS,"lifeline","Lifeline / safety line","","m",120);
+  add(RS,"lifecert","Third-party certification — lifeline","Per line","Nos",1500);
   [["canopy","Canopy",6500],["louver","Louvered enclosure",9000],["canbar","Canopy with barricade",9000],["room","Civil room with louvers",35000],["pole","Pole protection",250]]
-    .forEach(([k,n,r])=>add("Other BOQ","prot-"+k,"Protection for inverters / ACCB",n,"Nos",r));
+    .forEach(([k,n,r])=>add(RS,"prot-"+k,"Protection for inverters / ACCB",n,"Nos",r));
   [["cage","Cage ladder","9 m",6500],["spiral","Spiral ladder","15 m",22000],["step","Zig-zag step ladder","15 m",18000],["scaff","Scaffolding","",3500]]
-    .forEach(([k,n,h,r])=>add("Other BOQ","access-"+k,"Roof access — "+n,h,"Nos",r));
+    .forEach(([k,n,h,r])=>add(RS,"access-"+k,"Roof access — "+n,h,"Nos",r));
   XLS.forEach(([sno,cat,d,spec,u])=>{
     if(XLS_SKIP.has(sno))return;
     let s=String(spec??""),uu=u;if(typeof spec==="number"&&spec<=1)s="";
     if(PCT.has("x"+sno))uu="%";if(sno===171)uu="LS";if(sno===199||sno===200)s="1% of main qty";
     if(sno===168){d="Sungrow data logger (communication box)";s="Logger1000"}
     if(sno===170){d="Shamslog weather station with sensors";s=""}
-    add(cat,"x"+sno,d,s,uu,XLS_RATES[sno]||0,XLS_FORMULA[sno]);
+    add(XLS_CAT[sno]||OLD_CAT[cat]||cat,"x"+sno,d,s,uu,XLS_RATES[sno]||0,XLS_FORMULA[sno]);
   });
   return L;
 }
@@ -598,22 +690,34 @@ function mergeSeed(list){
 const PKEY="pv_costing_projects_v1", DBKEY="pv_pricedb_v2", SKEY="pv_costing_settings_v1";
 const today=new Date().toISOString().slice(0,10);
 let PROJ={}, CUR=null, P=null, DB=[], FX=3.6725, CTXV=null;
-let openCats=new Set(["Solar Panel","Mounting Structure","Inverter","Switchgear"]), openDb=new Set(["Solar Panel"]);
-const DEFAULT_S={company:"Your Company Name",address:"Dubai, UAE",trn:"",contact:"",preparedBy:"",validity:30,terms:[
-  {id:"t1",text:"This offer is valid for {validity} days from the date above.",on:true},
-  {id:"t2",text:"Prices are in UAE Dirhams (AED). VAT at 5% is shown separately.",on:true},
-  {id:"t3",text:"Payment terms: 30% advance with purchase order, 60% on material delivery, 10% on testing and commissioning.",on:true},
-  {id:"t4",text:"The price covers only the scope listed. Civil works, roof repairs and MDB upgrades are excluded unless listed.",on:true},
-  {id:"t5",text:"Authority approval timelines (DEWA / consultant) are outside our control.",on:true},
-  {id:"t6",text:"Delivery: 6–8 weeks from advance payment and approved drawings.",on:false},
-  {id:"t7",text:"Warranty: PV modules and inverters as per manufacturer warranty; workmanship 2 years from commissioning.",on:false},
-  {id:"t8",text:"Client to provide site access, storage space, water and electricity during installation.",on:false}]};
+let openCats=new Set(["PV Modules","Inverters","Mounting Structure","Switchgear"]), openDb=new Set(["PV Modules"]);
+const TERM_GROUPS={excl:"Price exclusions / limitations",pay:"Payment terms",other:"Other terms"};
+const DEFAULT_S={company:"Your Company Name",tagline:"Solar energy system provider",logo:"",accent:"#4F81BD",
+  address:"Office address, Dubai, UAE",phone:"",email:"",web:"",trn:"",
+  signName:"",signTitle:"",preparedBy:"",validity:10,delivery:"As per attached schedule",
+  closing:"We trust our offer is of interest and we look forward to hearing from you in due course.",
+  footnote:"Above information is not an invoice and only an estimate of services/goods described above.",
+  terms:[
+  {id:"t1",g:"excl",text:"This quote is based on the proposed design.",on:true},
+  {id:"t2",g:"excl",text:"Approved drawings from DM and DEWA to be provided by the client.",on:true},
+  {id:"t3",g:"excl",text:"Rest area to be provided by the client as per HSE requirements.",on:true},
+  {id:"t4",g:"excl",text:"Water for roof leakage test to be provided by the client. Any repairs if needed are not included.",on:true},
+  {id:"t5",g:"excl",text:"Civil works, roof repairs and MDB upgrades are excluded unless listed.",on:false},
+  {id:"t6",g:"pay",text:"20% advance on order confirmation",on:true},
+  {id:"t7",g:"pay",text:"20% on delivery of switchgear and AC cables",on:true},
+  {id:"t8",g:"pay",text:"20% on delivery of mounting structure and DC cables",on:true},
+  {id:"t9",g:"pay",text:"20% on mechanical completion on roof",on:true},
+  {id:"t10",g:"pay",text:"10% on electrical completion",on:true},
+  {id:"t11",g:"pay",text:"10% on commissioning",on:true},
+  {id:"t12",g:"other",text:"Warranty: PV modules and inverters as per manufacturer warranty; workmanship 2 years from commissioning.",on:false}]};
 let S=JSON.parse(JSON.stringify(DEFAULT_S));
+function fixS(x){const o={...JSON.parse(JSON.stringify(DEFAULT_S)),...(x||{})};if(!Array.isArray(o.terms)||o.terms.every(t=>!t.g))o.terms=JSON.parse(JSON.stringify(DEFAULT_S.terms));return o}
 const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const clone=o=>JSON.parse(JSON.stringify(o));
 function newProject(name){
   return {id:uid("p"),name:name||"New project",location:"",ref:"",wp:620,
-    roofs:[{id:uid("r"),name:"Roof 1",type:"metal",sub:"trap",mods:0}],pv:null,swg:{mode:"single",n:2},mon:"sungrow",
+    roofs:[{id:uid("r"),name:"Roof 1",type:"metal",sub:"trap",mods:0}],pv:null,swg:{mode:"single",n:2},mon:"sungrow",qtype:"detailed",
+    offer:{customer:"",custAddr:"",custTel:"",attn:"",email:"",custRef:"",rev:"v1",delivery:"",desc:"",price:null},
     O:{},ML:[],cont:3,margin:15,created:today,updated:Date.now()};
 }
 function sampleProject(){
@@ -625,7 +729,8 @@ function sampleProject(){
   ml("Cable Trays","tray","tray-50x50x1.2",150);ml("Cable Trays","tray","tray-100x50x1.5",130);ml("Cable Trays","tray","tray-200x50x1.5",15);
   ml("Cable Trays","tray","tray-300x50x1.5",20);ml("Cable Trays","tray","tray-400x100x1.5",15);
   ml("AC Cables",null,"rs485",30);ml("AC Cables",null,"sec2c",36);ml("Other BOQ",null,"x125",1);
-  Object.assign(p.O,{"ob-sky":{q:27},walkway:{q:265},lifeline:{q:200},lifecert:{q:2},"ob-access":{q:1},"cta-hbend":{q:6},"cta-tee":{q:2}});
+  Object.assign(p.O,{"ob-sky":{q:27},"ob-walk":{q:265,sel:"walk-450"},lifeline:{q:200},lifecert:{q:2},"ob-access":{q:1},"cta-hbend":{q:6},"cta-tee":{q:2}});
+  p.offer={customer:"Sample Customer LLC",custAddr:"Dubai",custTel:"",attn:"",email:"",custRef:"",rev:"v1",delivery:"",desc:"",price:null};
   return p;
 }
 function saveLocal(){try{localStorage.setItem(PKEY,JSON.stringify({PROJ,CUR}))}catch(e){}}
@@ -635,6 +740,9 @@ function openProject(id){CUR=id;P=PROJ[id];saveLocal();renderAll()}
 function fixProject(p){   /* older saved projects → current shape */
   p.roofs.forEach(r=>{if(r.type==="metal"&&!r.sub)r.sub="trap"});
   if(!p.mon)p.mon="sungrow";if(!p.swg)p.swg={mode:"single",n:2};if(!p.ML)p.ML=[];if(!p.O)p.O={};
+  if(!p.qtype)p.qtype="detailed";if(!p.offer)p.offer={customer:"",custAddr:"",custTel:"",attn:"",email:"",custRef:"",rev:"v1",delivery:"",desc:"",price:null};
+  p.ML.forEach(m=>{if(OLD_CAT[m.cat])m.cat=OLD_CAT[m.cat]});
+  if(p.O.walkway&&!p.O["ob-walk"]){p.O["ob-walk"]=p.O.walkway;delete p.O.walkway}
   return p;
 }
 function load(){
@@ -645,7 +753,7 @@ function load(){
   P=PROJ[CUR];
   DB=buildSeed();
   try{const s=localStorage.getItem(DBKEY);if(s){const o=JSON.parse(s);if(Array.isArray(o.DB)&&o.DB.length)DB=mergeSeed(o.DB).list;if(o.FX)FX=o.FX}}catch(e){}
-  try{const s=localStorage.getItem(SKEY);if(s)S={...clone(DEFAULT_S),...JSON.parse(s)}}catch(e){}
+  try{const s=localStorage.getItem(SKEY);if(s)S=fixS(JSON.parse(s))}catch(e){}
 }
 function saveDBLocal(){try{localStorage.setItem(DBKEY,JSON.stringify({DB,FX}))}catch(e){}}
 
@@ -705,7 +813,7 @@ function mk(o){
     rateSrc:o.rateSrc||(it.formula?"formula":null),pct:o.pct??PCT.has(o.key)};
 }
 const FAMLABEL={str:x=>x.d.replace("Mounting structure — ",""),inv:x=>x.d.replace("On-grid 3-phase inverter ",""),iso:x=>x.spec,inviso:x=>x.spec,
-  dc:x=>x.d.replace(" DC cable",""),earth:x=>x.d.replace(" Y/G earth cable",""),sky:x=>x.spec,prot:x=>x.spec,access:x=>x.d.replace("Roof access — ","")+(x.spec?" · "+x.spec:"")};
+  dc:x=>x.d.replace(" DC cable",""),earth:x=>x.d.replace(" Y/G earth cable",""),sky:x=>x.spec,walk:x=>x.spec,prot:x=>x.spec,access:x=>x.d.replace("Roof access — ","")+(x.spec?" · "+x.spec:"")};
 const famSel=(fam,v,lid,label)=>({opts:famOpts(fam).map(x=>[x.id,(FAMLABEL[fam]||(x=>x.d))(x)]),v,lid,label});
 const FAMNAME={str:"Mounting structure",dc:"DC cable",inv:"Inverter",ac:"AC cable",earth:"Earth cable",tray:"Cable tray",iso:"Isolator",inviso:"Inverter AC isolator"};
 function manualLines(cat){
@@ -716,7 +824,7 @@ function manualLines(cat){
   });
 }
 const B={};
-B["Solar Panel"]=c=>P.roofs.map(r=>mk({lid:"pan-"+r.id,key:"panel",d:`Solar panels — ${r.name||"Roof"}`,
+B["PV Modules"]=c=>P.roofs.map(r=>mk({lid:"pan-"+r.id,key:"panel",d:`Solar panels — ${r.name||"Roof"}`,
   spec:`${P.wp} Wp · ${r.type==="metal"?"Metal roof — "+METAL_SUB[r.sub||"trap"]:ROOF_TYPES[r.type]}`,u:"Nos",
   aQ:+r.mods||0,autoRate:r2(itemRate(dbItem("panel"),c)*P.wp),rateNote:`${itemRate(dbItem("panel"),c)}/Wp × ${P.wp}`}));
 B["Mounting Structure"]=c=>{
@@ -735,7 +843,7 @@ B["DC Cables"]=c=>{
   return [mk({lid:"dc-main",key:v,d:"DC cable",spec:"",aQ:0,needQ:true,sel:famSel("dc",v,"dc-main")}),
           mk({lid:"mc4",key:"mc4",aQ:0,needQ:true}),...manualLines("DC Cables")];
 };
-B["Inverter"]=c=>[...(P.pv?.inverters||[]).map(v=>mk({lid:"inv-"+v.model,key:"inv-"+v.model,aQ:v.qty,src:"PV Design",
+B["Inverters"]=c=>[...(P.pv?.inverters||[]).map(v=>mk({lid:"inv-"+v.model,key:"inv-"+v.model,aQ:v.qty,src:"PV Design",
   spec:`${v.kw} kW · ${v.kva} kVA · feeder ${v.brk} A · ${v.cable||""}`})),...manualLines("Inverter")];
 B["Switchgear"]=c=>{
   const L=[],n=c.poc,multi=n>1,ratingOpts=RATINGS.map(a=>[a,a+" A"]);
@@ -765,9 +873,9 @@ B["AC Cables"]=c=>{
     routeNote:(route.length?"":"Enter metres — ")+v.notes.slice(0,3).join(" · ")+(v.notes.length>3?` · +${v.notes.length-3} more`:"")}));
   return [...L,...manualLines("AC Cables")];
 };
-B["AC Earthing"]=c=>{
+B["Earthing & LPS"]=c=>{
   const v=OV("earth-inv").sel||"earth-1C6";
-  return [mk({lid:"earth-inv",key:v,d:"Inverter body earthing",spec:"",aQ:0,needQ:true,sel:famSel("earth",v,"earth-inv")}),...manualLines("AC Earthing")];
+  return [mk({lid:"earth-inv",key:v,d:"Inverter body earthing",spec:"",aQ:0,needQ:true,sel:famSel("earth",v,"earth-inv")}),...manualLines("Earthing & LPS")];
 };
 B["Cable Trays"]=c=>manualLines("Cable Trays");
 B["Cable Tray Accessories"]=(c,trayLen)=>{
@@ -776,19 +884,20 @@ B["Cable Tray Accessories"]=(c,trayLen)=>{
   return [...famOpts("cta").map(x=>{const k=x.id.slice(4);return rule[k]!=null?mk({lid:x.id,key:x.id,aQ:rule[k]}):mk({lid:x.id,key:x.id,aQ:0,needQ:true,soft:true})}),
           ...manualLines("Cable Tray Accessories")];
 };
-B["Other BOQ"]=c=>{
+B["Roof Safety & Access"]=c=>{
   const L=[];
   if(c.byType.metal>0){
-    const sv=OV("ob-sky").sel||"sky-a";
-    L.push(mk({lid:"ob-sky",key:sv,d:"Skylight protection",spec:"",aQ:0,needQ:true,why:"metal roof",sel:famSel("sky",sv,"ob-sky","Size")}),
-           mk({lid:"walkway",key:"walkway",aQ:0,needQ:true,why:"metal roof"}),
+    const sv=OV("ob-sky").sel||"sky-3x1",wv=OV("ob-walk").sel||"walk-450";
+    L.push(mk({lid:"ob-sky",key:sv,d:"Skylight protection",spec:sv==="sky-other"?"":"",aQ:0,needQ:true,why:"metal roof",
+             sel:famSel("sky",sv,"ob-sky","Size"),sizeEdit:sv==="sky-other",sizeTxt:OV("ob-sky").size||""}),
+           mk({lid:"ob-walk",key:wv,d:"Walkway — FRP grating",spec:"",aQ:0,needQ:true,why:"metal roof",sel:famSel("walk",wv,"ob-walk","Width")}),
            mk({lid:"lifeline",key:"lifeline",aQ:0,needQ:true,why:"metal roof"}),
            mk({lid:"lifecert",key:"lifecert",aQ:0,needQ:true,why:"metal roof"}));
   }
   const pv=OV("ob-prot").sel||"prot-canopy", av=OV("ob-access").sel||"access-cage";
   L.push(mk({lid:"ob-prot",key:pv,d:"Protection for inverters / ACCB",spec:"",aQ:0,needQ:true,sel:famSel("prot",pv,"ob-prot")}),
          mk({lid:"ob-access",key:av,d:"Roof access",spec:"",aQ:0,needQ:true,sel:famSel("access",av,"ob-access")}));
-  return [...L,...manualLines("Other BOQ")];
+  return [...L,...manualLines("Roof Safety & Access")];
 };
 const MON_SETS={
   sungrow:{label:"Sungrow + Shamslog",q:c=>({x168:1,x170:1})},
@@ -942,6 +1051,7 @@ function rowHTML(it,code){
   else{
     const tags=(it.src?`<span class="pill pv">${it.src}</span>`:"")+(it.why?`<span class="pill link">for ${it.why}</span>`:"");
     d=`<span class="dsc">${esc(it.d)}</span>${tags}${selHTML(it)}`+
+      (it.sizeEdit?`<span class="bsel"><label for="sz-${it.lid}">Size</label><input type="text" id="sz-${it.lid}" data-size="${it.lid}" value="${esc(it.sizeTxt)}" placeholder="e.g. 5 × 1.2 m" style="max-width:160px"></span>`:"")+
       (it.inEdit?`<span class="bsel"><label for="in-${it.lid}">In</label><input type="text" id="in-${it.lid}" data-in="${it.lid}" value="${esc(it.inTxt)}" placeholder="e.g. 2 × 320 A + 1 × 80 A" style="max-width:260px"></span>`:"")+
       (it.spec?`<span class="spc">${esc(it.spec)}</span>`:"")+(it.routeNote?`<span class="spc">${esc(it.routeNote)}</span>`:"");
   }
@@ -962,14 +1072,14 @@ function rowHTML(it,code){
     <td class="n"><div class="cell">${num("q",it.q||"",it.ovQ,"Quantity")}</div>${qNote}</td>
     <td class="n amt" id="am-${it.lid}">${fmt(it.amt)}</td><td>${act}</td></tr>`;
 }
-const FAM_ADD={"Mounting Structure":[["str","+ Structure line"]],"DC Cables":[["dc","+ DC cable line"]],"Inverter":[["inv","+ Inverter"],["inviso","+ Inverter isolator"]],
-  "Switchgear":[["iso","+ Isolator"]],"AC Cables":[["ac","+ AC cable line"]],"AC Earthing":[["earth","+ Earth cable line"]],"Cable Trays":[["tray","+ Tray line"]]};
-const NO_ADD={"Switchgear":["accb","mdbm","mdbe","meter","iso"],"Other BOQ":["sky","prot","access"],"Mounting Structure":["str"]};
-const HINT={"Solar Panel":"One line per roof — set roofs on the Project tab",
-  "Inverter":"Pulled from PV Design on the Project tab",
+const FAM_ADD={"Mounting Structure":[["str","+ Structure line"]],"DC Cables":[["dc","+ DC cable line"]],"Inverters":[["inv","+ Inverter"],["inviso","+ Inverter isolator"]],
+  "Switchgear":[["iso","+ Isolator"]],"AC Cables":[["ac","+ AC cable line"]],"Earthing & LPS":[["earth","+ Earth cable line"]],"Cable Trays":[["tray","+ Tray line"]]};
+const NO_ADD={"Switchgear":["accb","mdbm","mdbe","meter","iso"],"Roof Safety & Access":["sky","walk","prot","access"],"Mounting Structure":["str"]};
+const HINT={"PV Modules":"One line per roof — set roofs on the Project tab",
+  "Inverters":"Pulled from PV Design on the Project tab",
   "AC Cables":"Cable sizes come from PV Design; metres from its AC route when built",
   "Cable Tray Accessories":"Couplers, supports, clamps and jumpers follow total tray length. Fill the rest from your layout",
-  "Other BOQ":"Skylight, walkway and lifeline lines appear when a roof is metal"};
+  "Roof Safety & Access":"Skylight, walkway and lifeline lines appear when a roof is metal"};
 function visible(it,s){return !s.smart?(it.custom||it.q||it.ovQ||it.ovR||it.off):true}
 function segHTML(id,attr,opts,v){return `<div class="seg" id="${id}">${opts.map(([k,l])=>`<button ${attr}="${k}" class="${v===k?"on":""}">${l}</button>`).join("")}</div>`}
 function renderBoq(){
@@ -998,7 +1108,7 @@ function renderBoq(){
         <tbody>${vis.length?vis.map((it,i)=>rowHTML(it,`${s.no}.${i+1}`)).join(""):`<tr><td colspan="7" class="emptyrow">${esc(HINT[s.cat]||"No lines yet. Add one below.")}</td></tr>`}</tbody></table></div>
         <div class="addrow">
           ${(FAM_ADD[s.cat]||[]).map(([f,l])=>`<button class="btn ghost sm" data-addfam="${f}" data-cat="${esc(s.cat)}">${l}</button>`).join("")}
-          ${addable.length&&s.cat!=="Solar Panel"?`<select id="add-${s.no}" data-addsel="${esc(s.cat)}" aria-label="Add item"><option value="">Add item from price database…</option>${addable.map(x=>`<option value="${x.id}">${esc(x.d)}${x.spec?" · "+esc(x.spec):""}</option>`).join("")}</select>`:""}
+          ${addable.length&&s.cat!=="PV Modules"?`<select id="add-${s.no}" data-addsel="${esc(s.cat)}" aria-label="Add item"><option value="">Add item from price database…</option>${addable.map(x=>`<option value="${x.id}">${esc(x.d)}${x.spec?" · "+esc(x.spec):""}</option>`).join("")}</select>`:""}
           <button class="btn ghost sm" data-addcus="${esc(s.cat)}">+ Custom line</button>
           ${HINT[s.cat]&&vis.length?`<span class="hint">${esc(HINT[s.cat])}</span>`:""}
         </div></div></details>`;
@@ -1019,6 +1129,7 @@ BW.addEventListener("input",e=>{
   else if(el.dataset.lid&&el.dataset.k){const ml=P.ML.find(x=>x.lid===el.dataset.lid);
     setO(el.dataset.lid,{[el.dataset.k]:el.value===""?null:+el.value});if(!ml)el.classList.toggle("ov",el.value!=="")}
   else if(el.dataset.in){setO(el.dataset.in,{inTxt:el.value});save();return}
+  else if(el.dataset.size){setO(el.dataset.size,{size:el.value});save();return}
   else return;
   save();refreshBoq();
 });
@@ -1110,14 +1221,26 @@ $("dbSearch").addEventListener("input",renderDb);$("dbCat").addEventListener("ch
 $("fx").addEventListener("change",e=>{FX=+e.target.value||3.6725;saveDBLocal();updateTop();toast("Exchange rate saved")});
 
 /* ============ S9 · PAGE SETTINGS ============ */
+let SETTAB="co";
 function saveS(){try{localStorage.setItem(SKEY,JSON.stringify(S))}catch(e){}clearTimeout(saveS._t);saveS._t=setTimeout(cloudSaveSettings,600)}
 function renderSettings(){
-  document.querySelectorAll("#p-set [data-s]").forEach(el=>{el.value=S[el.dataset.s]??""});
-  $("termLib").innerHTML=S.terms.map((t,i)=>`<div class="term">
-    <input type="checkbox" id="tc-${t.id}" data-ti="${i}" data-tk="on" ${t.on?"checked":""} aria-label="Add to new offers">
-    <textarea id="tt-${t.id}" data-ti="${i}" data-tk="text" rows="2" aria-label="Term text">${esc(t.text)}</textarea>
-    <button class="iconbtn" data-tdel="${i}" title="Delete term" aria-label="Delete term">🗑</button></div>`).join("")||`<p class="empty">No terms yet.</p>`;
+  document.querySelectorAll("#setSeg button").forEach(b=>b.classList.toggle("on",b.dataset.st===SETTAB));
+  ["co","terms","db"].forEach(k=>$("set-"+k).hidden=k!==SETTAB);
+  if(SETTAB==="co"){
+    document.querySelectorAll("#set-co [data-s]").forEach(el=>{el.value=S[el.dataset.s]??""});
+    $("logoPrev").innerHTML=S.logo?`<img src="${S.logo}" alt="Logo">`:'<span>No logo</span>';$("logoDel").hidden=!S.logo;
+  }
+  if(SETTAB==="terms"){
+    $("termLib").innerHTML=Object.entries(TERM_GROUPS).map(([g,gl])=>`<div class="tgroup"><div class="flex"><h4>${gl}</h4><span class="spacer"></span><button class="btn ghost sm" data-tadd="${g}">+ Add</button></div>
+      ${S.terms.map((t,i)=>[t,i]).filter(([t])=>(t.g||"other")===g).map(([t,i])=>`<div class="term">
+        <input type="checkbox" id="tc-${t.id}" data-ti="${i}" data-tk="on" ${t.on?"checked":""} aria-label="Add to new quotes" title="Add to new quotes">
+        <textarea id="tt-${t.id}" data-ti="${i}" data-tk="text" rows="1" aria-label="Term text">${esc(t.text)}</textarea>
+        <select id="tg-${t.id}" data-ti="${i}" data-tk="g" aria-label="Group">${Object.entries(TERM_GROUPS).map(([k,l])=>`<option value="${k}" ${(t.g||"other")===k?"selected":""}>${l.split(" ")[0]}${k==="excl"?" / limits":""}</option>`).join("")}</select>
+        <button class="iconbtn" data-tdel="${i}" title="Delete term" aria-label="Delete term">🗑</button></div>`).join("")||'<p class="empty">None yet.</p>'}</div>`).join("");
+  }
+  if(SETTAB==="db")renderDb();
 }
+$("setSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;SETTAB=b.dataset.st;renderSettings();try{history.replaceState(null,"",SETTAB==="db"?"#db":"#set")}catch(e){}});
 const SP=$("p-set");
 SP.addEventListener("input",e=>{
   const el=e.target;
@@ -1126,14 +1249,30 @@ SP.addEventListener("input",e=>{
   else return;
   saveS();updateTop();
 });
-SP.addEventListener("change",e=>{const el=e.target;if(el.dataset.tk==="on"){S.terms[+el.dataset.ti].on=el.checked;saveS()}});
-SP.addEventListener("click",e=>{const b=e.target.closest("[data-tdel]");if(b){S.terms.splice(+b.dataset.tdel,1);saveS();renderSettings()}});
-$("addTerm").onclick=()=>{const t={id:uid("t"),text:"",on:true};S.terms.push(t);saveS();renderSettings();setTimeout(()=>$("tt-"+t.id).focus(),0)};
+SP.addEventListener("change",e=>{
+  const el=e.target;
+  if(el.dataset.tk==="on"){S.terms[+el.dataset.ti].on=el.checked;saveS()}
+  if(el.dataset.tk==="g"){S.terms[+el.dataset.ti].g=el.value;saveS();renderSettings()}
+});
+SP.addEventListener("click",e=>{
+  const d=e.target.closest("[data-tdel]");if(d){S.terms.splice(+d.dataset.tdel,1);saveS();renderSettings();return}
+  const a=e.target.closest("[data-tadd]");if(a){const t={id:uid("t"),g:a.dataset.tadd,text:"",on:true};S.terms.push(t);saveS();renderSettings();setTimeout(()=>$("tt-"+t.id).focus(),0)}
+});
+/* logo — shrunk to a small image so it saves with the settings */
+$("sLogo").addEventListener("change",e=>{
+  const f=e.target.files[0];if(!f)return;
+  const rd=new FileReader();rd.onload=()=>{const img=new Image();img.onload=()=>{
+    const k=Math.min(1,480/img.width,160/img.height),cv=document.createElement("canvas");
+    cv.width=Math.round(img.width*k);cv.height=Math.round(img.height*k);cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+    let url=cv.toDataURL("image/png");if(url.length>300000)url=cv.toDataURL("image/jpeg",0.85);
+    S.logo=url;saveS();renderSettings();toast("Logo saved");};img.src=rd.result};rd.readAsDataURL(f);
+});
+$("logoDel").onclick=()=>{S.logo="";saveS();renderSettings()};
 
 /* ============ S10 · FIREBASE SYNC ============ */
 let fdb=null;
 function setCloud(s,msg){
-  ["cloud","cloudP"].forEach(id=>{const el=$(id);el.className="cloud"+(s==="live"?" live":s==="error"&&!PREVIEW?" err":"");
+  ["cloud","cloudP"].forEach(id=>{const el=$(id);if(!el)return;el.className="cloud"+(s==="live"?" live":s==="error"?" err":"");
     el.querySelector("span").textContent=s==="live"?"Firebase · live":s==="connecting"?"Connecting…":s==="error"?(PREVIEW?"Firebase connects on your website — saved on this browser here":"Firebase error — saved on this browser"):"Saved on this browser · Firebase not connected";
     if(msg)el.title=msg});
 }
@@ -1149,7 +1288,7 @@ async function initCloud(){
     fdb.collection(FB_PRICES).onSnapshot(snap=>{
       const arr=[];let setDoc=null;
       snap.forEach(d=>{if(d.id==="_settings")setDoc=d.data();else arr.push({...d.data(),id:d.id})});
-      if(setDoc&&setDoc.S)S={...clone(DEFAULT_S),...setDoc.S};else cloudSaveSettings();
+      if(setDoc&&setDoc.S)S=fixS(setDoc.S);else cloudSaveSettings();
       try{localStorage.setItem(SKEY,JSON.stringify(S))}catch(e){}
       if(!arr.length){const b=fdb.batch();DB.forEach(it=>b.set(fdb.collection(FB_PRICES).doc(it.id),it));b.commit();return}
       const m=mergeSeed(arr);
@@ -1202,34 +1341,73 @@ const projTerms=()=>P.terms?S.terms.filter(t=>P.terms.includes(t.id)):S.terms.fi
 function renderTermPick(){
   const sel=new Set(projTerms().map(t=>t.id));
   $("termCount").textContent=`${sel.size} of ${S.terms.length} selected · edit the list in Settings`;
-  $("termList").innerHTML=S.terms.map(t=>`<label class="tpick"><input type="checkbox" data-tp="${t.id}" id="tp-${t.id}" ${sel.has(t.id)?"checked":""}><span>${esc(t.text.replace("{validity}",S.validity))}</span></label>`).join("")||`<p class="empty">No terms — add them in Settings.</p>`;
+  $("termList").innerHTML=Object.entries(TERM_GROUPS).map(([g,gl])=>{const ts=S.terms.filter(t=>(t.g||"other")===g);return ts.length?`<h4 class="tph">${gl}</h4>`+
+    ts.map(t=>`<label class="tpick"><input type="checkbox" data-tp="${t.id}" id="tp-${t.id}" ${sel.has(t.id)?"checked":""}><span>${esc(t.text)}</span></label>`).join(""):""}).join("")||`<p class="empty">No terms — add them in Settings.</p>`;
 }
 $("termList").addEventListener("change",e=>{const id=e.target.dataset.tp;if(!id)return;
   const cur=new Set(projTerms().map(t=>t.id));e.target.checked?cur.add(id):cur.delete(id);P.terms=[...cur];save();renderTermPick();renderPaper()});
-function renderReport(){renderTermPick();renderPaper()}
+function renderOffer(){
+  document.querySelectorAll("#offerBox [data-o]").forEach(el=>{const v=P.offer[el.dataset.o];el.value=v??""});
+  document.querySelectorAll("#qtSeg button").forEach(b=>b.classList.toggle("on",b.dataset.qt===P.qtype));
+}
+$("offerBox").addEventListener("input",e=>{const el=e.target;if(!el.dataset.o)return;
+  P.offer[el.dataset.o]=el.dataset.num?(el.value===""?null:+el.value):el.value;save();renderPaper()});
+$("qtSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;P.qtype=b.dataset.qt;save();renderOffer();renderPaper()});
+function renderReport(){renderOffer();renderTermPick();renderPaper()}
+/* split a total over parts by weight, rounded to 2 decimals, last part takes the rounding */
+function split(total,weights){const W=weights.reduce((a,b)=>a+b,0)||1;let run=0;return weights.map((w,i)=>{if(i===weights.length-1)return r2(total-run);const v=r2(total*w/W);run+=v;return v})}
+const SHORT_GROUPS=[["PV Modules","Supply","Supply of PV modules"],["Inverters","Supply","Supply of on-grid inverters"],
+  ["Mounting Structure","Supply & installation","Mounting structure and installation hardware"],
+  [null,"Supply & installation","Balance of system — cables, switchgear, earthing, trays, monitoring, roof safety, installation, testing, commissioning and approvals"]];
+function quoteRows(R,sell){
+  const kWp=R.c.kWp,pk=v=>kWp?v/kWp:0;
+  if(P.qtype==="single"){
+    return [{task:"Supply & Installation",desc:`EPC price for a ${fmt(kWp,1)} kWp system as per attached BOQ and with terms and conditions below`,u:"LS",q:1,pk:pk(sell),tot:sell}];
+  }
+  if(P.qtype==="short"){
+    const named=new Set(SHORT_GROUPS.filter(g=>g[0]).map(g=>g[0]));
+    const w=SHORT_GROUPS.map(([cat])=>cat?(R.cats.find(s=>s.cat===cat)?.sub||0):R.cats.filter(s=>!named.has(s.cat)).reduce((a,b)=>a+b.sub,0));
+    const v=split(sell,w);
+    return SHORT_GROUPS.map(([cat,task,desc],i)=>({task,desc:cat==="PV Modules"?`${desc} — ${fmt(R.c.mods)} × ${P.wp} Wp`:cat==="Inverters"?`${desc} — ${R.c.inv.map(x=>x.qty+" × "+x.model).join(", ")||"as per design"}`:desc,u:"LS",q:1,pk:pk(v[i]),tot:v[i],w:w[i]})).filter(r=>r.w>0);
+  }
+  const cats=R.cats.filter(s=>s.sub>0),v=split(sell,cats.map(s=>s.sub));
+  return cats.map((s,i)=>({task:s.cat,desc:s.items.filter(x=>!x.off&&x.amt>0&&!x.pct).slice(0,3).map(x=>x.d).join(", "),u:"LS",q:1,pk:pk(v[i]),tot:v[i]}));
+}
 function renderPaper(){
-  const R=calc(),k=R.cost?R.sell/R.cost:0,cats=R.cats.filter(s=>s.sub>0);
-  let run=0;const sp=cats.map((s,i)=>{let v=Math.round(s.sub*k);if(i===cats.length-1)v=Math.round(R.sell)-run;run+=v;return v});
-  const sell=Math.round(R.sell),vat=Math.round(sell*.05),grand=sell+vat;
-  const inv=R.c.inv.map(v=>`${v.qty} × ${v.model}`).join(", ")||"—";
-  const inc=s=>s.items.filter(x=>!x.off&&x.amt>0&&!x.pct).slice(0,3).map(x=>esc(x.d)).join(" · ");
-  const terms=projTerms();
+  const R=calc(),O=P.offer,calcSell=r2(R.sell),sell=O.price!=null&&O.price>0?r2(+O.price):calcSell;
+  $("oPriceHint").textContent=`Calculated: AED ${fmt(calcSell,2)} (${R.wp?(calcSell/R.wp).toFixed(3):0}/Wp)`+(sell!==calcSell?` · your price is ${Math.abs((sell/calcSell-1)*100).toFixed(1)}% ${sell>calcSell?"above":"below"}`:"");
+  const vat=r2(sell*0.05),total=r2(sell+vat),rows=quoteRows(R,sell),terms=projTerms();
+  const desc=O.desc||`Supply and installation of a ${fmt(R.c.kWp,1)} kWp solar PV system${P.location?" at "+P.location:""}`;
+  const date=new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"});
+  const grp=g=>terms.filter(t=>(t.g||"other")===g);
+  const tRow=(label,list,numbered)=>list.length?`<tr><th>${label}</th><td>${numbered?`<ol>${list.map(t=>`<li>${esc(t.text)}</li>`).join("")}</ol>`:list.map(esc).join("<br>")}</td></tr>`:"";
+  const foot=[S.address,[S.phone&&"Tel: "+S.phone,S.email&&"E-mail: "+S.email,S.web&&"Web: "+S.web].filter(Boolean).join("  ")].filter(Boolean);
+  $("paper").style.setProperty("--qa",S.accent||"#4F81BD");
   $("paper").innerHTML=`
-    <div class="rhead"><div class="co">${esc(S.company||"Company name — set in Settings")}<small>${esc(S.address||"")}${S.trn?` · TRN ${esc(S.trn)}`:""}${S.contact?`<br>${esc(S.contact)}`:""}</small></div>
-      <div class="doc"><b>Commercial offer</b>Ref. ${esc(P.ref||"—")}<br>${new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})}</div></div>
-    <div class="rmeta">
-      <div><h4>Project</h4><p><b>${esc(P.name)}</b><br>${esc(P.location||"")}</p></div>
-      <div><h4>System</h4><p>${fmt(R.c.kWp,2)} kWp DC · ${fmt(R.c.kVA,1)} kVA AC<br>${fmt(R.c.mods)} × ${P.wp} Wp modules · ${[...new Set(P.roofs.map(r=>strName(strKey(r))))].join(" + ")}<br>Inverters: ${esc(inv)}</p></div>
+    <div class="qtop">
+      <div class="qbrand">${S.logo?`<img src="${S.logo}" alt="${esc(S.company)}">`:`<div class="qco">${esc(S.company)}</div>`}<div class="qtag">${esc(S.tagline||"")}</div></div>
+      <div class="qtitle">Quote</div>
     </div>
-    <div class="tw" style="border:0"><table class="rt">
-      <thead><tr><th style="width:44px">No.</th><th>Description</th><th class="n">Amount (AED)</th></tr></thead>
-      <tbody>${cats.map((s,i)=>`<tr><td class="code">${i+1}</td><td><b>${esc(s.cat)}</b><div class="inc">${inc(s)}</div></td><td class="n">${fmt(sp[i])}</td></tr>`).join("")}
-      <tr class="tot"><td></td><td>Total excl. VAT</td><td class="n">${fmt(sell)}</td></tr>
-      <tr><td></td><td>VAT 5%</td><td class="n">${fmt(vat)}</td></tr>
-      <tr class="grand"><td></td><td>Total incl. VAT</td><td class="n">${fmt(grand)}</td></tr></tbody></table></div>
-    <div class="words"><b>Amount in words:</b> UAE Dirhams ${words(grand)} only.</div>
-    ${terms.length?`<div class="terms"><h4>Terms and conditions</h4><ol>${terms.map(t=>`<li>${esc(t.text.replace("{validity}",S.validity))}</li>`).join("")}</ol></div>`:""}
-    <div class="sign"><div>Prepared by${S.preparedBy?`<br><b style="color:var(--ink)">${esc(S.preparedBy)}</b>`:""}</div><div>Accepted by client</div></div>`;
+    <div class="qgrid">
+      <table class="qbox"><tr><th>Customer</th></tr><tr><td><b>${esc(O.customer||"—")}</b><br>${esc(O.custAddr||"")}${O.custTel?`<br>Tel No.: ${esc(O.custTel)}`:""}</td></tr></table>
+      <table class="qmeta"><tr><td>Date</td><td>${date}</td></tr><tr><td>Customer Ref</td><td>${esc(O.custRef||P.ref||"")}</td></tr><tr><td>Quote #</td><td>${esc(O.rev||"")}</td></tr></table>
+      <table class="qbox"><tr><th colspan="2">Contact Person</th></tr><tr><td class="k">Attn</td><td>${esc(O.attn||"")}</td></tr><tr><td class="k">Email</td><td>${esc(O.email||"")}</td></tr></table>
+      <table class="qbox"><tr><th>Quote / Project Description</th></tr><tr><td>${esc(desc)}</td></tr></table>
+    </div>
+    <table class="qitems">
+      <thead><tr><th style="width:7%">Item</th><th style="width:16%">Task</th><th>Description</th><th style="width:7%">Unit</th><th style="width:6%">Qty</th><th style="width:12%">Price per kWp in AED</th><th style="width:15%">Line Total</th></tr></thead>
+      <tbody>${rows.map((r,i)=>`<tr><td class="c">${i+1}</td><td class="c">${esc(r.task)}</td><td>${esc(r.desc)}</td><td class="c">${r.u}</td><td class="c">${r.q}</td><td class="r">${fmt(r.pk,2)}</td><td class="r">${fmt(r.tot,2)}</td></tr>`).join("")}</tbody>
+    </table>
+    <table class="qtot"><tr><td>Subtotal</td><td>AED</td><td>${fmt(sell,2)}</td></tr><tr><td>VAT (5%)</td><td>AED</td><td>${fmt(vat,2)}</td></tr><tr class="g"><td>TOTAL</td><td>AED</td><td>${fmt(total,2)}</td></tr></table>
+    <div class="qwords">Amount in words: UAE Dirhams ${words(Math.round(total))} only.</div>
+    <table class="qterms"><tr><th colspan="2" class="qhead">Terms &amp; Conditions</th></tr>
+      ${tRow(TERM_GROUPS.excl,grp("excl"),true)}${tRow(TERM_GROUPS.pay,grp("pay"),true)}${tRow(TERM_GROUPS.other,grp("other"),true)}
+      <tr><th>Validity</th><td>${S.validity} days.</td></tr><tr><th>Delivery</th><td>${esc(O.delivery||S.delivery||"")}</td></tr></table>
+    <p class="qclose">${esc(S.closing||"")}</p>
+    <div class="qsign"><p>Kind Regards,</p><p><b>${esc(S.signName||"________________")}</b><br>${esc(S.company)}${S.signTitle?`<br>${esc(S.signTitle)}`:""}</p>
+      <p class="qprep">Prepared By: ${esc(S.preparedBy||"______")}</p>${S.trn?`<p class="qprep">TRN: ${esc(S.trn)}</p>`:""}</div>
+    ${S.footnote?`<p class="qnote">*** ${esc(S.footnote)} ***</p>`:""}
+    ${foot.length?`<div class="qfoot">${foot.map(esc).join("<br>")}</div>`:""}`;
 }
 
 /* ============ S12 · INIT + LOCK ============ */
@@ -1242,7 +1420,7 @@ function show(p){
   current=p;
   document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.p===p));
   document.querySelectorAll("section.page").forEach(s=>s.classList.toggle("on",s.id==="p-"+p));
-  ({proj:renderProject,boq:renderBoq,db:renderDb,sum:renderSummary,rep:renderReport,set:renderSettings})[p]();
+  ({proj:renderProject,boq:renderBoq,sum:renderSummary,rep:renderReport,set:renderSettings})[p]();
   updateTop();
   try{if(location.hash!=="#"+p)history.replaceState(null,"","#"+p)}catch(e){}
 }
@@ -1267,7 +1445,7 @@ load();
 $("fx").value=FX;
 $("dbCat").innerHTML=`<option value="">All categories</option>`+CATS.map(c=>`<option>${esc(c)}</option>`).join("");
 const start=(location.hash||"").replace("#","");
-show(["proj","boq","db","sum","rep","set"].includes(start)?start:"proj");
+if(start==="db"){SETTAB="db";show("set")}else show(["proj","boq","sum","rep","set"].includes(start)?start:"proj");
 initCloud();
 
 </script>
