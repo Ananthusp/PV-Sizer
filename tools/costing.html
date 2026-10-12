@@ -267,6 +267,29 @@ details.sec[open] .chev{transform:rotate(90deg)}
 .boq input[type=number]{text-align:right}
 .boq .cell input{width:100%}
 @media(max-width:860px){.pvgrid{grid-template-columns:1fr}}
+
+/* v5 additions */
+.roofsel{display:flex;gap:6px;flex-wrap:wrap}
+.roofsel select{min-width:120px}
+.delpw{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.delpw input{width:170px;padding:6px 10px}
+.term{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed var(--line)}
+.term:last-child{border-bottom:0}
+.term input[type=checkbox]{width:16px;height:16px;margin-top:9px;accent-color:var(--pri);flex:none}
+.term textarea{flex:1;min-width:0;background:var(--field);border:1px solid var(--line2);border-radius:9px;padding:7px 10px;font:13px/1.45 var(--sans);color:var(--ink);resize:vertical}
+.term textarea:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px var(--pri-soft)}
+.tpick{display:flex;gap:10px;align-items:flex-start;padding:6px 0;font-size:13px;cursor:pointer}
+.tpick input{width:16px;height:16px;margin-top:2px;accent-color:var(--pri);flex:none}
+.iid{display:block;font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:3px}
+.dbt input.rin{text-align:right;font-family:var(--mono)}
+.dbt input.fx{text-align:left;color:var(--blue);font-size:12.5px}
+.fval{display:block;font-size:11px;color:var(--sub);margin-top:3px;text-align:right}
+.ferr{display:block;font-size:11px;color:var(--bad);margin-top:3px;text-align:right}
+.dbt col.c-r{width:170px}
+code{font-family:var(--mono);font-size:12px;background:var(--bg);border-radius:5px;padding:1px 5px}
+.note code{background:var(--card)}
+#termPick{margin-bottom:14px}
+@media print{.noprint{display:none!important}}
 </style>
 </head>
 <body>
@@ -293,9 +316,10 @@ details.sec[open] .chev{transform:rotate(90deg)}
     <nav class="tabs" id="tabs">
       <button data-p="proj" class="on">Project</button>
       <button data-p="boq">BOQ</button>
-      <button data-p="db">Price Database</button>
       <button data-p="sum">Summary</button>
       <button data-p="rep">Client Report</button>
+      <button data-p="db">Price Database</button>
+      <button data-p="set">Settings</button>
     </nav>
   </div>
 </header>
@@ -346,25 +370,11 @@ details.sec[open] .chev{transform:rotate(90deg)}
 <section class="page" id="p-boq">
   <div class="ph"><div><h2>Bill of quantities</h2><p id="boqSub"></p></div>
     <button class="btn ghost sm" id="expandAll">Open all</button></div>
-  <div class="note"><span>●</span><div>Lines marked <b>auto</b> come from the Project tab or PV Design. You can change qty and rate (turns amber, ↺ to undo). Dropdowns pick the item type; its rate comes from the Price Database. <b>enter qty</b> means the line needs your number.</div></div>
+  <div class="note"><span>●</span><div>Lines marked <b>auto</b> come from the Project tab or PV Design. Change any qty or rate (turns amber; ↺ puts the database rate back). Dropdowns pick the item type and its rate. <b>enter qty</b> means the line needs your number.</div></div>
   <div id="boqWrap"></div>
 </section>
 
-<!-- ================= 3 · PRICE DATABASE ================= -->
-<section class="page" id="p-db">
-  <div class="ph"><div><h2>Price database</h2><p>One price per item, shared by every project. Update a rate and every BOQ uses it. The old rate and date are kept.</p></div>
-    <span class="cloud" id="cloud"><i></i><span>…</span></span></div>
-  <div class="dbbar">
-    <input type="search" id="dbSearch" placeholder="Search items, specs, suppliers" aria-label="Search price database">
-    <select id="dbCat" aria-label="Category"></select>
-    <select id="dbShow" aria-label="Show"><option value="all">All items</option><option value="missing">Missing price only</option><option value="used">Used in this project</option></select>
-    <span class="spacer"></span>
-    <label class="flex" style="gap:6px;font-size:12.5px;color:var(--sub);font-weight:600" for="fx">USD → AED <input type="number" id="fx" step="0.0001" style="width:92px"></label>
-  </div>
-  <div id="dbWrap"></div>
-</section>
-
-<!-- ================= 4 · SUMMARY ================= -->
+<!-- ================= 3 · SUMMARY ================= -->
 <section class="page" id="p-sum">
   <div class="ph"><div><h2>Cost summary</h2><p>Cost by category, then contingency, margin and 5% VAT to reach the client price</p></div></div>
   <div class="stats" id="sumStats"></div>
@@ -374,11 +384,55 @@ details.sec[open] .chev{transform:rotate(90deg)}
   </table></div>
 </section>
 
-<!-- ================= 5 · CLIENT REPORT ================= -->
+<!-- ================= 4 · CLIENT REPORT ================= -->
 <section class="page" id="p-rep">
-  <div class="ph"><div><h2>Client report</h2><p>Category prices include contingency and margin. Your rates are not shown. Layout will follow your format.</p></div>
+  <div class="ph"><div><h2>Client report</h2><p>Category prices include contingency and margin. Your rates are not shown. Company details and terms come from Settings.</p></div>
     <button class="btn pri" id="printBtn" hidden>Print / Save PDF</button></div>
+  <details class="sec noprint" id="termPick">
+    <summary><span class="stitle">Terms on this offer<small id="termCount"></small></span>
+      <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5"/></svg></summary>
+    <div class="secbody" style="padding:12px 18px" id="termList"></div>
+  </details>
   <div class="paper" id="paper"></div>
+</section>
+
+<!-- ================= 5 · PRICE DATABASE ================= -->
+<section class="page" id="p-db">
+  <div class="ph"><div><h2>Price database</h2><p>One price per item, shared by every project. Update a rate and every BOQ uses it. The old rate and date are kept.</p></div>
+    <span class="cloud" id="cloud"><i></i><span>…</span></span></div>
+  <div class="note"><span>ƒ</span><div><b>Formulas:</b> type a rate starting with <b>=</b>, for example <code>=kWp*25</code> or <code>=rate("panel")*wp</code>. You can use
+    <code>kWp</code> <code>MWp</code> <code>kWac</code> <code>kVA</code> <code>mods</code> <code>wp</code> <code>invN</code> <code>roofs</code> <code>poc</code> and <code>rate("item id")</code>. The item id is shown under each description.</div></div>
+  <div class="dbbar">
+    <input type="search" id="dbSearch" placeholder="Search items, specs, suppliers" aria-label="Search price database">
+    <select id="dbCat" aria-label="Category"></select>
+    <select id="dbShow" aria-label="Show"><option value="all">All items</option><option value="missing">Missing price only</option><option value="formula">Formulas only</option><option value="used">Used in this project</option></select>
+    <span class="spacer"></span>
+    <label class="flex" style="gap:6px;font-size:12.5px;color:var(--sub);font-weight:600" for="fx">USD → AED <input type="number" id="fx" step="0.0001" style="width:92px"></label>
+  </div>
+  <div id="dbWrap"></div>
+</section>
+
+<!-- ================= 6 · SETTINGS ================= -->
+<section class="page" id="p-set">
+  <div class="ph"><div><h2>Settings</h2><p>Shared by every project. Used on the client report.</p></div></div>
+  <div class="grid g2">
+    <div class="card">
+      <h3>Company details</h3>
+      <div class="fgrid">
+        <div class="f wide"><label for="sCo">Company name</label><input type="text" id="sCo" data-s="company"></div>
+        <div class="f wide"><label for="sAddr">Address line</label><input type="text" id="sAddr" data-s="address" placeholder="e.g. Office 12, Al Quoz, Dubai, UAE"></div>
+        <div class="f"><label for="sTrn">TRN <span class="u">VAT number</span></label><input type="text" id="sTrn" data-s="trn"></div>
+        <div class="f"><label for="sContact">Phone / email</label><input type="text" id="sContact" data-s="contact"></div>
+        <div class="f"><label for="sBy">Prepared by</label><input type="text" id="sBy" data-s="preparedBy"></div>
+        <div class="f"><label for="sVal">Offer validity <span class="u">days</span></label><input type="number" id="sVal" data-s="validity" data-num="1"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="flex" style="margin-bottom:12px"><h3 style="margin:0">Terms and conditions</h3><span class="spacer"></span><button class="btn ghost sm" id="addTerm">+ Add term</button></div>
+      <p style="font-size:12.5px;color:var(--sub);margin-bottom:10px">Ticked terms are added to every new offer. You can still pick terms per project on the Client Report tab. <code>{validity}</code> is replaced with the validity days.</p>
+      <div id="termLib"></div>
+    </div>
+  </div>
 </section>
 
 </div>
@@ -387,23 +441,22 @@ details.sec[open] .chev{transform:rotate(90deg)}
 <script>
 /* ╔════════════════════════════════════════════════════════════╗
    ║  PROJECT COSTING — CODE MAP                                ║
-   ║  S0 · SETTINGS ............. Firebase config, company name ║
+   ║  S0 · SETTINGS ............. Firebase config, password     ║
    ║  S1 · CATALOGUE ............ roof types, ratings, inverters║
-   ║  S2 · PRICE DATABASE SEED .. items + sample rates          ║
-   ║  S3 · PROJECTS ............. create / open / delete / save ║
-   ║  S4 · CONTEXT .............. kWp, inverters, ACCB in/out   ║
+   ║  S2 · PRICE DATABASE SEED .. items, sample rates, formulas ║
+   ║  S3 · PROJECTS + SETTINGS STATE                            ║
+   ║  S4 · CONTEXT + FORMULAS ... kWp, kVA, ACCB in/out         ║
    ║  S5 · BOQ BUILDER .......... one function per category     ║
    ║  S6 · PAGE PROJECT                                         ║
    ║  S7 · PAGE BOQ                                             ║
    ║  S8 · PAGE PRICE DATABASE                                  ║
-   ║  S9 · FIREBASE SYNC                                        ║
-   ║  S10 · PAGE SUMMARY + CLIENT REPORT                        ║
-   ║  S11 · INIT                                                ║
+   ║  S9 · PAGE SETTINGS                                        ║
+   ║  S10 · FIREBASE SYNC                                       ║
+   ║  S11 · PAGE SUMMARY + CLIENT REPORT                        ║
+   ║  S12 · INIT + LOCK                                         ║
    ╚════════════════════════════════════════════════════════════╝ */
 
-/* ============ S0 · SETTINGS ============
-   Paste your Firebase config (same as Task Manager) to share prices and projects:
-   const FIREBASE_CONFIG={apiKey:"…",authDomain:"…",projectId:"…",storageBucket:"…",messagingSenderId:"…",appId:"…"};  */
+/* ============ S0 · SETTINGS ============ */
 const FIREBASE_CONFIG={
   apiKey:"AIzaSyC3KaQ6fJJ3Mnt45Y54-MACJGpvk0gxPaw",
   authDomain:"solar-design-tool-55e07.firebaseapp.com",
@@ -413,9 +466,8 @@ const FIREBASE_CONFIG={
   appId:"1:587430527414:web:ef5379a56710838a08c117"
 };
 const PREVIEW=false;   /* true only in the Claude preview — allows sample PV Design data */
-const FB_PRICES="priceDB", FB_PROJECTS="costingProjects";
-const COMPANY="Your Company Name";
-/* password to open the tool — stored only as a SHA-256 fingerprint. Current password: ask the team lead.
+const FB_PRICES="priceDB", FB_PROJECTS="costingProjects";   /* settings live in priceDB/_settings */
+/* password to open the tool and to delete projects — stored only as a SHA-256 fingerprint.
    To change it: run  printf 'newpass' | sha256sum  and paste the result here. */
 const LOCK_HASH="57917bceb9920cdccdef578fc6f03a57d4895e4184cbaa47b1de2de5574816f7";
 const LOCK_KEY="pv_costing_unlocked";
@@ -423,7 +475,12 @@ const PV_EXPORT_KEY="pv_design_export";   /* PV Design Assistant saves its inver
 
 /* ============ S1 · CATALOGUE ============ */
 const ROOF_TYPES={metal:"Metal roof",flat:"Flat roof",carpark:"Carpark",ground:"Ground mount"};
+const METAL_SUB={trap:"Trapezoidal",klip:"Kliplok",seam:"Standing seam"};
+const strKey=r=>r.type==="metal"?"str-metal-"+(r.sub||"trap"):"str-"+r.type;
+const strName=k=>k.startsWith("str-metal-")?"Metal roof — "+METAL_SUB[k.slice(10)]:ROOF_TYPES[k.slice(4)]||k;
 const RATINGS=[63,80,100,125,160,200,225,250,300,320,400,500,630,800,1000,1250,1600,2000,2500];
+const ISO_RATINGS=[32,40,63,80,100,125,160,200,225,250,300,320,400,500,630,800,1000,1250,1600,2000,2500,3200];
+const INVISO_RATINGS=[16,20,25,32,40,63,80,100,125,160,200,225,250,320];
 /* same inverter table as PV Design (output current + feeder breaker) */
 const INV_DATA=[
   {m:"SG5.0RT-P2",kw:5,kva:5.5,amp:8.3,brk:16},{m:"SG6.0RT-P2",kw:6,kva:6.6,amp:10,brk:16},{m:"SG7.0RT-P2",kw:7,kva:7.7,amp:11.7,brk:16},
@@ -446,19 +503,23 @@ const DEMO_PV={
 /* ============ S2 · PRICE DATABASE SEED (sample rates, AED) ============ */
 const CATS=["Solar Panel","Mounting Structure","DC Cables","Inverter","Switchgear","AC Cables","AC Earthing","Cable Trays","Cable Tray Accessories",
   "Other BOQ","Consumables","Installation Works","Monitoring System","Project Management","Permits & Authority Fees","Insurances & Bonds","Spare Parts"];
-/* categories built from your Excel list (rows 114–201) */
-const XLS=[[114,"Other BOQ","Skylight Prot 5*1","2.5 mtr x 1.5 mtr","Nos"],[115,"Other BOQ","Skylight Prot 4.2*1.2","","Nos"],[116,"Other BOQ","Walkways 450mm","FRP Grating","Meters"],[117,"Other BOQ","Safety Line","","Meters"],[118,"Other BOQ","Third part certification per line","","Nos"],[119,"Other BOQ","Permanent staircase - Cat Ladder","9 meter","Nos"],[120,"Other BOQ","Permanent staircase - Spiral Ladder","15 meter","Nos"],[121,"Other BOQ","Permanent staircase - Zig Zag Step ladder","15 meter","Nos"],[122,"Other BOQ","Scaffolding","","Nos"],[123,"Other BOQ","Zero Export Controller along with CTs","","Nos"],[124,"Other BOQ","Fiber Optics","","Nos"],[125,"Other BOQ","Safety materials","","Nos"],[126,"Other BOQ","Edge protection per meter","","Nos"],[127,"Other BOQ","LPS","","Nos"],[128,"Consumables","Canopy for inverter","canopy for 3 nos of inverters and ACCB","Nos"],[129,"Consumables","Fall protection","Barricade","Nos"],[130,"Consumables","Mechanical room - Electrical ACDB","Civil room","Nos"],[131,"Consumables","Mechanical room - Electrical ACDB","Louvers","Nos"],[132,"Consumables","Pole protection","","Nos"],[133,"Consumables","Stand for Inverter inc foundations","No of inverters","Nos"],[135,"Consumables","Cable ties and clips","Enter kWp","kWp"],[136,"Consumables","Miscelleaneous","Enter 1","LS"],[137,"Consumables","Labels","Enter 1","LS"],[138,"Consumables","Fuel Expenses","","Nos"],[139,"Consumables","Water Leakage test with report","Every 200 kWp enter 1","Nos"],[140,"Consumables","Lightning study","","Nos"],[141,"Installation Works","I&C contractor - Labour - Rooftop","Enter kWp","kWp"],[142,"Installation Works","I&C contractor - Labour - Carpark","Enter kWp","kWp"],[143,"Installation Works","Civil works","Interlock","Meters"],[144,"Installation Works","Civil works","Asphalt","Meters"],[145,"Installation Works","Civil works","Sand","Meters"],[146,"Installation Works","Manholes","","Nos"],[147,"Installation Works","Logistics panels and others","Enter 1","Nos"],[148,"Installation Works","Logistics concrete blocks","Enter 1","Nos"],[149,"Installation Works","Forklift","","Nos"],[150,"Monitoring System","Commercial cabinet less than 750Kw","Meteo Control","Nos"],[151,"Monitoring System","Control cabinet more than 750Kwp IN","Meteo Control","Nos"],[152,"Monitoring System","Control cabinet more than 750Kwp OUT","Meteo Control","Nos"],[153,"Monitoring System","Blue log XC200","Meteo Control","Nos"],[154,"Monitoring System","Blue'Log XC-1000 plant controller","Meteo Control","Nos"],[155,"Monitoring System","PT1000 module cabinet","Meteo Control","Nos"],[156,"Monitoring System","MX-Module RS485/422 add-on modules","Meteo Control","Nos"],[157,"Monitoring System","5 Port Ethernet Switch (inl in cabinet","Meteo Control","Nos"],[158,"Monitoring System","Plant setup fee VCOM","Meteo Control","Nos"],[159,"Monitoring System","Onsite commissioning","Meteo Control","Nos"],[160,"Monitoring System","Router","Meteo Control","Nos"],[161,"Monitoring System","Antenna","Meteo Control","Nos"],[162,"Monitoring System","Irradiance sensor with module temp","Meteo Control","Nos"],[163,"Monitoring System","Irradiance sensor with ambiant temp","Meteo Control","Nos"],[164,"Monitoring System","Pyranometer","Meteo Control","Nos"],[165,"Monitoring System","Weather station","Meteo Control","Nos"],[166,"Monitoring System","Export docs","Meteo Control","Nos"],[167,"Monitoring System","Shipping","Meteo Control","Nos"],[168,"Monitoring System","Communication Box - Data logger","Inverter Logger","Nos"],[169,"Monitoring System","Weather station with accessories","Rainwise","Nos"],[170,"Monitoring System","Weather station with accessories","Shamslog","Nos"],[171,"Project Management","Engineering  and Project Management","",""],[172,"Permits & Authority Fees","DEWA/TAQA Meter Inspection approval","No of POC","Nos"],[173,"Permits & Authority Fees","DCD Approval","Enter kWp","kWp"],[174,"Permits & Authority Fees","Municipality/Trakhess approval","Formula","Nos"],[175,"Permits & Authority Fees","Consultant fees - Electrical","No of MWp","MWp"],[176,"Permits & Authority Fees","Consultant fees - Structural","No of Areas","Nos"],[177,"Insurances & Bonds","Professional indemnity Insurance","",""],[178,"Insurances & Bonds","Contractor All Risk & WC","",""],[179,"Insurances & Bonds","Bank Fees LC",0.01,"Nos"],[180,"Insurances & Bonds","Bank Fees PB",0.03,"Nos"],[181,"Insurances & Bonds","Bank Fees overdraft",0,"Nos"],[182,"Insurances & Bonds","Bank Fees",0.01,""],[183,"Spare Parts","Spare SPD","","Nos"],[184,"Spare Parts","Spare breaker","","Nos"],[197,"Spare Parts","1C X 6 SQMM DC - NON ARMOURED","6mm NA","Meters"],[198,"Spare Parts","1C X 6 SQMM DC - ARMOURED","6mm AR","Meters"],[199,"Spare Parts","Solar Panels Area1",0.01,"Nos"],[200,"Spare Parts","Mounting Structure",0.01,"Nos"],[201,"Spare Parts","Irradience Sensor",1,"Nos"]];
-const XLS_RATES={114:1350,115:1250,116:165,117:120,118:1500,119:6500,120:22000,121:18000,122:3500,123:4500,124:3000,125:2500,126:85,127:12000,
- 128:6500,129:2500,130:35000,131:1800,132:250,133:650,135:6,136:3000,137:1200,138:1500,139:2500,140:3500,
+/* items from your Excel list (rows 114–201) */
+const XLS=[[114,"Other BOQ","Skylight Prot 5*1","2.5 mtr x 1.5 mtr","Nos"],[115,"Other BOQ","Skylight Prot 4.2*1.2","","Nos"],[116,"Other BOQ","Walkways 450mm","FRP Grating","Meters"],[117,"Other BOQ","Safety Line","","Meters"],[118,"Other BOQ","Third part certification per line","","Nos"],[119,"Other BOQ","Permanent staircase - Cat Ladder","9 meter","Nos"],[120,"Other BOQ","Permanent staircase - Spiral Ladder","15 meter","Nos"],[121,"Other BOQ","Permanent staircase - Zig Zag Step ladder","15 meter","Nos"],[122,"Other BOQ","Scaffolding","","Nos"],[123,"Other BOQ","Zero Export Controller along with CTs","","Nos"],[124,"Other BOQ","Fiber Optics","","Nos"],[125,"Other BOQ","Safety materials","","Nos"],[126,"Other BOQ","Edge protection per meter","","Nos"],[127,"Other BOQ","LPS","","Nos"],[128,"Consumables","Canopy for inverter","canopy for 3 nos of inverters and ACCB","Nos"],[129,"Consumables","Fall protection","Barricade","Nos"],[130,"Consumables","Mechanical room - Electrical ACDB","Civil room","Nos"],[131,"Consumables","Mechanical room - Electrical ACDB","Louvers","Nos"],[132,"Consumables","Pole protection","","Nos"],[133,"Consumables","Stand for Inverter inc foundations","No of inverters","Nos"],[134,"Consumables","Earth pits","","Nos"],[135,"Consumables","Cable ties and clips","Enter kWp","kWp"],[136,"Consumables","Miscelleaneous","Enter 1","LS"],[137,"Consumables","Labels","Enter 1","LS"],[138,"Consumables","Fuel Expenses","","Nos"],[139,"Consumables","Water Leakage test with report","Every 200 kWp enter 1","Nos"],[140,"Consumables","Lightning study","","Nos"],[141,"Installation Works","I&C contractor - Labour - Rooftop","Enter kWp","kWp"],[142,"Installation Works","I&C contractor - Labour - Carpark","Enter kWp","kWp"],[143,"Installation Works","Civil works","Interlock","Meters"],[144,"Installation Works","Civil works","Asphalt","Meters"],[145,"Installation Works","Civil works","Sand","Meters"],[146,"Installation Works","Manholes","","Nos"],[147,"Installation Works","Logistics panels and others","Enter 1","Nos"],[148,"Installation Works","Logistics concrete blocks","Enter 1","Nos"],[149,"Installation Works","Forklift","","Nos"],[150,"Monitoring System","Commercial cabinet less than 750Kw","Meteo Control","Nos"],[151,"Monitoring System","Control cabinet more than 750Kwp IN","Meteo Control","Nos"],[152,"Monitoring System","Control cabinet more than 750Kwp OUT","Meteo Control","Nos"],[153,"Monitoring System","Blue log XC200","Meteo Control","Nos"],[154,"Monitoring System","Blue'Log XC-1000 plant controller","Meteo Control","Nos"],[155,"Monitoring System","PT1000 module cabinet","Meteo Control","Nos"],[156,"Monitoring System","MX-Module RS485/422 add-on modules","Meteo Control","Nos"],[157,"Monitoring System","5 Port Ethernet Switch (inl in cabinet","Meteo Control","Nos"],[158,"Monitoring System","Plant setup fee VCOM","Meteo Control","Nos"],[159,"Monitoring System","Onsite commissioning","Meteo Control","Nos"],[160,"Monitoring System","Router","Meteo Control","Nos"],[161,"Monitoring System","Antenna","Meteo Control","Nos"],[162,"Monitoring System","Irradiance sensor with module temp","Meteo Control","Nos"],[163,"Monitoring System","Irradiance sensor with ambiant temp","Meteo Control","Nos"],[164,"Monitoring System","Pyranometer","Meteo Control","Nos"],[165,"Monitoring System","Weather station","Meteo Control","Nos"],[166,"Monitoring System","Export docs","Meteo Control","Nos"],[167,"Monitoring System","Shipping","Meteo Control","Nos"],[168,"Monitoring System","Communication Box - Data logger","Inverter Logger","Nos"],[169,"Monitoring System","Weather station with accessories","Rainwise","Nos"],[170,"Monitoring System","Weather station with accessories","Shamslog","Nos"],[171,"Project Management","Engineering  and Project Management","",""],[172,"Permits & Authority Fees","DEWA/TAQA Meter Inspection approval","No of POC","Nos"],[173,"Permits & Authority Fees","DCD Approval","Enter kWp","kWp"],[174,"Permits & Authority Fees","Municipality/Trakhess approval","Formula","Nos"],[175,"Permits & Authority Fees","Consultant fees - Electrical","No of MWp","MWp"],[176,"Permits & Authority Fees","Consultant fees - Structural","No of Areas","Nos"],[177,"Insurances & Bonds","Professional indemnity Insurance","",""],[178,"Insurances & Bonds","Contractor All Risk & WC","",""],[179,"Insurances & Bonds","Bank Fees LC",0.01,"Nos"],[180,"Insurances & Bonds","Bank Fees PB",0.03,"Nos"],[181,"Insurances & Bonds","Bank Fees overdraft",0,"Nos"],[182,"Insurances & Bonds","Bank Fees",0.01,""],[183,"Spare Parts","Spare SPD","","Nos"],[184,"Spare Parts","Spare breaker","","Nos"],[185,"Spare Parts","Ongrid 3 phased inverter",165000,"Nos"],[186,"Spare Parts","Ongrid 3 phased inverter",125000,"Nos"],[187,"Spare Parts","Ongrid 3 phased inverter",110000,"Nos"],[188,"Spare Parts","Ongrid 3 phased inverter",55000,"Nos"],[189,"Spare Parts","Ongrid 3 phased inverter",44000,"Nos"],[190,"Spare Parts","Ongrid 3 phased inverter",36300,"Nos"],[191,"Spare Parts","Ongrid 3 phased inverter",30000,"Nos"],[192,"Spare Parts","Ongrid 3 phased inverter",25000,"Nos"],[193,"Spare Parts","Ongrid 3 phased inverter",22000,"Nos"],[194,"Spare Parts","Ongrid 3 phased inverter",15000,"Nos"],[195,"Spare Parts","Ongrid 3 phased inverter",12000,"Nos"],[196,"Spare Parts","Ongrid 3 phased inverter",11000,"Nos"],[197,"Spare Parts","1C X 6 SQMM DC - NON ARMOURED","6mm NA","Meters"],[198,"Spare Parts","1C X 6 SQMM DC - ARMOURED","6mm AR","Meters"],[199,"Spare Parts","Solar Panels Area1",0.01,"Nos"],[200,"Spare Parts","Mounting Structure",0.01,"Nos"],[201,"Spare Parts","Irradience Sensor",1,"Nos"]];
+const XLS_SKIP=new Set([114,115,116,117,118,119,120,121,122,128,129,130,131,134,185,186,187,188,189,190,191,192,193,194,195,196]);  /* replaced by dropdown items */
+const XLS_RATES={123:4500,124:3000,125:2500,126:85,127:12000,132:250,133:650,135:6,136:3000,137:1200,138:1500,139:2500,140:3500,
  141:85,142:140,143:65,144:85,145:25,146:2200,147:4500,148:2500,149:1800,
  150:9500,151:14000,152:14000,153:4800,154:7500,155:1100,156:1200,157:600,158:2200,159:3500,160:900,161:300,162:2200,163:2200,164:4500,165:9000,166:400,167:1500,168:2600,169:8500,170:7800,
  172:3000,173:3,175:12000,176:6000,183:450,184:900,201:2200};
+const XLS_FORMULA={171:"kWp*25",174:"(5.4+3+1)*kWp*2.2*1.15+2000",197:'rate("dc-6na")',198:'rate("dc-6ar")',199:'rate("panel")*wp',200:'rate("str-metal-trap")'};
+const PCT=new Set(["x177","x178","x179","x180","x181","x182"]);
 const r50=n=>Math.round(n/50)*50;
 function buildSeed(){
   const L=[];let ord=0;
-  const add=(cat,id,d,spec,u,rate)=>L.push({id,cat,ord:++ord,d,spec,u,rate,cur:"AED",sup:rate?"Sample price":"",upd:rate?"2026-10-01":"",prev:null});
+  const add=(cat,id,d,spec,u,rate,formula)=>L.push({id,cat,ord:++ord,d,spec,u,rate:formula?0:rate,formula:formula||"",cur:"AED",sup:rate||formula?"Sample price":"",upd:rate||formula?"2026-10-01":"",prev:null});
   add("Solar Panel","panel","Solar PV module","Price per Wp — BOQ rate = this × module Wp","Wp",0.38);
-  [["metal",95],["flat",160],["carpark",620],["ground",210]].forEach(([t,r])=>add("Mounting Structure","str-"+t,"Mounting structure — "+ROOF_TYPES[t],"Per module","Nos",r));
+  [["str-metal-trap","Metal roof — trapezoidal",95],["str-metal-klip","Metal roof — Kliplok",105],["str-metal-seam","Metal roof — standing seam",90],
+   ["str-flat","Flat roof",160],["str-carpark","Carpark",620],["str-ground","Ground mount",210]]
+    .forEach(([id,n,r])=>add("Mounting Structure",id,"Mounting structure — "+n,"Per module","Nos",r));
   add("Mounting Structure","ballast","Ballast for flat roof","0.5 × 0.5 × 0.5 m block","m³",450);
   add("Mounting Structure","anchor","Anchor bolts — flat roof","","Nos",12);
   add("Mounting Structure","fdn-single","Foundation for carpark — single","","Nos",2800);
@@ -472,12 +533,12 @@ function buildSeed(){
   const invRate={"SG5.0RT-P2":2300,"SG6.0RT-P2":2500,"SG7.0RT-P2":2700,"SG8.0RT-P2":2900,"SG10RT-P2":3400,"SG12RT-P2":3900,"SG15RT-P2":4300,"SG17RT-P2":4800,"SG20RT-P2":5200,
     "SG25CX-P2":6300,"SG30CX-P2":6900,"SG33CX-P2":7400,"SG36CX-P2":7800,"SG40CX-P2":8100,"SG50CX-P2":9300,"SG110CX":16200,"SG125CX-P2":17800,"SG150CX":19500};
   INV_DATA.forEach(v=>add("Inverter","inv-"+v.m,"On-grid 3-phase inverter "+v.m,`${v.kw} kW · ${v.kva} kVA`,"Nos",invRate[v.m]||0));
-  [[100,650],[225,1450],[320,2100]].forEach(([a,r])=>add("Inverter","inviso-"+a,`Inverter isolator ${a} A`,"","Nos",r));
+  INVISO_RATINGS.forEach(a=>add("Inverter","inviso-"+a,"Inverter AC isolator",`${a} A`,"Nos",r50(250+6*a)));
   RATINGS.forEach(a=>add("Switchgear","accb-"+a,"ACCB — AC combiner box",`Out ${a} A`,"Nos",r50(2500+28*a)));
   RATINGS.forEach(a=>add("Switchgear","mdbm-"+a,"MDB modification",`${a} A breaker`,"Nos",r50(1500+13*a)));
   RATINGS.forEach(a=>add("Switchgear","mdbe-"+a,"MDB extension",`${a} A breaker`,"Nos",r50(4000+18*a)));
   RATINGS.forEach(a=>add("Switchgear","meter-"+a,"Solar meter cabinet",`${a} A`,"Nos",r50(3000+20*a)));
-  RATINGS.forEach(a=>add("Switchgear","iso-"+a,"Isolator",`${a} A`,"Nos",r50(300+3.2*a)));
+  ISO_RATINGS.forEach(a=>add("Switchgear","iso-"+a,"Isolator",`${a} A`,"Nos",r50(300+3.2*a)));
   [["4C2.5","1C × 2.5",18],["4C4","1C × 4",24],["4C6","1C × 6",32],["4C10","1C × 6",48],["4C16","1C × 10",65],["4C25","1C × 16",92],["4C35","1C × 16",120],
    ["4C50","1C × 25",160],["4C70","1C × 35",215],["4C95","1C × 50",285],["4C120","1C × 70",355],["4C150","1C × 70",430],["4C185","1C × 95",520],
    ["4C240","1C × 120",670],["4C300","1C × 150",820],["3C185","1C × 120",450]]
@@ -497,25 +558,62 @@ function buildSeed(){
    ["reducer","Reducer","","Nos",110],["endcap","End cap","","Nos",25],["unistrut","Unistrut channel 41 × 41","","m",28],
    ["rod","Threaded rod M10 with anchor","","Set",12],["bolts","Nuts, bolts and washers","","LS",600]]
     .forEach(([k,d,s,u,r])=>add("Cable Tray Accessories","cta-"+k,d,s,u,r));
+  /* Other BOQ — dropdown families */
+  add("Other BOQ","sky-a","Skylight protection","2.5 × 1.5 m","Nos",1350);
+  add("Other BOQ","sky-b","Skylight protection","4.2 × 1.2 m","Nos",1250);
+  add("Other BOQ","walkway","Walkway 450 mm","FRP grating","m",165);
+  add("Other BOQ","lifeline","Lifeline / safety line","","m",120);
+  add("Other BOQ","lifecert","Third-party certification — lifeline","Per line","Nos",1500);
+  [["canopy","Canopy",6500],["louver","Louvered enclosure",9000],["canbar","Canopy with barricade",9000],["room","Civil room with louvers",35000],["pole","Pole protection",250]]
+    .forEach(([k,n,r])=>add("Other BOQ","prot-"+k,"Protection for inverters / ACCB",n,"Nos",r));
+  [["cage","Cage ladder","9 m",6500],["spiral","Spiral ladder","15 m",22000],["step","Zig-zag step ladder","15 m",18000],["scaff","Scaffolding","",3500]]
+    .forEach(([k,n,h,r])=>add("Other BOQ","access-"+k,"Roof access — "+n,h,"Nos",r));
   XLS.forEach(([sno,cat,d,spec,u])=>{
+    if(XLS_SKIP.has(sno))return;
     let s=String(spec??""),uu=u;if(typeof spec==="number"&&spec<=1)s="";
     if(PCT.has("x"+sno))uu="%";if(sno===171)uu="LS";if(sno===199||sno===200)s="1% of main qty";
-    add(cat,"x"+sno,d,s,uu,XLS_RATES[sno]||0);
+    if(sno===168){d="Sungrow data logger (communication box)";s="Logger1000"}
+    if(sno===170){d="Shamslog weather station with sensors";s=""}
+    add(cat,"x"+sno,d,s,uu,XLS_RATES[sno]||0,XLS_FORMULA[sno]);
   });
   return L;
 }
-const PCT=new Set(["x177","x178","x179","x180","x181","x182"]);
+/* keep the database in step with this version: add new items, give formulas to old copies, retire replaced items */
+function mergeSeed(list){
+  const seed=buildSeed(),sid=new Map(seed.map(x=>[x.id,x])),have=new Set(list.map(x=>x.id));
+  const toSave=[],toDelete=[];
+  const out=list.filter(x=>{
+    if(x.id.startsWith("_"))return false;
+    if((x.ord||0)<5000&&!sid.has(x.id)){toDelete.push(x.id);return false}
+    const s=sid.get(x.id);
+    if(s&&s.formula&&!x.formula&&!x.rate){x.formula=s.formula;toSave.push(x)}
+    if(s&&x.cat!==s.cat){x.cat=s.cat;toSave.push(x)}
+    return true;
+  });
+  seed.forEach(s=>{if(!have.has(s.id)){out.push(s);toSave.push(s)}});
+  return {list:out.sort((a,b)=>a.ord-b.ord),toSave,toDelete};
+}
 
-/* ============ S3 · PROJECTS ============ */
-const PKEY="pv_costing_projects_v1", DBKEY="pv_pricedb_v2";
+/* ============ S3 · PROJECTS + SETTINGS STATE ============ */
+const PKEY="pv_costing_projects_v1", DBKEY="pv_pricedb_v2", SKEY="pv_costing_settings_v1";
 const today=new Date().toISOString().slice(0,10);
-let PROJ={}, CUR=null, P=null, DB=[], FX=3.6725;
+let PROJ={}, CUR=null, P=null, DB=[], FX=3.6725, CTXV=null;
 let openCats=new Set(["Solar Panel","Mounting Structure","Inverter","Switchgear"]), openDb=new Set(["Solar Panel"]);
+const DEFAULT_S={company:"Your Company Name",address:"Dubai, UAE",trn:"",contact:"",preparedBy:"",validity:30,terms:[
+  {id:"t1",text:"This offer is valid for {validity} days from the date above.",on:true},
+  {id:"t2",text:"Prices are in UAE Dirhams (AED). VAT at 5% is shown separately.",on:true},
+  {id:"t3",text:"Payment terms: 30% advance with purchase order, 60% on material delivery, 10% on testing and commissioning.",on:true},
+  {id:"t4",text:"The price covers only the scope listed. Civil works, roof repairs and MDB upgrades are excluded unless listed.",on:true},
+  {id:"t5",text:"Authority approval timelines (DEWA / consultant) are outside our control.",on:true},
+  {id:"t6",text:"Delivery: 6–8 weeks from advance payment and approved drawings.",on:false},
+  {id:"t7",text:"Warranty: PV modules and inverters as per manufacturer warranty; workmanship 2 years from commissioning.",on:false},
+  {id:"t8",text:"Client to provide site access, storage space, water and electricity during installation.",on:false}]};
+let S=JSON.parse(JSON.stringify(DEFAULT_S));
 const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const clone=o=>JSON.parse(JSON.stringify(o));
 function newProject(name){
   return {id:uid("p"),name:name||"New project",location:"",ref:"",wp:620,
-    roofs:[{id:uid("r"),name:"Roof 1",type:"metal",mods:0}],pv:null,swg:{mode:"single",n:2},
+    roofs:[{id:uid("r"),name:"Roof 1",type:"metal",sub:"trap",mods:0}],pv:null,swg:{mode:"single",n:2},mon:"sungrow",
     O:{},ML:[],cont:3,margin:15,created:today,updated:Date.now()};
 }
 function sampleProject(){
@@ -526,53 +624,73 @@ function sampleProject(){
   p.O["dc-main"]={q:7200};p.O["mc4"]={q:60};p.O["earth-inv"]={q:100};
   ml("Cable Trays","tray","tray-50x50x1.2",150);ml("Cable Trays","tray","tray-100x50x1.5",130);ml("Cable Trays","tray","tray-200x50x1.5",15);
   ml("Cable Trays","tray","tray-300x50x1.5",20);ml("Cable Trays","tray","tray-400x100x1.5",15);
-  ml("AC Cables",null,"rs485",30);ml("AC Cables",null,"sec2c",36);
-  Object.assign(p.O,{x114:{q:27},x116:{q:265},x117:{q:200},x119:{q:1},x125:{q:1},x170:{q:1},"cta-hbend":{q:6},"cta-tee":{q:2}});
+  ml("AC Cables",null,"rs485",30);ml("AC Cables",null,"sec2c",36);ml("Other BOQ",null,"x125",1);
+  Object.assign(p.O,{"ob-sky":{q:27},walkway:{q:265},lifeline:{q:200},lifecert:{q:2},"ob-access":{q:1},"cta-hbend":{q:6},"cta-tee":{q:2}});
   return p;
 }
 function saveLocal(){try{localStorage.setItem(PKEY,JSON.stringify({PROJ,CUR}))}catch(e){}}
 let saveT=null;
 function save(){P.updated=Date.now();delete P.untouched;saveLocal();clearTimeout(saveT);saveT=setTimeout(()=>cloudSaveProject(P),700)}
 function openProject(id){CUR=id;P=PROJ[id];saveLocal();renderAll()}
+function fixProject(p){   /* older saved projects → current shape */
+  p.roofs.forEach(r=>{if(r.type==="metal"&&!r.sub)r.sub="trap"});
+  if(!p.mon)p.mon="sungrow";if(!p.swg)p.swg={mode:"single",n:2};if(!p.ML)p.ML=[];if(!p.O)p.O={};
+  return p;
+}
 function load(){
   try{const s=localStorage.getItem(PKEY);if(s){const o=JSON.parse(s);PROJ=o.PROJ||{};CUR=o.CUR}}catch(e){}
   if(!Object.keys(PROJ).length){const s=sampleProject();PROJ[s.id]=s;CUR=s.id}
+  Object.values(PROJ).forEach(fixProject);
   if(!PROJ[CUR])CUR=Object.keys(PROJ)[0];
   P=PROJ[CUR];
   DB=buildSeed();
-  try{const s=localStorage.getItem(DBKEY);if(s){const o=JSON.parse(s);if(Array.isArray(o.DB)&&o.DB.length)DB=o.DB;if(o.FX)FX=o.FX}}catch(e){}
+  try{const s=localStorage.getItem(DBKEY);if(s){const o=JSON.parse(s);if(Array.isArray(o.DB)&&o.DB.length)DB=mergeSeed(o.DB).list;if(o.FX)FX=o.FX}}catch(e){}
+  try{const s=localStorage.getItem(SKEY);if(s)S={...clone(DEFAULT_S),...JSON.parse(s)}}catch(e){}
 }
 function saveDBLocal(){try{localStorage.setItem(DBKEY,JSON.stringify({DB,FX}))}catch(e){}}
 
-/* ============ S4 · CONTEXT ============ */
+/* ============ S4 · CONTEXT + FORMULAS ============ */
 const $=id=>document.getElementById(id);
 const fmt=(n,d=0)=>Number(n||0).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
 const fq=n=>Number.isInteger(+n)?fmt(n):fmt(n,2);
 const esc=s=>String(s??"").replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[ch]);
 const r1=n=>Math.round(n*10)/10, r2=n=>Math.round(n*100)/100;
 const dbItem=id=>DB.find(x=>x.id===id);
-const toAED=it=>it?(it.cur==="USD"?it.rate*FX:+it.rate||0):0;
-const rateOf=id=>toAED(dbItem(id));
 const OV=lid=>P.O[lid]||{};
 const nextRating=a=>RATINGS.find(r=>r>=a-1e-9)||RATINGS[RATINGS.length-1];
 const cableKey=s=>String(s||"").replace(/\s/g,"").replace(/^\d+Rx/i,"").replace(/x/gi,"").toUpperCase();
+const parseCab=s=>{const m=/^(?:(\d+)Rx)?(\d)Cx([\d.]+)$/i.exec(String(s||"").replace(/\s/g,""));return m?{runs:+(m[1]||1),key:m[2]+"C"+m[3]}:null};
 const famOpts=fam=>DB.filter(x=>x.id.startsWith(fam+"-")).sort((a,b)=>a.ord-b.ord);
-
+const FVARS=["kWp","MWp","kWac","kVA","mods","wp","invN","roofs","poc"];
+function checkFormula(f){
+  if(!/^[\w\s.+\-*\/()"',%]*$/.test(f))return "Only numbers, + − × ÷, brackets and names are allowed";
+  const bad=(f.replace(/"[^"]*"|'[^']*'/g,"").match(/[A-Za-z_]\w*/g)||[]).filter(w=>!FVARS.includes(w)&&w!=="rate"&&w!=="Math"&&!["ceil","floor","round","min","max"].includes(w));
+  return bad.length?"Unknown name: "+bad[0]:"";
+}
+function evalFormula(f,c,depth){
+  if(checkFormula(f))return NaN;
+  const v={kWp:c.kWp,MWp:c.kWp/1000,kWac:c.kWac,kVA:c.kVA,mods:c.mods,wp:P.wp,invN:c.invN,roofs:P.roofs.length,poc:c.poc};
+  try{return +new Function(...FVARS,"rate","Math",`return (${f});`)(...FVARS.map(k=>v[k]),id=>itemRate(dbItem(id),c,depth+1),Math)}catch(e){return NaN}
+}
+function itemRate(it,c,depth=0){
+  if(!it)return 0;
+  if(it.formula){if(depth>5)return 0;const v=evalFormula(it.formula,c||CTXV||ctx(),depth);return isFinite(v)?r2(v):0}
+  return it.cur==="USD"?r2(it.rate*FX):+it.rate||0;
+}
 function ctx(){
-  const byType={metal:0,flat:0,carpark:0,ground:0};
-  P.roofs.forEach(r=>byType[r.type]+=(+r.mods||0));
+  const byType={metal:0,flat:0,carpark:0,ground:0},byKey={};
+  P.roofs.forEach(r=>{byType[r.type]+=(+r.mods||0);const k=strKey(r);byKey[k]=(byKey[k]||0)+(+r.mods||0)});
   const mods=Object.values(byType).reduce((a,b)=>a+b,0), kWp=mods*P.wp/1000;
   const kWpBy={};for(const k in byType)kWpBy[k]=byType[k]*P.wp/1000;
-  /* inverters = pulled from PV Design + any added on the BOQ */
   const inv=[];
-  (P.pv?.inverters||[]).forEach(v=>{const q=OV("inv-"+v.model).off?0:(OV("inv-"+v.model).q??v.qty);if(q>0)inv.push({...v,qty:q})});
+  (P.pv?.inverters||[]).forEach(v=>{const o=OV("inv-"+v.model),q=o.off?0:(o.q??v.qty);if(q>0)inv.push({...v,qty:q})});
   let manualInv=false;
   P.ML.filter(m=>m.fam==="inv").forEach(m=>{const q=OV(m.lid).q||0,d=INV_DATA.find(v=>"inv-"+v.m===m.key);if(q>0&&d){manualInv=true;inv.push({model:d.m,qty:q,kw:d.kw,kva:d.kva,amp:d.amp,brk:d.brk})}});
-  const invN=inv.reduce((a,b)=>a+b.qty,0), kWac=inv.reduce((a,b)=>a+b.kw*b.qty,0), amp=inv.reduce((a,b)=>a+b.amp*b.qty,0);
+  const invN=inv.reduce((a,b)=>a+b.qty,0),kWac=inv.reduce((a,b)=>a+b.kw*b.qty,0),kVA=inv.reduce((a,b)=>a+(b.kva||b.kw)*b.qty,0),amp=inv.reduce((a,b)=>a+b.amp*b.qty,0);
   const grp={};inv.forEach(v=>grp[v.brk]=(grp[v.brk]||0)+v.qty);
   const ins=Object.entries(grp).sort((a,b)=>b[0]-a[0]).map(([a,n])=>`${n} × ${a} A`).join(" + ");
   const out=(!manualInv&&P.pv?.accb?.out)?P.pv.accb.out:(amp?nextRating(amp*1.2):RATINGS[0]);
-  return {byType,kWpBy,mods,kWp,inv,invN,kWac,accb:{amp,ins,out},poc:P.swg.mode==="single"?1:Math.max(2,P.swg.n||2)};
+  return {byType,byKey,kWpBy,mods,kWp,inv,invN,kWac,kVA,accb:{amp,ins,out},poc:P.swg.mode==="single"?1:Math.max(2,P.swg.n||2)};
 }
 
 /* ============ S5 · BOQ BUILDER ============
@@ -580,78 +698,76 @@ function ctx(){
    sel = dropdown on the line · needQ = waits for your qty · manual = added by you      */
 function mk(o){
   const ov=OV(o.lid), it=dbItem(o.key)||{};
-  const autoRate=o.autoRate!=null?o.autoRate:toAED(it);
+  const autoRate=o.autoRate!=null?o.autoRate:itemRate(it,CTXV);
   const q=ov.q??o.aQ??0, rate=ov.r??autoRate;
   return {...o,d:o.d??it.d??"(item not in database)",spec:o.spec??it.spec??"",u:o.u??it.u??"",
-    q:+q||0,rate:+rate||0,autoRate,ovQ:ov.q!=null,ovR:ov.r!=null,off:!!ov.off,auto:o.aQ!=null&&!o.needQ&&!o.manual};
+    q:+q||0,rate:+rate||0,autoRate,ovQ:ov.q!=null,ovR:ov.r!=null,off:!!ov.off,auto:o.aQ!=null&&!o.needQ&&!o.manual,
+    rateSrc:o.rateSrc||(it.formula?"formula":null),pct:o.pct??PCT.has(o.key)};
 }
+const FAMLABEL={str:x=>x.d.replace("Mounting structure — ",""),inv:x=>x.d.replace("On-grid 3-phase inverter ",""),iso:x=>x.spec,inviso:x=>x.spec,
+  dc:x=>x.d.replace(" DC cable",""),earth:x=>x.d.replace(" Y/G earth cable",""),sky:x=>x.spec,prot:x=>x.spec,access:x=>x.d.replace("Roof access — ","")+(x.spec?" · "+x.spec:"")};
+const famSel=(fam,v,lid,label)=>({opts:famOpts(fam).map(x=>[x.id,(FAMLABEL[fam]||(x=>x.d))(x)]),v,lid,label});
+const FAMNAME={str:"Mounting structure",dc:"DC cable",inv:"Inverter",ac:"AC cable",earth:"Earth cable",tray:"Cable tray",iso:"Isolator",inviso:"Inverter AC isolator"};
 function manualLines(cat){
   return P.ML.filter(m=>m.cat===cat).map(m=>{
-    if(m.custom)return {lid:m.lid,custom:true,manual:true,d:m.d||"",u:m.u||"Nos",spec:"",q:+m.q||0,rate:+m.r||0,autoRate:0,off:false};
-    const sel=m.fam?{opts:famOpts(m.fam).map(x=>[x.id,x.d.replace(/^Mounting structure — |^On-grid 3-phase inverter /,"")+(x.spec&&!["str","inv","ac"].includes(m.fam)?" · "+x.spec:"")]),v:m.key,ml:true}:null;
-    const FAMNAME={str:"Mounting structure",dc:"DC cable",inv:"Inverter",ac:"AC cable",earth:"Earth cable",tray:"Cable tray"};
+    if(m.custom)return {lid:m.lid,custom:true,manual:true,d:m.d||"",u:m.u||"Nos",spec:"",q:+m.q||0,rate:+m.r||0,autoRate:0,off:false,key:null};
+    const sel=m.fam?{...famSel(m.fam,m.key,m.lid),ml:true}:null;
     return mk({lid:m.lid,key:m.key,aQ:0,needQ:true,manual:true,sel,fam:m.fam,d:m.fam?FAMNAME[m.fam]:undefined,spec:m.fam?"":undefined});
   });
 }
-const B={};   /* builders by category */
-B["Solar Panel"]=c=>P.roofs.map(r=>mk({lid:"pan-"+r.id,key:"panel",d:`Solar panels — ${r.name||"Roof"}`,spec:`${P.wp} Wp · ${ROOF_TYPES[r.type]}`,u:"Nos",
-  aQ:+r.mods||0,autoRate:r2(rateOf("panel")*P.wp),rateNote:`${rateOf("panel")}/Wp × ${P.wp}`}));
+const B={};
+B["Solar Panel"]=c=>P.roofs.map(r=>mk({lid:"pan-"+r.id,key:"panel",d:`Solar panels — ${r.name||"Roof"}`,
+  spec:`${P.wp} Wp · ${r.type==="metal"?"Metal roof — "+METAL_SUB[r.sub||"trap"]:ROOF_TYPES[r.type]}`,u:"Nos",
+  aQ:+r.mods||0,autoRate:r2(itemRate(dbItem("panel"),c)*P.wp),rateNote:`${itemRate(dbItem("panel"),c)}/Wp × ${P.wp}`}));
 B["Mounting Structure"]=c=>{
-  const types=[...new Set(P.roofs.map(r=>r.type))];
-  const L=types.map(t=>{const v=OV("str-"+t).sel||t;
-    return mk({lid:"str-"+t,key:"str-"+v,d:"Mounting structure",spec:`${fmt(c.byType[t])} modules on ${ROOF_TYPES[t].toLowerCase()} roofs`,aQ:c.byType[t],
-      sel:{opts:Object.entries(ROOF_TYPES).map(([k,n])=>["str-"+k,n]),v:"str-"+v,lid:"str-"+t}})});
+  const L=Object.keys(c.byKey).map(k=>{const v=OV("str-"+k).sel||k;
+    return mk({lid:"str-"+k,key:v,d:"Mounting structure",spec:`${fmt(c.byKey[k])} modules on ${strName(k).toLowerCase()} roofs`,aQ:c.byKey[k],sel:famSel("str",v,"str-"+k)})});
   const all=[...L,...manualLines("Mounting Structure")];
-  const used=new Set(all.filter(l=>!l.off&&l.key&&l.key.startsWith("str-")).map(l=>l.key.slice(4)));
+  const used=new Set(all.filter(l=>!l.off&&l.key&&l.key.startsWith("str-")).map(l=>l.key.startsWith("str-metal")?"metal":l.key.slice(4)));
   const ex=[];
   if(used.has("flat"))ex.push(mk({lid:"ballast",key:"ballast",aQ:0,needQ:true,why:"flat roof"}),mk({lid:"anchor",key:"anchor",aQ:0,needQ:true,why:"flat roof"}));
   if(used.has("carpark"))ex.push(mk({lid:"fdn-single",key:"fdn-single",aQ:0,needQ:true,why:"carpark"}),mk({lid:"fdn-double",key:"fdn-double",aQ:0,needQ:true,why:"carpark"}));
   if(used.has("ground"))ex.push(mk({lid:"gm-mob",key:"gm-mob",aQ:1,why:"ground mount"}),mk({lid:"gm-ram",key:"gm-ram",aQ:0,needQ:true,why:"ground mount"}),mk({lid:"gm-drill",key:"gm-drill",aQ:0,needQ:true,why:"ground mount"}));
-  /* keep extras next to the structure lines: structure lines, then extras, then other manual lines */
   return [...all.filter(l=>l.key?.startsWith("str-")),...ex,...all.filter(l=>!l.key?.startsWith("str-"))];
 };
 B["DC Cables"]=c=>{
   const v=OV("dc-main").sel||"dc-6na";
-  return [mk({lid:"dc-main",key:v,d:"DC cable",spec:"",aQ:0,needQ:true,sel:{opts:famOpts("dc").map(x=>[x.id,x.d.replace(" DC cable","")]),v,lid:"dc-main"}}),
+  return [mk({lid:"dc-main",key:v,d:"DC cable",spec:"",aQ:0,needQ:true,sel:famSel("dc",v,"dc-main")}),
           mk({lid:"mc4",key:"mc4",aQ:0,needQ:true}),...manualLines("DC Cables")];
 };
 B["Inverter"]=c=>[...(P.pv?.inverters||[]).map(v=>mk({lid:"inv-"+v.model,key:"inv-"+v.model,aQ:v.qty,src:"PV Design",
-  spec:`${v.kw} kW · feeder ${v.brk} A · ${v.cable||""}`})),...manualLines("Inverter")];
+  spec:`${v.kw} kW · ${v.kva} kVA · feeder ${v.brk} A · ${v.cable||""}`})),...manualLines("Inverter")];
 B["Switchgear"]=c=>{
-  const L=[],n=c.poc,multi=n>1;
-  const ratingOpts=RATINGS.map(a=>[a,a+" A"]);
+  const L=[],n=c.poc,multi=n>1,ratingOpts=RATINGS.map(a=>[a,a+" A"]);
   for(let g=0;g<n;g++){
-    const p=`swg${g}-`, pre=multi?`POC ${g+1} · `:"";
+    const p=`swg${g}-`,pre=multi?`POC ${g+1} · `:"";
     const auto=multi?nextRating(c.accb.amp*1.2/n):c.accb.out;
-    const out=+(OV(p+"accb").sel||auto), inTxt=multi?(OV(p+"accb").inTxt||""):c.accb.ins;
+    const out=+(OV(p+"accb").sel||auto),inTxt=multi?(OV(p+"accb").inTxt||""):c.accb.ins;
     L.push(mk({lid:p+"accb",key:"accb-"+out,d:pre+"ACCB — AC combiner box",
       spec:multi?"":`In: ${inTxt||"no inverters yet"} · Out: ${out} A${out!==auto?` (auto ${auto} A)`:""}`,
       inEdit:multi,inTxt,aQ:1,sel:{label:"Out",opts:ratingOpts,v:out,lid:p+"accb"}}));
     const mt=OV(p+"mdb").sel||"mod";
     L.push(mk({lid:p+"mdb",key:(mt==="mod"?"mdbm-":"mdbe-")+out,d:pre+"MDB",spec:`${out} A breaker — same as ACCB out`,aQ:1,
       sel:{opts:[["mod","Modification"],["ext","Extension"]],v:mt,lid:p+"mdb"}}));
-    if(mt==="mod"){
-      L.push(mk({lid:p+"meter",key:"meter-"+out,d:pre+"Solar meter cabinet",spec:`${out} A`,aQ:1}));
-      const ia=+(OV(p+"iso").sel||out);
-      L.push(mk({lid:p+"iso",key:"iso-"+ia,d:pre+"Isolator",spec:ia===out?"Same as ACCB out — change if not available":`Changed from ${out} A`,aQ:1,
-        sel:{label:"Rating",opts:ratingOpts,v:ia,lid:p+"iso"}}));
-    }
+    if(mt==="mod")L.push(mk({lid:p+"meter",key:"meter-"+out,d:pre+"Solar meter cabinet",spec:`${out} A`,aQ:1}));
   }
   return [...L,...manualLines("Switchgear")];
 };
 B["AC Cables"]=c=>{
-  const L=[];
-  if(c.poc===1&&P.pv?.route?.length){
-    const agg={},from={};
-    P.pv.route.forEach(r=>{const k=cableKey(r.size);agg[k]=(agg[k]||0)+(+r.len||0)*(+r.runs||1);(from[k]=from[k]||[]).push(r.from+" → "+r.to)});
-    Object.entries(agg).forEach(([k,m])=>L.push(mk({lid:"acr-"+k,key:"ac-"+k,aQ:m,src:"PV Design",routeNote:from[k].length+" run"+(from[k].length>1?"s":"")+" in route"})));
+  const need={},route=P.pv?.route||[];
+  const add=(k,m,note)=>{need[k]=need[k]||{m:0,notes:[]};need[k].m+=m;if(note)need[k].notes.push(note)};
+  if(route.length)route.forEach(r=>add(cableKey(r.size),(+r.len||0)*(+r.runs||1),`${r.from} → ${r.to}${+r.runs>1?" × "+r.runs+" runs":""}`));
+  else{
+    c.inv.forEach(v=>{const p=parseCab(v.cable);if(p)add(p.key,0,`${v.qty} × ${v.model} → ACCB${p.runs>1?" ("+p.runs+" runs each)":""}`)});
+    const pa=parseCab(P.pv?.accb?.cable);if(pa)add(pa.key,0,`ACCB → MDB${pa.runs>1?" ("+pa.runs+" runs)":""}`);
   }
+  const L=Object.entries(need).map(([k,v])=>mk({lid:"acr-"+k,key:"ac-"+k,aQ:route.length?v.m:0,needQ:!v.m,src:"PV Design",
+    routeNote:(route.length?"":"Enter metres — ")+v.notes.slice(0,3).join(" · ")+(v.notes.length>3?` · +${v.notes.length-3} more`:"")}));
   return [...L,...manualLines("AC Cables")];
 };
 B["AC Earthing"]=c=>{
   const v=OV("earth-inv").sel||"earth-1C6";
-  return [mk({lid:"earth-inv",key:v,d:"Inverter body earthing",spec:"",aQ:0,needQ:true,sel:{opts:famOpts("earth").map(x=>[x.id,x.d.replace(" Y/G earth cable","")]),v,lid:"earth-inv"}}),
-          ...manualLines("AC Earthing")];
+  return [mk({lid:"earth-inv",key:v,d:"Inverter body earthing",spec:"",aQ:0,needQ:true,sel:famSel("earth",v,"earth-inv")}),...manualLines("AC Earthing")];
 };
 B["Cable Trays"]=c=>manualLines("Cable Trays");
 B["Cable Tray Accessories"]=(c,trayLen)=>{
@@ -660,25 +776,44 @@ B["Cable Tray Accessories"]=(c,trayLen)=>{
   return [...famOpts("cta").map(x=>{const k=x.id.slice(4);return rule[k]!=null?mk({lid:x.id,key:x.id,aQ:rule[k]}):mk({lid:x.id,key:x.id,aQ:0,needQ:true,soft:true})}),
           ...manualLines("Cable Tray Accessories")];
 };
+B["Other BOQ"]=c=>{
+  const L=[];
+  if(c.byType.metal>0){
+    const sv=OV("ob-sky").sel||"sky-a";
+    L.push(mk({lid:"ob-sky",key:sv,d:"Skylight protection",spec:"",aQ:0,needQ:true,why:"metal roof",sel:famSel("sky",sv,"ob-sky","Size")}),
+           mk({lid:"walkway",key:"walkway",aQ:0,needQ:true,why:"metal roof"}),
+           mk({lid:"lifeline",key:"lifeline",aQ:0,needQ:true,why:"metal roof"}),
+           mk({lid:"lifecert",key:"lifecert",aQ:0,needQ:true,why:"metal roof"}));
+  }
+  const pv=OV("ob-prot").sel||"prot-canopy", av=OV("ob-access").sel||"access-cage";
+  L.push(mk({lid:"ob-prot",key:pv,d:"Protection for inverters / ACCB",spec:"",aQ:0,needQ:true,sel:famSel("prot",pv,"ob-prot")}),
+         mk({lid:"ob-access",key:av,d:"Roof access",spec:"",aQ:0,needQ:true,sel:famSel("access",av,"ob-access")}));
+  return [...L,...manualLines("Other BOQ")];
+};
+const MON_SETS={
+  sungrow:{label:"Sungrow + Shamslog",q:c=>({x168:1,x170:1})},
+  meteo:{label:"Meteocontrol",q:c=>{const big=c.kWp>=750;
+    return {x150:big?0:1,x151:big?1:0,x152:big?1:0,x153:big?0:1,x154:big?1:0,x155:0,x156:0,x157:0,x158:1,x159:1,x160:1,x161:1,x162:1,x163:0,x164:0,x165:0,x166:1,x167:1}}}
+};
+B["Monitoring System"]=c=>{
+  const set=MON_SETS[P.mon]||MON_SETS.sungrow,q=set.q(c);
+  return [...Object.entries(q).map(([id,n])=>mk({lid:id,key:id,aQ:n,needQ:!n,soft:!n})),...manualLines("Monitoring System")];
+};
 /* other categories — items from your Excel; auto qty where there is a rule */
 const XRULE={x133:c=>c.invN,x135:c=>Math.round(c.kWp),x136:()=>1,x137:()=>1,x139:c=>r1(c.kWp/200),
-  x141:c=>Math.round(c.kWpBy.metal+c.kWpBy.flat+c.kWpBy.ground),x142:c=>Math.round(c.kWpBy.carpark),x147:()=>1,x168:()=>1,x171:()=>1,
+  x141:c=>Math.round(c.kWpBy.metal+c.kWpBy.flat+c.kWpBy.ground),x142:c=>Math.round(c.kWpBy.carpark),x147:()=>1,x171:()=>1,
   x172:c=>c.poc,x173:c=>Math.round(c.kWp),x174:()=>1,x175:c=>r2(c.kWp/1000),x176:()=>P.roofs.length,
   x177:()=>0.5,x178:()=>0.3,x179:()=>1,x180:()=>3,x181:()=>0,x182:()=>1,x199:c=>Math.ceil(c.mods*0.01),x200:c=>Math.ceil(c.mods*0.01)};
-const XRATE={x171:c=>Math.round(c.kWp*25),x174:c=>Math.round((5.4+3+1)*c.kWp*2.2*1.15+2000),
-  x199:()=>r2(rateOf("panel")*P.wp),x200:()=>rateOf("str-"+(P.roofs[0]?.type||"metal")),x197:()=>rateOf("dc-6na"),x198:()=>rateOf("dc-6ar")};
 const SMART=new Set(Object.keys(B));
 function genericLines(cat,c){
   return DB.filter(x=>x.cat===cat).sort((a,b)=>a.ord-b.ord).map(x=>{
-    const l=mk({lid:x.id,key:x.id,aQ:XRULE[x.id]?XRULE[x.id](c):0,autoRate:XRATE[x.id]?XRATE[x.id](c):null,pct:PCT.has(x.id),
-      rateSrc:XRATE[x.id]?(x.id==="x171"||x.id==="x174"?"formula":"linked"):null});
-    l.auto=!!XRULE[x.id];l.generic=true;return l;
+    const l=mk({lid:x.id,key:x.id,aQ:XRULE[x.id]?XRULE[x.id](c):0});l.auto=!!XRULE[x.id];return l;
   }).concat(manualLines(cat).filter(l=>l.custom));
 }
 function calc(){
-  const c=ctx();let trayLen=0;
+  const c=ctx();CTXV=c;let trayLen=0;
   const cats=CATS.map((cat,i)=>{
-    let items=SMART.has(cat)?B[cat](c,trayLen):genericLines(cat,c);
+    const items=SMART.has(cat)?B[cat](c,trayLen):genericLines(cat,c);
     if(cat==="Cable Trays")trayLen=items.filter(l=>!l.off&&!l.custom).reduce((a,b)=>a+b.q,0);
     return {cat,no:i+1,items,smart:SMART.has(cat)};
   });
@@ -691,37 +826,45 @@ function calc(){
   return {c,cats,cost,cont,mar,sell,vat,grand:sell+vat,wp:c.kWp*1000,trayLen,
     missing:cats.reduce((a,b)=>a+b.missing,0),needQ:cats.reduce((a,b)=>a+b.needQ,0)};
 }
-function calcFor(p){const s=P;P=p;try{return calc()}finally{P=s}}
+function calcFor(p){const s=P;P=p;try{return calc()}finally{P=s;CTXV=null}}
 
 /* ============ S6 · PAGE PROJECT ============ */
+async function sha256(t){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
 function ago(ts){const m=Math.round((Date.now()-ts)/6e4);return m<1?"just now":m<60?m+" min ago":m<1440?Math.round(m/60)+" h ago":Math.round(m/1440)+" days ago"}
 function renderProjList(){
   const ids=Object.keys(PROJ).sort((a,b)=>PROJ[b].updated-PROJ[a].updated);
   $("projList").innerHTML=ids.map(id=>{const p=PROJ[id],R=calcFor(p),on=id===CUR;
     return `<tr class="${on?"cur":""}"><td><b>${esc(p.name)}</b>${on?'<span class="pill pv">Open</span>':""}<span class="spc">${esc(p.location||"")}</span></td>
       <td>${esc(p.ref||"—")}</td><td class="n">${fmt(R.c.kWp,1)}</td><td class="n">${fmt(R.cost)}</td><td style="color:var(--sub);font-size:12.5px;white-space:nowrap">${ago(p.updated)}</td>
-      <td class="n" style="white-space:nowrap">${on?"":`<button class="btn ghost sm" data-open="${id}">Open</button>`}
+      <td class="n acts" id="pa-${id}">${on?"":`<button class="btn ghost sm" data-open="${id}">Open</button>`}
         <button class="btn ghost sm" data-dup="${id}" title="Copy as new project">Copy</button>
         <button class="btn danger sm" data-pdel="${id}">Delete</button></td></tr>`}).join("");
 }
-$("projList").addEventListener("click",e=>{
+$("projList").addEventListener("click",async e=>{
   const b=e.target.closest("button");if(!b)return;
   if(b.dataset.open){openProject(b.dataset.open);toast("Opened "+P.name);return}
-  if(b.dataset.dup){const s=PROJ[b.dataset.dup],p={...clone(s),id:uid("p"),name:s.name+" (copy)",updated:Date.now()};PROJ[p.id]=p;cloudSaveProject(p);openProject(p.id);toast("Copied");return}
-  if(b.dataset.pdel){
-    if(!b.classList.contains("arm")){b.classList.add("arm");b.textContent="Tap to delete";setTimeout(()=>{b.classList.remove("arm");b.textContent="Delete"},3000);return}
-    const id=b.dataset.pdel;delete PROJ[id];cloudDeleteProject(id);
-    if(!Object.keys(PROJ).length){const p=newProject();PROJ[p.id]=p}
-    if(id===CUR)CUR=Object.keys(PROJ)[0];
-    P=PROJ[CUR];saveLocal();renderAll();toast("Project deleted");
-  }
+  if(b.dataset.dup){const s=PROJ[b.dataset.dup],p={...clone(s),id:uid("p"),name:s.name+" (copy)",updated:Date.now()};delete p.untouched;PROJ[p.id]=p;cloudSaveProject(p);openProject(p.id);toast("Copied");return}
+  if(b.dataset.pdel){const id=b.dataset.pdel;
+    $("pa-"+id).innerHTML=`<form class="delpw" data-delform="${id}"><input type="password" id="dp-${id}" placeholder="Password to delete" aria-label="Password to delete">
+      <button class="btn danger sm" type="submit">Delete</button><button class="btn ghost sm" type="button" data-pcancel="1">Cancel</button></form>`;
+    $("dp-"+id).focus();return}
+  if(b.dataset.pcancel){renderProjList()}
+});
+$("projList").addEventListener("submit",async e=>{
+  e.preventDefault();const f=e.target.closest("[data-delform]");if(!f)return;const id=f.dataset.delform;
+  if(await sha256($("dp-"+id).value.trim())!==LOCK_HASH){toast("Wrong password — project not deleted");$("dp-"+id).select();return}
+  const name=PROJ[id]?.name;delete PROJ[id];cloudDeleteProject(id);
+  if(!Object.keys(PROJ).length){const p=newProject();PROJ[p.id]=p}
+  if(id===CUR)CUR=Object.keys(PROJ)[0];
+  P=PROJ[CUR];saveLocal();renderAll();toast(`Deleted "${name}"`);
 });
 $("newProj").onclick=()=>{const p=newProject("New project "+(Object.keys(PROJ).length+1));PROJ[p.id]=p;cloudSaveProject(p);openProject(p.id);setTimeout(()=>{$("pName").focus();$("pName").select()},0)};
 
 function renderRoofs(){
   $("roofBody").innerHTML=P.roofs.map((r,i)=>`<tr>
     <td><input type="text" id="rn-${r.id}" data-ri="${i}" data-rk="name" value="${esc(r.name)}" aria-label="Roof name" style="min-width:110px"></td>
-    <td><select id="rt-${r.id}" data-ri="${i}" data-rk="type" aria-label="Roof type">${Object.entries(ROOF_TYPES).map(([k,n])=>`<option value="${k}" ${r.type===k?"selected":""}>${n}</option>`).join("")}</select></td>
+    <td><div class="roofsel"><select id="rt-${r.id}" data-ri="${i}" data-rk="type" aria-label="Roof type">${Object.entries(ROOF_TYPES).map(([k,n])=>`<option value="${k}" ${r.type===k?"selected":""}>${n}</option>`).join("")}</select>
+      ${r.type==="metal"?`<select id="rs-${r.id}" data-ri="${i}" data-rk="sub" aria-label="Metal sheet type">${Object.entries(METAL_SUB).map(([k,n])=>`<option value="${k}" ${(r.sub||"trap")===k?"selected":""}>${n}</option>`).join("")}</select>`:""}</div></td>
     <td class="n"><input type="number" id="rm-${r.id}" data-ri="${i}" data-rk="mods" value="${r.mods||""}" placeholder="0" style="width:92px;text-align:right" aria-label="Modules"></td>
     <td class="n" id="rk-${r.id}">${fmt(r.mods*P.wp/1000,2)}</td>
     <td>${P.roofs.length>1?`<button class="iconbtn" data-rdel="${i}" aria-label="Remove roof" title="Remove roof">✕</button>`:""}</td></tr>`).join("");
@@ -730,29 +873,29 @@ function renderPv(){
   const pv=P.pv;
   $("clearPv").hidden=!pv;
   if(!pv){$("pvSum").innerHTML=`<p class="empty">Nothing pulled yet. Pick inverters (and build the AC route) in PV Design, then press <b>Pull from PV Design</b>. Inverter, ACCB and AC cable lines in the BOQ fill in from it.</p>`;return}
-  const c=ctx();
+  const c=ctx(),route=pv.route||[];
   $("pvSum").innerHTML=`
     <div class="flex" style="margin:4px 0 10px;font-size:12.5px;color:var(--sub)">Pulled ${new Date(pv.pulled).toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})}
       ${pv.demo?'<span class="pill no" style="margin:0">Sample design data</span><span>PV Design runs on your website, so this preview uses sample data.</span>':""}</div>
     <div class="pvgrid">
       <div class="tw"><table>
-        <thead><tr><th>Inverter</th><th class="n">Qty</th><th class="n">kW</th><th class="n">Feeder</th><th>Cable</th></tr></thead>
-        <tbody>${pv.inverters.map(v=>`<tr><td><b>${esc(v.model)}</b></td><td class="n">${v.qty}</td><td class="n">${fmt(v.kw*v.qty)}</td><td class="n">${v.brk} A</td><td>${esc(v.cable||"")}</td></tr>`).join("")}
-        <tr class="tot"><td>Total</td><td class="n">${pv.inverters.reduce((a,b)=>a+b.qty,0)}</td><td class="n">${fmt(pv.inverters.reduce((a,b)=>a+b.kw*b.qty,0))}</td><td></td><td></td></tr></tbody></table></div>
+        <thead><tr><th>Inverter</th><th class="n">Qty</th><th class="n">kVA</th><th class="n">Feeder</th><th>Cable</th></tr></thead>
+        <tbody>${pv.inverters.map(v=>`<tr><td><b>${esc(v.model)}</b></td><td class="n">${v.qty}</td><td class="n">${fmt((v.kva||v.kw)*v.qty,1)}</td><td class="n">${v.brk} A</td><td>${esc(v.cable||"")}</td></tr>`).join("")}
+        <tr class="tot"><td>Total</td><td class="n">${pv.inverters.reduce((a,b)=>a+b.qty,0)}</td><td class="n">${fmt(pv.inverters.reduce((a,b)=>a+(b.kva||b.kw)*b.qty,0),1)}</td><td></td><td></td></tr></tbody></table></div>
       <div class="pvbox">
         <div><span class="k">ACCB in</span><b>${esc(c.accb.ins||"—")}</b></div>
         <div><span class="k">ACCB out</span><b>${pv.accb?.out||c.accb.out} A</b><span class="spc">${esc(pv.accb?.cable||"")}${pv.accb?.note?" · "+esc(pv.accb.note):""}</span></div>
-        <div><span class="k">AC route</span><b>${(pv.route||[]).length?(pv.route.length+" segments"):"Not built"}</b><span class="spc">${!(pv.route||[]).length?"Build the AC route in PV Design to fill AC cables":(pv.route.filter(r=>!(+r.len)).length?"some lengths are 0":"lengths entered")}</span></div>
+        <div><span class="k">AC route</span><b>${route.length?route.length+" segments":"Not built"}</b><span class="spc">${!route.length?"Cable sizes still come in — you enter the metres":(route.filter(r=>!(+r.len)).length?"some lengths are 0":"lengths entered")}</span></div>
       </div>
     </div>`;
 }
 function renderProjStats(){
-  const c=ctx(),ratio=c.kWac?c.kWp/c.kWac:0;
+  const c=ctx(),ratio=c.kVA?c.kWp/c.kVA:0;
   $("projStats").innerHTML=`
     <div class="stat hero"><span class="k">DC capacity</span><span class="v">${fmt(c.kWp,2)}<small>kWp</small></span><span class="hint">${fmt(c.mods)} × ${P.wp} Wp · ${P.roofs.length} roof${P.roofs.length>1?"s":""}</span></div>
-    <div class="stat"><span class="k">AC capacity</span><span class="v">${fmt(c.kWac)}<small>kW</small></span><span class="hint">${c.invN?`${c.invN} inverters · DC/AC ${ratio.toFixed(2)}`:"Pull from PV Design"}</span></div>
+    <div class="stat"><span class="k">AC capacity</span><span class="v">${fmt(c.kVA,1)}<small>kVA</small></span><span class="hint">${c.invN?`${c.invN} inverters · DC/AC ${ratio.toFixed(2)} (on kVA)`:"Pull from PV Design"}</span></div>
     <div class="stat"><span class="k">ACCB</span><span class="v">${c.invN?c.accb.out+"<small>A out</small>":"—"}</span><span class="hint">${esc(c.accb.ins||"No inverters yet")}</span></div>
-    <div class="stat"><span class="k">Roof types</span><span class="v" style="font-size:16px;font-family:var(--sans)">${[...new Set(P.roofs.map(r=>ROOF_TYPES[r.type]))].join(" + ")}</span><span class="hint">Sets the structure lines in the BOQ</span></div>`;
+    <div class="stat"><span class="k">Roof types</span><span class="v" style="font-size:16px;font-family:var(--sans)">${[...new Set(P.roofs.map(r=>strName(strKey(r))))].join(" + ")}</span><span class="hint">Sets the structure lines in the BOQ</span></div>`;
   P.roofs.forEach(r=>{const e=$("rk-"+r.id);if(e)e.textContent=fmt(r.mods*P.wp/1000,2)});
 }
 function renderProject(){
@@ -764,20 +907,24 @@ const PJ=$("p-proj");
 PJ.addEventListener("input",e=>{
   const el=e.target;
   if(el.dataset.p){P[el.dataset.p]=el.dataset.num?(+el.value||0):el.value;if(el.dataset.p==="name")$("projTitle").textContent=el.value}
-  else if(el.dataset.ri!=null){const r=P.roofs[+el.dataset.ri];r[el.dataset.rk]=el.dataset.rk==="mods"?(+el.value||0):el.value}
+  else if(el.dataset.ri!=null&&el.tagName!=="SELECT"){const r=P.roofs[+el.dataset.ri];r[el.dataset.rk]=el.dataset.rk==="mods"?(+el.value||0):el.value}
   else return;
   save();renderProjStats();updateTop();
 });
-PJ.addEventListener("change",e=>{if(e.target.dataset.p||e.target.dataset.ri!=null)renderProjList()});
+PJ.addEventListener("change",e=>{
+  const el=e.target;
+  if(el.tagName==="SELECT"&&el.dataset.ri!=null){const r=P.roofs[+el.dataset.ri];r[el.dataset.rk]=el.value;if(r.type==="metal"&&!r.sub)r.sub="trap";save();renderRoofs();renderProjStats();updateTop()}
+  if(el.dataset.p||el.dataset.ri!=null)renderProjList();
+});
 PJ.addEventListener("click",e=>{const d=e.target.closest("[data-rdel]");if(d){P.roofs.splice(+d.dataset.rdel,1);save();renderProject()}});
-$("addRoof").onclick=()=>{P.roofs.push({id:uid("r"),name:"Roof "+(P.roofs.length+1),type:P.roofs[P.roofs.length-1]?.type||"metal",mods:0});save();renderRoofs();renderProjStats();
+$("addRoof").onclick=()=>{const last=P.roofs[P.roofs.length-1]||{};P.roofs.push({id:uid("r"),name:"Roof "+(P.roofs.length+1),type:last.type||"metal",sub:last.sub||"trap",mods:0});save();renderRoofs();renderProjStats();
   setTimeout(()=>$("rm-"+P.roofs[P.roofs.length-1].id).focus(),0)};
 $("pullPv").onclick=()=>{
   let ex=null;try{ex=JSON.parse(localStorage.getItem(PV_EXPORT_KEY))}catch(e){}
   if(!ex&&!PREVIEW){toast("Nothing in PV Design yet — pick inverters there first");return}
   const demo=!ex;if(demo)ex=DEMO_PV;
   P.pv={...clone(ex),demo,pulled:new Date().toISOString()};
-  ["inv-","acr-"].forEach(pf=>Object.keys(P.O).filter(k=>k.startsWith(pf)).forEach(k=>delete P.O[k]));   /* fresh pull resets those lines */
+  ["inv-","acr-"].forEach(pf=>Object.keys(P.O).filter(k=>k.startsWith(pf)).forEach(k=>delete P.O[k]));
   save();renderProject();toast(demo?"PV Design not found here — sample design data loaded":"Pulled from PV Design");
 };
 $("clearPv").onclick=()=>{P.pv=null;save();renderProject();toast("PV Design data cleared")};
@@ -802,9 +949,9 @@ function rowHTML(it,code){
   const num=(k,v,ov,title)=>it.custom
     ?`<input type="number" id="${k}-${it.lid}" data-cl="${it.lid}" data-k="${k}" value="${v}" aria-label="${title}">`
     :`<input type="number" class="${ov&&!it.manual?"ov":""}" id="${k}-${it.lid}" data-lid="${it.lid}" data-k="${k}" value="${v}" aria-label="${title}">`;
-  const rst=(k,ov,auto)=>ov&&!it.manual?`<button class="iconbtn" data-reset="${k}" data-lid="${it.lid}" title="Back to ${fq(auto)}" aria-label="Undo">↺</button>`:"";
+  const rRst=it.ovR&&!it.custom?`<button class="iconbtn" data-reset="r" data-lid="${it.lid}" title="Back to database rate ${fq(it.autoRate)}" aria-label="Back to database rate">↺</button>`:"";
   const rateCell=it.pct?`<span class="spc" style="text-align:right">% of all other costs</span>`
-    :`<div class="cell">${rst("r",it.ovR,it.autoRate)}${num("r",r2(it.rate),it.ovR,"Rate")}</div>`+
+    :`<div class="cell">${rRst}${num("r",r2(it.rate),it.ovR,"Rate")}</div>`+
      (!it.rate&&it.q?'<span class="auto bad">NO PRICE</span>':it.rateNote?`<span class="auto">${esc(it.rateNote)}</span>`:it.rateSrc?`<span class="auto">${it.rateSrc}</span>`:"");
   const qNote=it.needQ&&!it.q&&!it.off?`<span class="auto ${it.soft?"":"warn"}">enter qty</span>`:it.auto&&!it.ovQ?'<span class="auto">auto</span>':"";
   const act=it.manual?`<button class="iconbtn" data-mdel="${it.lid}" title="Delete line" aria-label="Delete line">🗑</button>`
@@ -812,39 +959,46 @@ function rowHTML(it,code){
   return `<tr class="${it.off?"off":""} ${!it.q?"zero":""}">
     <td class="code">${code}</td><td>${d}</td><td>${unit}</td>
     <td class="n">${rateCell}</td>
-    <td class="n"><div class="cell">${rst("q",it.ovQ,it.aQ)}${num("q",it.q||"",it.ovQ,"Quantity")}</div>${qNote}</td>
+    <td class="n"><div class="cell">${num("q",it.q||"",it.ovQ,"Quantity")}</div>${qNote}</td>
     <td class="n amt" id="am-${it.lid}">${fmt(it.amt)}</td><td>${act}</td></tr>`;
 }
-const FAM_ADD={"Mounting Structure":["str","+ Structure line"],"DC Cables":["dc","+ DC cable line"],"Inverter":["inv","+ Inverter"],
-  "AC Cables":["ac","+ AC cable line"],"AC Earthing":["earth","+ Earth cable line"],"Cable Trays":["tray","+ Tray line"]};
+const FAM_ADD={"Mounting Structure":[["str","+ Structure line"]],"DC Cables":[["dc","+ DC cable line"]],"Inverter":[["inv","+ Inverter"],["inviso","+ Inverter isolator"]],
+  "Switchgear":[["iso","+ Isolator"]],"AC Cables":[["ac","+ AC cable line"]],"AC Earthing":[["earth","+ Earth cable line"]],"Cable Trays":[["tray","+ Tray line"]]};
+const NO_ADD={"Switchgear":["accb","mdbm","mdbe","meter","iso"],"Other BOQ":["sky","prot","access"],"Mounting Structure":["str"]};
 const HINT={"Solar Panel":"One line per roof — set roofs on the Project tab",
   "Inverter":"Pulled from PV Design on the Project tab",
-  "AC Cables":"Single POC: lengths come from the PV Design AC route. Multiple POC: add lines yourself",
-  "Cable Tray Accessories":"Couplers, supports, clamps and jumpers follow total tray length. Fill the rest from your layout"};
+  "AC Cables":"Cable sizes come from PV Design; metres from its AC route when built",
+  "Cable Tray Accessories":"Couplers, supports, clamps and jumpers follow total tray length. Fill the rest from your layout",
+  "Other BOQ":"Skylight, walkway and lifeline lines appear when a roof is metal"};
 function visible(it,s){return !s.smart?(it.custom||it.q||it.ovQ||it.ovR||it.off):true}
+function segHTML(id,attr,opts,v){return `<div class="seg" id="${id}">${opts.map(([k,l])=>`<button ${attr}="${k}" class="${v===k?"on":""}">${l}</button>`).join("")}</div>`}
 function renderBoq(){
   const R=calc();
-  $("boqSub").textContent=`${P.name} · ${fmt(R.c.kWp,2)} kWp · ${fmt(R.c.kWac)} kW AC${R.needQ?` · ${R.needQ} lines need a qty`:""}${R.missing?` · ${R.missing} without price`:""}`;
+  $("boqSub").textContent=`${P.name} · ${fmt(R.c.kWp,2)} kWp · ${fmt(R.c.kVA,1)} kVA${R.needQ?` · ${R.needQ} lines need a qty`:""}${R.missing?` · ${R.missing} without price`:""}`;
   $("boqWrap").innerHTML=R.cats.map(s=>{
     const vis=s.items.filter(it=>visible(it,s));
-    const fam=FAM_ADD[s.cat]?.[0];
-    const addable=DB.filter(x=>x.cat===s.cat&&!(fam&&x.id.startsWith(fam+"-"))&&!vis.some(v=>v.key===x.id&&!v.off));
+    const block=[...(FAM_ADD[s.cat]||[]).map(f=>f[0]),...(NO_ADD[s.cat]||[])];
+    const addable=DB.filter(x=>x.cat===s.cat&&!block.some(f=>x.id.startsWith(f+"-"))&&!vis.some(v=>v.key===x.id&&!v.off));
     const used=s.items.filter(it=>!it.off&&it.q).length;
-    const swgCtl=s.cat==="Switchgear"?`<div class="seg" id="pocSeg"><button data-poc="single" class="${P.swg.mode==="single"?"on":""}">1 POC</button><button data-poc="multi" class="${P.swg.mode==="multi"?"on":""}">Multiple POC</button></div>
-      ${P.swg.mode==="multi"?`<label class="flex" style="gap:6px;font-size:12.5px;color:var(--sub);font-weight:600" for="pocN">POCs <input type="number" id="pocN" min="2" value="${R.c.poc}" style="width:70px"></label>`:""}`:"";
+    let ctl="";
+    if(s.cat==="Switchgear")ctl=segHTML("pocSeg","data-poc",[["single","1 POC"],["multi","Multiple POC"]],P.swg.mode)+
+      (P.swg.mode==="multi"?`<label class="flex" style="gap:6px;font-size:12.5px;color:var(--sub);font-weight:600" for="pocN">POCs <input type="number" id="pocN" min="2" value="${R.c.poc}" style="width:70px"></label>`:"")+
+      `<span class="hint">${P.swg.mode==="single"?"ACCB in/out from the inverters. MDB breaker = ACCB out. Add an isolator only if needed.":"Type each ACCB's incoming breakers and pick its out rating."}</span>`;
+    if(s.cat==="Monitoring System")ctl=segHTML("monSeg","data-mon",Object.entries(MON_SETS).map(([k,v])=>[k,v.label]),P.mon)+
+      `<span class="hint">${P.mon==="meteo"?"Full Meteocontrol set — fill or zero the lines you need":"Sungrow data logger with Shamslog weather station"}</span>`;
     return `<details class="sec" data-cat="${esc(s.cat)}" ${openCats.has(s.cat)?"open":""}>
       <summary><span class="num">${s.no}</span><span class="stitle">${esc(s.cat)}<small>${used} line${used===1?"":"s"}${s.needQ?` · <span class="warnt">${s.needQ} need qty</span>`:""}${s.missing?` · <span class="miss">${s.missing} without price</span>`:""}</small></span>
         <span class="ssum"><span id="st-${s.no}">${fmt(s.sub)}</span><small id="sp-${s.no}">${R.cost?(s.sub/R.cost*100).toFixed(1):0}% · ${R.wp?(s.sub/R.wp).toFixed(3):0}/Wp</small></span>
         <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5"/></svg></summary>
       <div class="secbody">
-        ${swgCtl?`<div class="addrow" style="border-top:0;border-bottom:1px solid var(--line)">${swgCtl}<span class="hint">${P.swg.mode==="single"?"ACCB in/out from the inverters. MDB breaker = ACCB out.":"Type each ACCB's incoming breakers and pick its out rating."}</span></div>`:""}
+        ${ctl?`<div class="addrow" style="border-top:0;border-bottom:1px solid var(--line)">${ctl}</div>`:""}
         <div class="tw"><table class="boq">
         <colgroup><col class="c-no"><col><col class="c-u"><col class="c-r"><col class="c-q"><col class="c-a"><col class="c-x"></colgroup>
         <thead><tr><th>No.</th><th>Description</th><th>Unit</th><th class="n">Rate (AED)</th><th class="n">Qty</th><th class="n">Amount (AED)</th><th></th></tr></thead>
         <tbody>${vis.length?vis.map((it,i)=>rowHTML(it,`${s.no}.${i+1}`)).join(""):`<tr><td colspan="7" class="emptyrow">${esc(HINT[s.cat]||"No lines yet. Add one below.")}</td></tr>`}</tbody></table></div>
         <div class="addrow">
-          ${FAM_ADD[s.cat]?`<button class="btn ghost sm" data-addfam="${FAM_ADD[s.cat][0]}" data-cat="${esc(s.cat)}">${FAM_ADD[s.cat][1]}</button>`:""}
-          ${addable.length&&!["Solar Panel","Switchgear"].includes(s.cat)?`<select id="add-${s.no}" data-addsel="${esc(s.cat)}" aria-label="Add item"><option value="">Add item from price database…</option>${addable.map(x=>`<option value="${x.id}">${esc(x.d)}${x.spec?" · "+esc(x.spec):""}</option>`).join("")}</select>`:""}
+          ${(FAM_ADD[s.cat]||[]).map(([f,l])=>`<button class="btn ghost sm" data-addfam="${f}" data-cat="${esc(s.cat)}">${l}</button>`).join("")}
+          ${addable.length&&s.cat!=="Solar Panel"?`<select id="add-${s.no}" data-addsel="${esc(s.cat)}" aria-label="Add item"><option value="">Add item from price database…</option>${addable.map(x=>`<option value="${x.id}">${esc(x.d)}${x.spec?" · "+esc(x.spec):""}</option>`).join("")}</select>`:""}
           <button class="btn ghost sm" data-addcus="${esc(s.cat)}">+ Custom line</button>
           ${HINT[s.cat]&&vis.length?`<span class="hint">${esc(HINT[s.cat])}</span>`:""}
         </div></div></details>`;
@@ -871,8 +1025,7 @@ BW.addEventListener("input",e=>{
 BW.addEventListener("change",e=>{
   const el=e.target;
   if(el.dataset.sel){
-    if(el.dataset.ml){const m=P.ML.find(x=>x.lid===el.dataset.sel);if(m)m.key=el.value}
-    else setO(el.dataset.sel,{sel:el.value});
+    if(el.dataset.ml){const m=P.ML.find(x=>x.lid===el.dataset.sel);if(m)m.key=el.value}else setO(el.dataset.sel,{sel:el.value});
     save();renderBoq();return;
   }
   if(el.id==="pocN"){P.swg.n=Math.max(2,+el.value||2);save();renderBoq();return}
@@ -885,9 +1038,10 @@ BW.addEventListener("toggle",e=>{const d=e.target;if(d.tagName==="DETAILS"&&d.da
 BW.addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;
   if(b.dataset.poc){P.swg.mode=b.dataset.poc;save();renderBoq();return}
+  if(b.dataset.mon){P.mon=b.dataset.mon;save();renderBoq();return}
   if(b.dataset.reset){setO(b.dataset.lid,{[b.dataset.reset]:null});save();renderBoq();return}
   if(b.dataset.off){setO(b.dataset.off,{off:OV(b.dataset.off).off?null:true});save();renderBoq();return}
-  if(b.dataset.addfam){const fam=b.dataset.addfam,cat=b.dataset.cat;const lid=uid("m");P.ML.push({lid,cat,fam,key:famOpts(fam)[0]?.id});openCats.add(cat);save();renderBoq();
+  if(b.dataset.addfam){const fam=b.dataset.addfam,cat=b.dataset.cat,lid=uid("m");P.ML.push({lid,cat,fam,key:famOpts(fam)[0]?.id});openCats.add(cat);save();renderBoq();
     setTimeout(()=>{const el=$("sel-"+lid);el&&el.focus()},0);return}
   if(b.dataset.addcus!=null){const cat=b.dataset.addcus,lid=uid("c");P.ML.push({lid,cat,custom:true,d:"",u:"Nos",q:1,r:0});openCats.add(cat);save();renderBoq();
     setTimeout(()=>{const el=$("cd-"+lid);el&&el.focus()},0);return}
@@ -896,14 +1050,15 @@ BW.addEventListener("click",e=>{
 $("expandAll").onclick=function(){const all=openCats.size<CATS.length;openCats=new Set(all?CATS:[]);this.textContent=all?"Close all":"Open all";renderBoq()};
 
 /* ============ S8 · PAGE PRICE DATABASE ============ */
-const LINKED={x171:"Formula",x174:"Formula",x199:"= panel rate",x200:"= structure rate",x197:"= 6 mm² NA rate",x198:"= 6 mm² AR rate"};
-const noPrice=x=>!x.rate&&!LINKED[x.id]&&!PCT.has(x.id);
+const noPrice=x=>!x.rate&&!x.formula&&!PCT.has(x.id);
 function renderDb(){
   const q=$("dbSearch").value.trim().toLowerCase(),cf=$("dbCat").value,show=$("dbShow").value;
+  const c=ctx();CTXV=c;
   const used=show==="used"?new Set(calc().cats.flatMap(s=>s.items.filter(i=>!i.off&&i.q).map(i=>i.key))):null;
-  $("dbWrap").innerHTML=CATS.filter(c=>!cf||c===cf).map(cat=>{
+  $("dbWrap").innerHTML=CATS.filter(x=>!cf||x===cf).map(cat=>{
     const all=DB.filter(x=>x.cat===cat).sort((a,b)=>a.ord-b.ord);
-    const items=all.filter(x=>(!q||[x.d,x.spec,x.sup].join(" ").toLowerCase().includes(q))&&(show!=="missing"||noPrice(x))&&(show!=="used"||used.has(x.id)));
+    const items=all.filter(x=>(!q||[x.d,x.spec,x.sup,x.id,x.formula].join(" ").toLowerCase().includes(q))&&(show!=="missing"||noPrice(x))
+      &&(show!=="formula"||x.formula)&&(show!=="used"||used.has(x.id)));
     if(!items.length&&(q||show!=="all"))return"";
     const miss=all.filter(noPrice).length,n=CATS.indexOf(cat)+1,open=openDb.has(cat)||q||show!=="all";
     return `<details class="sec" data-dbcat="${esc(cat)}" ${open?"open":""}>
@@ -911,22 +1066,24 @@ function renderDb(){
       <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5"/></svg></summary>
       <div class="secbody"><div class="tw"><table class="dbt">
         <colgroup><col><col class="c-sp"><col class="c-u"><col class="c-r"><col class="c-c"><col class="c-s"><col class="c-d"><col class="c-x"></colgroup>
-        <thead><tr><th>Description</th><th>Spec</th><th>Unit</th><th class="n">Rate</th><th>Currency</th><th>Supplier</th><th>Last updated</th><th></th></tr></thead>
-        <tbody>${items.map(dbRow).join("")}</tbody></table></div>
+        <thead><tr><th>Description</th><th>Spec</th><th>Unit</th><th class="n">Rate or =formula</th><th>Currency</th><th>Supplier</th><th>Last updated</th><th></th></tr></thead>
+        <tbody>${items.map(x=>dbRow(x,c)).join("")}</tbody></table></div>
         <div class="addrow"><button class="btn ghost sm" data-dbadd="${esc(cat)}">+ New item in ${esc(cat)}</button></div></div></details>`;
   }).join("")||`<div class="card" style="color:var(--sub)">Nothing matches. Clear the search or filters.</div>`;
 }
-function dbRow(x){
-  const fixed=LINKED[x.id]||(PCT.has(x.id)?"% item":null);
+function dbRow(x,c){
   let ch="";
-  if(x.prev!=null&&x.prev!==x.rate&&x.prev>0){const p=(x.rate-x.prev)/x.prev*100;ch=`<span class="${p>0?"up":"dn"}">${p>0?"▲":"▼"} ${Math.abs(p).toFixed(1)}%</span> from ${fmt(x.prev,2)}<br>`}
+  if(x.prev!=null&&x.prev!==x.rate&&x.prev>0&&!x.formula){const p=(x.rate-x.prev)/x.prev*100;ch=`<span class="${p>0?"up":"dn"}">${p>0?"▲":"▼"} ${Math.abs(p).toFixed(1)}%</span> from ${fmt(x.prev,2)}<br>`}
+  const isPct=PCT.has(x.id);
+  const val=x.formula?"="+x.formula:(x.rate||"");
+  const fNote=x.formula?(()=>{const err=checkFormula(x.formula),v=evalFormula(x.formula,c,0);return err||!isFinite(v)?`<span class="ferr">${esc(err||"Formula error")}</span>`:`<span class="fval">= ${fmt(v,2)} on this project</span>`})():"";
   return `<tr>
-    <td><input type="text" id="dd-${x.id}" data-db="${x.id}" data-k="d" value="${esc(x.d)}" aria-label="Description"></td>
+    <td><input type="text" id="dd-${x.id}" data-db="${x.id}" data-k="d" value="${esc(x.d)}" aria-label="Description"><span class="iid">${esc(x.id)}</span></td>
     <td><input type="text" id="ds-${x.id}" data-db="${x.id}" data-k="spec" value="${esc(x.spec)}" aria-label="Spec"></td>
     <td><input type="text" id="du-${x.id}" data-db="${x.id}" data-k="u" value="${esc(x.u)}" aria-label="Unit"></td>
-    <td class="n">${fixed?`<span class="pill link" style="margin:0">${esc(fixed)}</span>`
-      :`<input type="number" id="dr-${x.id}" data-db="${x.id}" data-k="rate" value="${x.rate||""}" placeholder="0" step="any" class="${x.rate?"":"empty"}" aria-label="Rate">`}</td>
-    <td>${fixed?"":`<select id="dc-${x.id}" data-db="${x.id}" data-k="cur" aria-label="Currency"><option ${x.cur==="AED"?"selected":""}>AED</option><option ${x.cur==="USD"?"selected":""}>USD</option></select>`}</td>
+    <td class="n">${isPct?`<span class="pill link" style="margin:0">% set in BOQ</span>`
+      :`<input type="text" inputmode="decimal" id="dr-${x.id}" data-db="${x.id}" data-k="rate" value="${esc(val)}" placeholder="0" class="rin ${x.formula?"fx":""} ${noPrice(x)?"empty":""}" aria-label="Rate or formula">${fNote}`}</td>
+    <td>${isPct||x.formula?"":`<select id="dc-${x.id}" data-db="${x.id}" data-k="cur" aria-label="Currency"><option ${x.cur==="AED"?"selected":""}>AED</option><option ${x.cur==="USD"?"selected":""}>USD</option></select>`}</td>
     <td><input type="text" id="dsu-${x.id}" data-db="${x.id}" data-k="sup" value="${esc(x.sup)}" placeholder="Supplier" aria-label="Supplier"></td>
     <td><div class="upd">${ch}${x.upd||"—"}</div></td>
     <td>${x.ord>=5000?`<button class="iconbtn" data-dbdel="${x.id}" aria-label="Delete item" title="Delete item">🗑</button>`:""}</td></tr>`;
@@ -934,23 +1091,49 @@ function dbRow(x){
 const DW=$("dbWrap");
 DW.addEventListener("change",e=>{
   const el=e.target,it=dbItem(el.dataset.db);if(!it)return;const k=el.dataset.k;
-  if(k==="rate"){const v=+el.value||0;if(v!==it.rate){it.prev=it.rate||null;it.rate=v;it.upd=today}}else it[k]=el.value;
-  cloudSavePrice(it);renderDb();updateTop();toast(k==="rate"?"Price updated — every BOQ now uses it":"Saved");
+  if(k==="rate"){
+    const raw=el.value.trim();
+    if(raw.startsWith("=")){const f=raw.slice(1).trim(),err=checkFormula(f);if(err){toast(err);el.select();return}
+      if(f!==it.formula){it.formula=f;it.upd=today}}
+    else{const v=+raw||0;if(v!==it.rate||it.formula){it.prev=it.formula?null:(it.rate||null);it.rate=v;it.formula="";it.upd=today}}
+  }else it[k]=el.value;
+  cloudSavePrice(it);renderDb();updateTop();toast(k==="rate"?"Saved — every BOQ now uses it":"Saved");
 });
 DW.addEventListener("toggle",e=>{const d=e.target;if(d.tagName==="DETAILS"&&d.dataset.dbcat){d.open?openDb.add(d.dataset.dbcat):openDb.delete(d.dataset.dbcat)}},true);
 DW.addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;
-  if(b.dataset.dbadd){const cat=b.dataset.dbadd,it={id:uid("n"),ord:5000+DB.length,cat,d:"New item",spec:"",u:"Nos",rate:0,cur:"AED",sup:"",upd:today,prev:null};
+  if(b.dataset.dbadd){const cat=b.dataset.dbadd,it={id:uid("n"),ord:5000+DB.length,cat,d:"New item",spec:"",u:"Nos",rate:0,formula:"",cur:"AED",sup:"",upd:today,prev:null};
     DB.push(it);openDb.add(cat);cloudSavePrice(it);renderDb();setTimeout(()=>{const el=$("dd-"+it.id);el&&(el.focus(),el.select())},0)}
   if(b.dataset.dbdel){DB=DB.filter(x=>x.id!==b.dataset.dbdel);cloudDeletePrice(b.dataset.dbdel);renderDb()}
 });
 $("dbSearch").addEventListener("input",renderDb);$("dbCat").addEventListener("change",renderDb);$("dbShow").addEventListener("change",renderDb);
 $("fx").addEventListener("change",e=>{FX=+e.target.value||3.6725;saveDBLocal();updateTop();toast("Exchange rate saved")});
 
-/* ============ S9 · FIREBASE SYNC ============ */
+/* ============ S9 · PAGE SETTINGS ============ */
+function saveS(){try{localStorage.setItem(SKEY,JSON.stringify(S))}catch(e){}clearTimeout(saveS._t);saveS._t=setTimeout(cloudSaveSettings,600)}
+function renderSettings(){
+  document.querySelectorAll("#p-set [data-s]").forEach(el=>{el.value=S[el.dataset.s]??""});
+  $("termLib").innerHTML=S.terms.map((t,i)=>`<div class="term">
+    <input type="checkbox" id="tc-${t.id}" data-ti="${i}" data-tk="on" ${t.on?"checked":""} aria-label="Add to new offers">
+    <textarea id="tt-${t.id}" data-ti="${i}" data-tk="text" rows="2" aria-label="Term text">${esc(t.text)}</textarea>
+    <button class="iconbtn" data-tdel="${i}" title="Delete term" aria-label="Delete term">🗑</button></div>`).join("")||`<p class="empty">No terms yet.</p>`;
+}
+const SP=$("p-set");
+SP.addEventListener("input",e=>{
+  const el=e.target;
+  if(el.dataset.s){S[el.dataset.s]=el.dataset.num?(+el.value||0):el.value}
+  else if(el.dataset.ti!=null&&el.dataset.tk==="text"){S.terms[+el.dataset.ti].text=el.value}
+  else return;
+  saveS();updateTop();
+});
+SP.addEventListener("change",e=>{const el=e.target;if(el.dataset.tk==="on"){S.terms[+el.dataset.ti].on=el.checked;saveS()}});
+SP.addEventListener("click",e=>{const b=e.target.closest("[data-tdel]");if(b){S.terms.splice(+b.dataset.tdel,1);saveS();renderSettings()}});
+$("addTerm").onclick=()=>{const t={id:uid("t"),text:"",on:true};S.terms.push(t);saveS();renderSettings();setTimeout(()=>$("tt-"+t.id).focus(),0)};
+
+/* ============ S10 · FIREBASE SYNC ============ */
 let fdb=null;
 function setCloud(s,msg){
-  ["cloud","cloudP"].forEach(id=>{const el=$(id);el.className="cloud"+(s==="live"?" live":s==="error"?" err":"");
+  ["cloud","cloudP"].forEach(id=>{const el=$(id);el.className="cloud"+(s==="live"?" live":s==="error"&&!PREVIEW?" err":"");
     el.querySelector("span").textContent=s==="live"?"Firebase · live":s==="connecting"?"Connecting…":s==="error"?(PREVIEW?"Firebase connects on your website — saved on this browser here":"Firebase error — saved on this browser"):"Saved on this browser · Firebase not connected";
     if(msg)el.title=msg});
 }
@@ -964,16 +1147,19 @@ async function initCloud(){
     if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
     fdb=firebase.firestore();
     fdb.collection(FB_PRICES).onSnapshot(snap=>{
-      if(snap.empty){const b=fdb.batch();DB.forEach(it=>b.set(fdb.collection(FB_PRICES).doc(it.id),it));b.commit();return}
-      const arr=[];snap.forEach(d=>arr.push({...d.data(),id:d.id}));
-      const have=new Set(arr.map(x=>x.id)),missing=buildSeed().filter(x=>!have.has(x.id));   /* items added in a newer version of this page */
-      if(missing.length){const b=fdb.batch();missing.forEach(it=>b.set(fdb.collection(FB_PRICES).doc(it.id),it));b.commit()}
-      DB=[...arr,...missing].sort((a,b)=>a.ord-b.ord);saveDBLocal();setCloud("live");rerender();
+      const arr=[];let setDoc=null;
+      snap.forEach(d=>{if(d.id==="_settings")setDoc=d.data();else arr.push({...d.data(),id:d.id})});
+      if(setDoc&&setDoc.S)S={...clone(DEFAULT_S),...setDoc.S};else cloudSaveSettings();
+      try{localStorage.setItem(SKEY,JSON.stringify(S))}catch(e){}
+      if(!arr.length){const b=fdb.batch();DB.forEach(it=>b.set(fdb.collection(FB_PRICES).doc(it.id),it));b.commit();return}
+      const m=mergeSeed(arr);
+      if(m.toSave.length||m.toDelete.length){const b=fdb.batch();m.toSave.forEach(it=>b.set(fdb.collection(FB_PRICES).doc(it.id),it));m.toDelete.forEach(id=>b.delete(fdb.collection(FB_PRICES).doc(id)));b.commit()}
+      DB=m.list;saveDBLocal();setCloud("live");rerender();
     },err=>setCloud("error",err.message));
     fdb.collection(FB_PROJECTS).onSnapshot(snap=>{
       if(snap.empty){Object.values(PROJ).forEach(cloudSaveProject);return}
       const remote=new Set();
-      snap.forEach(d=>{const p=d.data();remote.add(p.id);if(!PROJ[p.id]||p.updated>PROJ[p.id].updated)PROJ[p.id]=p});
+      snap.forEach(d=>{const p=d.data();remote.add(p.id);if(!PROJ[p.id]||p.updated>PROJ[p.id].updated)PROJ[p.id]=fixProject(p)});
       Object.keys(PROJ).forEach(id=>{if(!remote.has(id)){if(PROJ[id].untouched)delete PROJ[id];else cloudSaveProject(PROJ[id])}});
       snap.docChanges().forEach(ch=>{if(ch.type==="removed")delete PROJ[ch.doc.id]});
       if(!PROJ[CUR])CUR=Object.keys(PROJ)[0];P=PROJ[CUR];saveLocal();setCloud("live");rerender();
@@ -982,10 +1168,11 @@ async function initCloud(){
 }
 function cloudSavePrice(it){saveDBLocal();if(fdb)fdb.collection(FB_PRICES).doc(it.id).set(it).catch(e=>toast("Firebase: "+e.message))}
 function cloudDeletePrice(id){saveDBLocal();if(fdb)fdb.collection(FB_PRICES).doc(id).delete()}
+function cloudSaveSettings(){if(fdb)fdb.collection(FB_PRICES).doc("_settings").set({id:"_settings",ord:-1,S}).catch(e=>toast("Firebase: "+e.message))}
 function cloudSaveProject(p){saveLocal();if(fdb&&p)fdb.collection(FB_PROJECTS).doc(p.id).set(p).catch(e=>toast("Firebase: "+e.message))}
 function cloudDeleteProject(id){saveLocal();if(fdb)fdb.collection(FB_PROJECTS).doc(id).delete()}
 
-/* ============ S10 · PAGE SUMMARY + CLIENT REPORT ============ */
+/* ============ S11 · PAGE SUMMARY + CLIENT REPORT ============ */
 function renderSummary(){
   const R=calc(),wp=v=>R.wp?(v/R.wp).toFixed(3):"0";
   $("sumStats").innerHTML=`
@@ -1011,18 +1198,28 @@ function words(n){
   const h=n=>{let s="";if(n>=100){s+=a[Math.floor(n/100)]+" Hundred";n%=100;if(n)s+=" and "}if(n>=20){s+=b[Math.floor(n/10)];if(n%10)s+="-"+a[n%10]}else if(n)s+=a[n];return s};
   if(!n)return"Zero";const p=[];for(const [v,l] of [[1e9,"Billion"],[1e6,"Million"],[1e3,"Thousand"]]){if(n>=v){p.push(h(Math.floor(n/v))+" "+l);n%=v}}if(n)p.push(h(n));return p.join(" ");
 }
-function renderReport(){
+const projTerms=()=>P.terms?S.terms.filter(t=>P.terms.includes(t.id)):S.terms.filter(t=>t.on);
+function renderTermPick(){
+  const sel=new Set(projTerms().map(t=>t.id));
+  $("termCount").textContent=`${sel.size} of ${S.terms.length} selected · edit the list in Settings`;
+  $("termList").innerHTML=S.terms.map(t=>`<label class="tpick"><input type="checkbox" data-tp="${t.id}" id="tp-${t.id}" ${sel.has(t.id)?"checked":""}><span>${esc(t.text.replace("{validity}",S.validity))}</span></label>`).join("")||`<p class="empty">No terms — add them in Settings.</p>`;
+}
+$("termList").addEventListener("change",e=>{const id=e.target.dataset.tp;if(!id)return;
+  const cur=new Set(projTerms().map(t=>t.id));e.target.checked?cur.add(id):cur.delete(id);P.terms=[...cur];save();renderTermPick();renderPaper()});
+function renderReport(){renderTermPick();renderPaper()}
+function renderPaper(){
   const R=calc(),k=R.cost?R.sell/R.cost:0,cats=R.cats.filter(s=>s.sub>0);
   let run=0;const sp=cats.map((s,i)=>{let v=Math.round(s.sub*k);if(i===cats.length-1)v=Math.round(R.sell)-run;run+=v;return v});
   const sell=Math.round(R.sell),vat=Math.round(sell*.05),grand=sell+vat;
   const inv=R.c.inv.map(v=>`${v.qty} × ${v.model}`).join(", ")||"—";
   const inc=s=>s.items.filter(x=>!x.off&&x.amt>0&&!x.pct).slice(0,3).map(x=>esc(x.d)).join(" · ");
+  const terms=projTerms();
   $("paper").innerHTML=`
-    <div class="rhead"><div class="co">${esc(COMPANY)}<small>Solar EPC · Dubai, UAE</small></div>
+    <div class="rhead"><div class="co">${esc(S.company||"Company name — set in Settings")}<small>${esc(S.address||"")}${S.trn?` · TRN ${esc(S.trn)}`:""}${S.contact?`<br>${esc(S.contact)}`:""}</small></div>
       <div class="doc"><b>Commercial offer</b>Ref. ${esc(P.ref||"—")}<br>${new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})}</div></div>
     <div class="rmeta">
       <div><h4>Project</h4><p><b>${esc(P.name)}</b><br>${esc(P.location||"")}</p></div>
-      <div><h4>System</h4><p>${fmt(R.c.kWp,2)} kWp DC · ${fmt(R.c.kWac)} kW AC<br>${fmt(R.c.mods)} × ${P.wp} Wp modules · ${[...new Set(P.roofs.map(r=>ROOF_TYPES[r.type]))].join(" + ")}<br>Inverters: ${esc(inv)}</p></div>
+      <div><h4>System</h4><p>${fmt(R.c.kWp,2)} kWp DC · ${fmt(R.c.kVA,1)} kVA AC<br>${fmt(R.c.mods)} × ${P.wp} Wp modules · ${[...new Set(P.roofs.map(r=>strName(strKey(r))))].join(" + ")}<br>Inverters: ${esc(inv)}</p></div>
     </div>
     <div class="tw" style="border:0"><table class="rt">
       <thead><tr><th style="width:44px">No.</th><th>Description</th><th class="n">Amount (AED)</th></tr></thead>
@@ -1031,37 +1228,32 @@ function renderReport(){
       <tr><td></td><td>VAT 5%</td><td class="n">${fmt(vat)}</td></tr>
       <tr class="grand"><td></td><td>Total incl. VAT</td><td class="n">${fmt(grand)}</td></tr></tbody></table></div>
     <div class="words"><b>Amount in words:</b> UAE Dirhams ${words(grand)} only.</div>
-    <div class="terms"><h4>Terms and conditions</h4><ol>
-      <li>Offer valid for 30 days.</li><li>Payment terms as agreed in the purchase order. <i>(your standard terms go here)</i></li>
-      <li>Price covers the scope listed. Works not listed are excluded.</li><li>Authority approval timelines depend on DEWA / consultant review.</li></ol></div>
-    <div class="sign"><div>Prepared by</div><div>Accepted by client</div></div>`;
+    ${terms.length?`<div class="terms"><h4>Terms and conditions</h4><ol>${terms.map(t=>`<li>${esc(t.text.replace("{validity}",S.validity))}</li>`).join("")}</ol></div>`:""}
+    <div class="sign"><div>Prepared by${S.preparedBy?`<br><b style="color:var(--ink)">${esc(S.preparedBy)}</b>`:""}</div><div>Accepted by client</div></div>`;
 }
 
-/* ============ S11 · INIT ============ */
+/* ============ S12 · INIT + LOCK ============ */
 let current="proj";
 function updateTop(R){R=R||calc();$("chipTot").textContent=`${fmt(R.cost)} AED · ${(R.wp?R.cost/R.wp:0).toFixed(2)}/Wp`;$("projTag").textContent=P.name}
-function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove("on"),2000)}
-function rerender(){show(current)}
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove("on"),2200)}
+function rerender(){const a=document.activeElement;if(a&&a.matches&&a.matches("input,textarea,select")&&current!=="proj")return;show(current)}
 function renderAll(){show(current)}
 function show(p){
   current=p;
   document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.p===p));
   document.querySelectorAll("section.page").forEach(s=>s.classList.toggle("on",s.id==="p-"+p));
-  ({proj:renderProject,boq:renderBoq,db:renderDb,sum:renderSummary,rep:renderReport})[p]();
+  ({proj:renderProject,boq:renderBoq,db:renderDb,sum:renderSummary,rep:renderReport,set:renderSettings})[p]();
   updateTop();
   try{if(location.hash!=="#"+p)history.replaceState(null,"","#"+p)}catch(e){}
 }
 $("tabs").addEventListener("click",e=>{const b=e.target.closest("button");if(b)show(b.dataset.p)});
 if(!PREVIEW){$("printBtn").hidden=false;$("printBtn").onclick=()=>window.print()}
-/* ---- lock screen ---- */
-async function sha256(t){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
 (function lock(){
   let ok=false;try{ok=localStorage.getItem(LOCK_KEY)===LOCK_HASH}catch(e){}
   if(ok){$("lock").hidden=true;return}
   $("lockForm").addEventListener("submit",async e=>{
     e.preventDefault();
-    const h=await sha256($("lockPw").value.trim());
-    if(h===LOCK_HASH){
+    if(await sha256($("lockPw").value.trim())===LOCK_HASH){
       if($("lockRemember").checked){try{localStorage.setItem(LOCK_KEY,LOCK_HASH)}catch(e){}}
       $("lock").hidden=true;
     }else{
@@ -1075,7 +1267,7 @@ load();
 $("fx").value=FX;
 $("dbCat").innerHTML=`<option value="">All categories</option>`+CATS.map(c=>`<option>${esc(c)}</option>`).join("");
 const start=(location.hash||"").replace("#","");
-show(["proj","boq","db","sum","rep"].includes(start)?start:"proj");
+show(["proj","boq","db","sum","rep","set"].includes(start)?start:"proj");
 initCloud();
 
 </script>
