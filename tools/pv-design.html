@@ -782,6 +782,7 @@ function renderInvTotals(){
       $("incBrk").innerHTML="—<small>A</small>";$("incCable").textContent="—";$("incEarth").textContent="";
       $("incType").textContent=kw>0?"Above 1000 kW — beyond ADDC standard table":"";
     }
+    exportForCosting();
     return;
   }
   const sf=D.sf, ampSf=amp*sf;
@@ -813,6 +814,22 @@ function renderInvTotals(){
     $("incCable").textContent="—";$("incEarth").textContent="";
     $("brkChoices").style.display="none";$("brkChoices").innerHTML="";
   }
+  exportForCosting();
+}
+/* ---- 4e · share with Project Costing (same website) ----
+   saves the inverter mix, ACCB in/out and AC route so Costing can "Pull from PV Design" */
+function exportForCosting(){
+  try{
+    const inv=D.inverters.filter(m=>invQty[m.model]>0).map(m=>{const f=feederOf(m);
+      return {model:m.model,qty:invQty[m.model],kw:m.kw||0,kva:m.kva,amp:m.amp,brk:f?f.brk:m.brk,cable:f?f.c:"",earth:f?f.e:""}});
+    if(!inv.length)return;                       /* nothing picked yet — keep the last saved design */
+    const c=window._combiner;
+    localStorage.setItem("pv_design_export",JSON.stringify({
+      ts:Date.now(),authority:D.authority,inverters:inv,
+      accb:c?{amp:c.amp,out:c.row.a,cable:c.row.c||"",earth:c.row.e||""}:null,
+      route:acRows.map(r=>({from:r.from,to:r.to,size:r.size,len:r.len||0,runs:r.runs||1}))
+    }));
+  }catch(e){}
 }
 /* breaker radio — select smaller size when lower SF is accepted */
 $("brkChoices").addEventListener("change",e=>{
@@ -955,6 +972,7 @@ function acUpdateTotals(){
     hint+=` &nbsp;<span class="pill ${ok?'ok':'bad'}">${ok?'Within':'Exceeds'} ADDC limit — 4% / 16 V</span>`;
   }
   $("acTotV").innerHTML=hint;
+  exportForCosting();
 }
 function renderAc(){
   const t=$("acTable");
