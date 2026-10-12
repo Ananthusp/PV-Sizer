@@ -152,7 +152,7 @@ function show(id){
   document.getElementById('topTitle').textContent = t ? t.title : 'Home';
   if(t){
     const f = document.querySelector('#view-'+id+' iframe');
-    if(!f.src) f.src = f.dataset.src;   // load only on first open
+    if(!f.src) f.src = f.dataset.src + "?v=" + Date.now();   // load on first open — always the newest version, never an old cached copy
   }
   toggleMenu(false);   // menu closes after selecting — reopen with the burger button
   if(location.hash !== '#'+id) history.replaceState(null,'','#'+id);
