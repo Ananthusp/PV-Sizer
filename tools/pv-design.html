@@ -694,11 +694,14 @@ $("toInv").addEventListener("click",()=>{
                radios · 4d auto-suggest (3 options)
    ============================================================ */
 const cableFor=a=>D.brkCable.find(r=>+r.a===+a)||null;
+/* DEWA: earth conductor never below 1C x 16 mm², whatever the cable size */
+const EARTH_MIN=16;
+const minEarth=e=>String(e||"").replace(/1C\s*x\s*([\d.]+)/i,(m,sz)=>+sz<EARTH_MIN?m.replace(sz,String(EARTH_MIN)):m);
 const nextBreaker=amps=>[...D.brkCable].sort((a,b)=>a.a-b.a).find(r=>r.a>=amps)||null;
 const addcFor=kw=>[...D.addc].sort((a,b)=>a.kw-b.kw).find(r=>r.kw>=kw-1e-9)||null;
 function feederOf(m){ /* per-inverter breaker + cable, mode aware */
   if(isAD()){const r=addcFor(m.kw);return r?{brk:r.a,c:r.c,e:"—"}:null}
-  const cb=cableFor(m.brk);return cb?{brk:m.brk,c:cb.c,e:cb.e}:{brk:m.brk,c:"—",e:"—"};
+  const cb=cableFor(m.brk);return cb?{brk:m.brk,c:cb.c,e:minEarth(cb.e)}:{brk:m.brk,c:"—",e:"—"};
 }
 const SERIES=[
   {id:"CX",label:"SG CX — Commercial · 25–150 kW"},
@@ -796,7 +799,7 @@ function renderInvTotals(){
     window._combiner={amp,row:sel};
     $("incBrk").innerHTML=sel.a+"<small>A</small>";
     $("incType").textContent=(sel.t||"")+(sel.a===rec.a?" · recommended":"");
-    $("incCable").textContent=sel.c;$("incEarth").textContent="Earth: "+sel.e;
+    $("incCable").textContent=sel.c;$("incEarth").textContent="Earth: "+minEarth(sel.e);
     $("incAlt").innerHTML=sel.a<rec.a?`<span class="pill warn">reduced SF — confirm acceptance with consultant / DEWA</span>`:"";
     /* radio list — pick a smaller breaker if a lower SF is accepted */
     const bc=$("brkChoices");
@@ -826,7 +829,7 @@ function exportForCosting(){
     const c=window._combiner;
     localStorage.setItem("pv_design_export",JSON.stringify({
       ts:Date.now(),authority:D.authority,inverters:inv,
-      accb:c?{amp:c.amp,out:c.row.a,cable:c.row.c||"",earth:c.row.e||""}:null,
+      accb:c?{amp:c.amp,out:c.row.a,cable:c.row.c||"",earth:minEarth(c.row.e||"")}:null,
       route:acRows.map(r=>({from:r.from,to:r.to,size:r.size,len:r.len||0,runs:r.runs||1}))
     }));
   }catch(e){}
@@ -1050,7 +1053,7 @@ $("ctSeg").addEventListener("click",e=>{
 /* tray helpers */
 const ctDcOd =r=>r.od !=null?r.od :(D.dcCables[r.i]?.od??0);
 const ctAcOd =r=>r.od !=null?r.od :(ctAcArm?(D.acCables[r.i]?.arm??0):(D.acCables[r.i]?.od??0));
-const ctEarth=r=>D.earthCables.find(e=>e.name===(D.acCables[r.i]?.earth))||D.earthCables[0];
+const ctEarth=r=>D.earthCables.find(e=>e.name===minEarth(D.acCables[r.i]?.earth))||D.earthCables[0];
 const ctAcEod=r=>r.eod!=null?r.eod:ctEarth(r).od;
 
 /* ---- 6b · DC cable rows ---- */
