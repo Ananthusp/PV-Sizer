@@ -1311,7 +1311,7 @@ function cloudSaveSettings(){if(fdb)fdb.collection(FB_PRICES).doc("_settings").s
 function cloudSaveProject(p){saveLocal();if(fdb&&p)fdb.collection(FB_PROJECTS).doc(p.id).set(p).catch(e=>toast("Firebase: "+e.message))}
 function cloudDeleteProject(id){saveLocal();if(fdb)fdb.collection(FB_PROJECTS).doc(id).delete()}
 
-/* ============ S11 · PAGE SUMMARY + CLIENT REPORT ============ */
+/* ============ S011 · PAGE SUMMARY + CLIENT REPORT ============ */
 function renderSummary(){
   const R=calc(),wp=v=>R.wp?(v/R.wp).toFixed(3):"0";
   $("sumStats").innerHTML=`
