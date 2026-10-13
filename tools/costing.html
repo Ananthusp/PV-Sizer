@@ -515,6 +515,7 @@ p.dl{font-size:13px;color:var(--sub);margin:-6px 0 14px;line-height:1.5}
               <span class="pct"><input type="number" id="qContP" step="0.5" aria-label="Contingency percent">%</span><span class="pamt" id="qContA"></span></div>
             <div class="prow"><label for="qMar"><input type="checkbox" id="qMar"> Margin</label>
               <span class="pct"><input type="number" id="qMarP" step="0.5" aria-label="Margin percent">%</span><span class="pamt" id="qMarA"></span></div>
+            <div class="prow"><label for="qVat"><input type="checkbox" id="qVat"> VAT 5%</label><span class="pamt" id="qVatA"></span></div>
             <div class="prow"><span style="flex:1;font-weight:600">Price column</span>
               <div class="seg" id="pcolSeg"><button data-pc="unit">Unit price</button><button data-pc="kwp">Per kWp</button></div></div>
           </div>
@@ -1500,13 +1501,13 @@ function quoteSell(R){
   return {sell:base+mar,cont:inc.cont?R.cont:0,mar};
 }
 function renderPriceBox(){
-  const inc=P.qinc;$("qCont").checked=!!inc.cont;$("qMar").checked=!!inc.mar;$("qContP").value=P.cont;$("qMarP").value=P.margin;
+  const inc=P.qinc;$("qCont").checked=!!inc.cont;$("qMar").checked=!!inc.mar;$("qVat").checked=inc.vat!==false;$("qContP").value=P.cont;$("qMarP").value=P.margin;
   $("qContP").disabled=!inc.cont;$("qMarP").disabled=!inc.mar;
   document.querySelectorAll("#pcolSeg button").forEach(b=>b.classList.toggle("on",b.dataset.pc===P.pcol));
 }
 $("priceBox").addEventListener("change",e=>{
   const id=e.target.id;
-  if(id==="qCont")P.qinc.cont=e.target.checked;else if(id==="qMar")P.qinc.mar=e.target.checked;else return;
+  if(id==="qCont")P.qinc.cont=e.target.checked;else if(id==="qMar")P.qinc.mar=e.target.checked;else if(id==="qVat")P.qinc.vat=e.target.checked;else return;
   save();renderPriceBox();renderPaper();updateTop();
 });
 $("priceBox").addEventListener("input",e=>{
@@ -1574,7 +1575,8 @@ function renderPaper(){
   $("qContA").textContent=P.qinc.cont?`${C} ${money(QS.cont)}`:"left out";$("qMarA").textContent=P.qinc.mar?`${C} ${money(QS.mar)}`:"left out";
   $("oPriceHint").textContent=`Calculated: ${C} ${fmt(calcSell,2)} (${R.wp?(calcSell/R.wp).toFixed(3):0}/Wp)`+
     (calcSell&&Math.abs(sell-calcSell)>0.005?` · your price is ${Math.abs((sell/calcSell-1)*100).toFixed(1)}% ${sell>calcSell?"above":"below"}`:"");
-  const vat=r2(sell*0.05),total=r2(sell+vat),rows=quoteRows(R,sell),terms=projTerms();
+  const withVat=P.qinc.vat!==false,vat=withVat?r2(sell*0.05):0,total=r2(sell+vat),rows=quoteRows(R,sell),terms=projTerms();
+  $("qVatA").textContent=withVat?`${C} ${fmt(vat)}`:"left out";
   LAST_ROWS=rows;renderTaskList(rows);
   const desc=O.desc||`Supply and installation of a ${fmt(R.c.kWp,1)} kWp solar PV system${P.location?" at "+P.location:""}`;
   const date=new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"});
@@ -1598,8 +1600,8 @@ function renderPaper(){
       <thead><tr><th style="width:7%">Item</th><th style="width:16%">Task</th><th>Description</th><th style="width:7%">Unit</th><th style="width:6%">Qty</th><th style="width:13%">${P.pcol==="kwp"?"Price per kWp":"Unit Price"} in ${C}</th><th style="width:15%">Line Total</th></tr></thead>
       <tbody>${rows.map((r,i)=>`<tr><td class="c">${i+1}</td><td class="c">${esc(TASKS[r.task]||r.task)}</td><td>${esc(r.desc)}</td><td class="c">${esc(r.u)}</td><td class="c">${fq(r.q)}</td><td class="r">${fmt(P.pcol==="kwp"?r.pk:r.up,2)}</td><td class="r">${fmt(r.tot,2)}</td></tr>`).join("")}</tbody>
     </table>
-    <table class="qtot"><tr><td>Subtotal</td><td>${C}</td><td>${fmt(sell,2)}</td></tr><tr><td>VAT (5%)</td><td>${C}</td><td>${fmt(vat,2)}</td></tr><tr class="g"><td>TOTAL</td><td>${C}</td><td>${fmt(total,2)}</td></tr></table>
-    <div class="qwords">Amount in words: ${curName} ${words(Math.round(total))} only.</div>
+    <table class="qtot">${withVat?`<tr><td>Subtotal</td><td>${C}</td><td>${fmt(sell,2)}</td></tr><tr><td>VAT (5%)</td><td>${C}</td><td>${fmt(vat,2)}</td></tr>`:""}<tr class="g"><td>TOTAL${withVat?"":" (excl. VAT)"}</td><td>${C}</td><td>${fmt(total,2)}</td></tr></table>
+    <div class="qwords">Amount in words: ${curName} ${words(Math.round(total))} only${withVat?"":", excluding VAT"}.</div>
     <table class="qterms"><tr><th colspan="2" class="qhead">Terms &amp; Conditions</th></tr>
       ${tRow(TERM_GROUPS.excl,grp("excl"))}${tRow(TERM_GROUPS.pay,grp("pay"))}${tRow(TERM_GROUPS.other,grp("other"))}
       <tr><th>Validity</th><td>${S.validity} days.</td></tr><tr><th>Delivery</th><td>${esc(O.delivery||S.delivery||"")}</td></tr></table>
