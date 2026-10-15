@@ -2,116 +2,184 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Solar Site Survey — SE-IMS-OP-01-FRM-XX</title>
 <style>
   :root{
-    --ink:#15221f; --ink-soft:#4c5a56;
-    --paper:#f5f6f4; --card:#ffffff; --line:#dde3df;
-    --brand:#0b5c46; --brand-soft:#e2efe9;
-    --sun:#f2a20c; --sun-soft:#fdf1d8;
-    --danger:#b3372c; --radius:14px;
+    --ink:#15221f; --ink-soft:#56645f; --faint:#8a9792;
+    --paper:#f2f4f2; --card:#ffffff; --field:#fbfcfb; --line:#dfe5e1; --line2:#cdd6d1;
+    --brand:#0b5c46; --brand-deep:#083f30; --brand-soft:#e2efe9;
+    --sun:#f2a20c; --sun-soft:#fdf1d8; --sun-ink:#8a5b00;
+    --danger:#b3372c; --radius:16px;
     font-size:16px;
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--paper);color:var(--ink);padding-bottom:90px}
+  body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--paper);color:var(--ink);
+    padding-bottom:calc(84px + env(safe-area-inset-bottom));line-height:1.4}
 
-  header{background:var(--brand);color:#fff;padding:14px 16px 12px;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.15)}
-  .head-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
-  header h1{font-size:1.02rem;font-weight:700}
-  header .doc{display:flex;gap:10px;margin-top:3px;font-size:.68rem;opacity:.85}
-  .mode-switch{display:flex;background:rgba(255,255,255,.18);border-radius:99px;padding:3px;flex:none}
-  .mode-switch button{border:none;background:none;color:#fff;font-size:.75rem;font-weight:700;padding:6px 12px;border-radius:99px;cursor:pointer;opacity:.75}
+  /* ---------- header: one compact bar ---------- */
+  header{background:var(--brand);color:#fff;padding:10px 16px 10px;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  .head-top{display:flex;align-items:center;justify-content:space-between;gap:10px;max-width:720px;margin:0 auto}
+  .ttl{min-width:0}
+  header h1{font-size:1rem;font-weight:750;line-height:1.2}
+  header .doc{font-size:.66rem;opacity:.8;letter-spacing:.02em}
+  body.embedded header h1{display:none}            /* the toolkit menu bar already shows the title */
+  body.embedded header .doc{font-size:.72rem;opacity:.9}
+  .mode-switch{display:flex;background:rgba(255,255,255,.16);border-radius:99px;padding:3px;flex:none}
+  .mode-switch button{border:none;background:none;color:#fff;font-size:.8rem;font-weight:700;padding:7px 14px;border-radius:99px;cursor:pointer;opacity:.8;min-height:34px}
   .mode-switch button.on{background:#fff;color:var(--brand);opacity:1}
-  .progress-wrap{margin-top:10px;background:rgba(255,255,255,.2);border-radius:99px;height:6px;overflow:hidden}
+  .prog{display:flex;align-items:center;gap:10px;margin:9px auto 0;max-width:720px}
+  .progress-wrap{flex:1;background:rgba(255,255,255,.2);border-radius:99px;height:6px;overflow:hidden}
   .progress-bar{height:100%;width:0%;background:var(--sun);border-radius:99px;transition:width .3s}
-  .progress-label{font-size:.68rem;margin-top:4px;opacity:.85}
+  .progress-label{font-size:.72rem;font-weight:700;opacity:.9;font-variant-numeric:tabular-nums;white-space:nowrap}
 
   main{max-width:720px;margin:0 auto;padding:12px}
 
-  details.section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:10px;overflow:hidden}
-  details.section>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:14px;font-weight:700;font-size:.95rem;user-select:none}
+  /* ---------- sections ---------- */
+  details.section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;scroll-margin-top:84px}
+  details.section>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:13px 14px;user-select:none;min-height:60px}
   details.section>summary::-webkit-details-marker{display:none}
-  .sec-num{flex:none;width:26px;height:26px;border-radius:8px;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800}
-  .chev{margin-left:auto;transition:transform .2s;color:var(--ink-soft);font-size:.8rem}
+  .sec-num{flex:none;width:32px;height:32px;border-radius:10px;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:800}
+  .sec-t{flex:1;min-width:0;font-weight:750;font-size:.95rem;line-height:1.25}
+  .sec-t small{display:block;font-weight:500;font-size:.74rem;color:var(--ink-soft);margin-top:2px}
+  .sec-count{flex:none;font-size:.7rem;font-weight:800;color:var(--ink-soft);background:var(--paper);border-radius:99px;padding:4px 9px;font-variant-numeric:tabular-nums}
+  .sec-count.full{background:var(--brand);color:#fff}
+  .chev{flex:none;color:var(--faint);transition:transform .2s;display:flex}
   details[open]>summary .chev{transform:rotate(180deg)}
-  .sec-body{padding:4px 14px 16px;border-top:1px solid var(--line)}
+  .sec-body{padding:2px 14px 16px;border-top:1px solid var(--line)}
 
-  .field{margin-top:12px}
-  .field label{display:block;font-size:.78rem;font-weight:600;color:var(--ink-soft);margin-bottom:5px}
+  /* group headings inside a section or area card — "classify" */
+  .grp{display:flex;align-items:center;gap:10px;margin:18px 0 2px;font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--brand)}
+  .grp::after{content:"";flex:1;height:1px;background:var(--line)}
+  .grp:first-child{margin-top:12px}
+
+  /* ---------- fields ---------- */
+  .field{margin-top:10px;min-width:0}
+  .field label{display:block;font-size:.76rem;font-weight:650;color:var(--ink-soft);margin-bottom:5px;line-height:1.3}
+  .lp{display:none}                                 /* label prefix kept for Guided mode only */
   input[type=text],input[type=date],input[type=number],input[type=tel],textarea,select{
-    width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;
-    font-size:.95rem;background:#fbfcfb;color:var(--ink);appearance:none}
-  textarea{min-height:64px;resize:vertical}
-  input:focus,textarea:focus,select:focus{outline:2px solid var(--brand);outline-offset:0;border-color:var(--brand)}
-  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234c5a56' stroke-width='2' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
-  @media(max-width:430px){.grid2{grid-template-columns:1fr}}
+    width:100%;min-height:46px;padding:11px 12px;border:1px solid var(--line2);border-radius:11px;
+    font:inherit;font-size:16px;background:var(--field);color:var(--ink);appearance:none;-webkit-appearance:none}
+  input::placeholder,textarea::placeholder{color:#a6b1ac}
+  input[type=number]{-moz-appearance:textfield}
+  input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+  input[type=date]{display:block}
+  textarea{min-height:72px;resize:vertical}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2356645f' stroke-width='2' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px}
 
-  .rep-card{border:1px solid var(--line);border-radius:12px;padding:2px 12px 14px;margin-top:12px;background:#fbfcfb}
-  .rep-head{display:flex;align-items:center;justify-content:space-between;padding-top:12px}
-  .rep-head h3{font-size:.9rem;color:var(--brand)}
-  .rep-head .type-tag{font-size:.65rem;font-weight:800;background:var(--sun-soft);color:#8a5b00;padding:3px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.04em}
-  .rep-del{border:none;background:none;color:var(--danger);font-size:.78rem;font-weight:600;cursor:pointer;padding:4px 6px}
-  .add-btn{margin-top:14px;width:100%;border:1.5px dashed var(--brand);background:var(--brand-soft);color:var(--brand);font-weight:700;font-size:.9rem;padding:12px;border-radius:10px;cursor:pointer}
-  .setup-box{border:1.5px solid var(--sun);background:var(--sun-soft);border-radius:12px;padding:2px 12px 14px;margin-top:12px}
-  .setup-box .field label{color:#7a5200}
+  /* two columns on phones too — bottoms line up even when a label wraps */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;align-items:end}
+  @media(max-width:340px){.grid2{grid-template-columns:1fr}}
 
-  /* checklists */
-  .check-row{padding:11px 0;border-bottom:1px solid var(--line)}
+  /* unit inside the box, e.g. "m", "m²" */
+  .inp{position:relative}
+  .inp input{padding-right:46px}
+  .inp .u{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:.82rem;font-weight:600;color:var(--faint);pointer-events:none}
+  .inbtn{position:absolute;right:5px;top:50%;transform:translateY(-50%);border:none;background:var(--brand-soft);color:var(--brand);font-weight:700;font-size:.74rem;border-radius:8px;padding:0 10px;height:36px;cursor:pointer;display:flex;align-items:center;gap:5px}
+  .inp.has-btn input{padding-right:96px}
+
+  /* tap chips — replace Yes/No text boxes and short dropdowns */
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chips button{flex:1 1 auto;min-height:44px;padding:5px 12px;line-height:1.2;border:1.5px solid var(--line2);border-radius:11px;background:var(--field);
+    font:inherit;font-size:.86rem;font-weight:650;color:var(--ink-soft);cursor:pointer;transition:background .12s,border-color .12s,color .12s}
+  .chips button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+  .chips.c2{display:grid;grid-template-columns:1fr 1fr}
+  .chips.c2 button{padding:5px 8px;font-size:.84rem}
+  .chips.c3{display:grid;grid-template-columns:repeat(3,1fr)}
+  .chips.c3 button{padding:5px 6px}
+  /* direction picker laid out like a compass */
+  .chips.compass{display:grid;grid-template-columns:repeat(3,1fr);max-width:250px}
+  .chips.compass .mid{display:flex;align-items:center;justify-content:center;font-size:.66rem;font-weight:800;letter-spacing:.06em;color:var(--faint);text-transform:uppercase}
+  .other-box[hidden]{display:none}
+  .fhint{font-size:.72rem;color:var(--faint);margin-top:5px;line-height:1.35}
+  /* "No" / "None" button inside a number box */
+  .nobtn{position:absolute;right:5px;top:50%;transform:translateY(-50%);height:36px;min-width:52px;padding:0 10px;border-radius:8px;border:1.5px solid var(--line2);background:#fff;font:inherit;font-size:.78rem;font-weight:700;color:var(--ink-soft);cursor:pointer}
+  .inp.has-no input{padding-right:100px}
+  .inp.has-no .u{right:68px}
+  .inp.is-no .u{display:none}
+  .inp.is-no input{background:var(--paper);color:var(--ink-soft)}
+  .inp.is-no .nobtn{background:var(--brand);border-color:var(--brand);color:#fff}
+  .chips.yn button{flex:1 1 0;padding:0 6px}
+
+  /* ---------- area setup + repeated cards ---------- */
+  .setup-box{border:1.5px solid var(--sun);background:var(--sun-soft);border-radius:14px;padding:4px 12px 14px;margin-top:12px}
+  .setup-box .field>label{color:#7a5200}
+  .stepper{display:flex;align-items:center;gap:8px}
+  .stepper button{flex:none;width:46px;height:46px;border-radius:11px;border:1.5px solid #e5c27a;background:#fff;color:var(--sun-ink);font-size:1.3rem;font-weight:700;cursor:pointer}
+  .stepper input{text-align:center;font-weight:800;max-width:90px}
+  .area-type-row{background:#fff;border:1px solid #edd9ac;border-radius:12px;padding:2px 12px 12px;margin-top:10px}
+  .ar-head{font-size:.72rem;font-weight:800;color:var(--sun-ink);letter-spacing:.06em;text-transform:uppercase;padding-top:10px}
+  .area-type-row .field label{color:var(--ink-soft)}
+
+  .rep-card{border:1px solid var(--line);border-radius:14px;padding:2px 12px 14px;margin-top:12px;background:#fcfdfc}
+  .rep-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:12px}
+  .rep-head h3{font-size:.95rem;color:var(--brand);min-width:0}
+  .rep-head .type-tag{flex:none;font-size:.64rem;font-weight:800;background:var(--sun-soft);color:var(--sun-ink);padding:4px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.04em}
+  .rep-del{border:none;background:none;color:var(--danger);font-size:.8rem;font-weight:700;cursor:pointer;padding:8px 6px;min-height:36px}
+  .add-btn{margin-top:14px;width:100%;min-height:48px;border:1.5px dashed var(--brand);background:var(--brand-soft);color:var(--brand);font-weight:700;font-size:.9rem;padding:12px;border-radius:12px;cursor:pointer}
+  .empty-note{font-size:.82rem;color:var(--ink-soft);padding:12px 2px 0}
+
+  /* ---------- safety: Yes / No rows ---------- */
+  .check-row{padding:12px 0;border-bottom:1px solid var(--line)}
   .check-row:last-child{border-bottom:none}
-  .check-main{display:flex;align-items:flex-start;gap:10px}
-  .check-row .txt{flex:1;font-size:.88rem;line-height:1.35;padding-top:4px}
+  .check-main{display:flex;align-items:center;gap:12px}
+  .check-row .txt{flex:1;font-size:.88rem;line-height:1.35}
   .yn{display:flex;gap:6px;flex:none}
-  .yn button{width:44px;padding:7px 0;border-radius:8px;border:1px solid var(--line);background:#fbfcfb;font-size:.8rem;font-weight:700;color:var(--ink-soft);cursor:pointer}
+  .yn button{min-width:52px;padding:0 8px;min-height:40px;border-radius:10px;border:1.5px solid var(--line2);background:var(--field);font-size:.82rem;font-weight:700;color:var(--ink-soft);cursor:pointer}
   .yn button.yes.on{background:var(--brand);border-color:var(--brand);color:#fff}
   .yn button.no.on{background:var(--danger);border-color:var(--danger);color:#fff}
-  .cmt-toggle{border:none;background:none;color:var(--brand);font-size:.72rem;font-weight:700;cursor:pointer;padding:6px 0 0;display:block}
+  .cmt-toggle{border:none;background:none;color:var(--brand);font-size:.74rem;font-weight:700;cursor:pointer;padding:8px 0 0;display:block}
   .cmt-box{display:none;margin-top:8px}
   .cmt-box.open{display:block}
-  .cmt-box textarea{min-height:48px;font-size:.85rem}
+  .cmt-box textarea{min-height:52px}
 
-  /* final checklist (3-state) */
+  /* ---------- final checklist (3-state) ---------- */
   .todo-row{padding:12px 0;border-bottom:1px solid var(--line)}
   .todo-row:last-child{border-bottom:none}
   .todo-row .txt{font-size:.88rem;line-height:1.4;margin-bottom:8px}
-  .todo-opts{display:flex;gap:6px;flex-wrap:wrap}
-  .todo-opts button{flex:1;min-width:96px;padding:9px 8px;border-radius:9px;border:1.5px solid var(--line);background:#fbfcfb;font-size:.72rem;font-weight:700;cursor:pointer;color:var(--ink-soft);transition:all .12s}
-  .todo-opts button[data-v="Collected"].on{background:var(--brand);border-color:var(--brand);color:#fff}
-  .todo-opts button[data-v="To be requested"].on{background:#8a5b00;border-color:#8a5b00;color:#fff}
+  .todo-opts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .todo-opts button{min-height:42px;padding:4px 6px;border-radius:10px;border:1.5px solid var(--line2);background:var(--field);font-size:.74rem;font-weight:700;cursor:pointer;color:var(--ink-soft);line-height:1.15;transition:all .12s}
+  .todo-opts button[data-v="Taken"].on,.todo-opts button[data-v="Collected"].on{background:var(--brand);border-color:var(--brand);color:#fff}
+  .todo-opts button[data-v="To be requested"].on{background:var(--sun-ink);border-color:var(--sun-ink);color:#fff}
   .todo-opts button[data-v="Requested"].on{background:var(--sun);border-color:var(--sun);color:#3d2a00}
 
-  .actionbar{position:fixed;bottom:0;left:0;right:0;z-index:60;background:var(--card);border-top:1px solid var(--line);display:flex;gap:10px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto}
-  .actionbar button{flex:1;padding:13px;border-radius:12px;font-weight:700;font-size:.92rem;cursor:pointer;border:none}
-  .btn-secondary{background:var(--sun-soft);color:#8a5b00}
+  .hint{display:flex;gap:8px;align-items:flex-start;font-size:.78rem;color:var(--sun-ink);background:var(--sun-soft);border:1px solid #edd9ac;border-radius:12px;padding:10px 12px;margin-top:4px}
+
+  /* ---------- bottom action bar ---------- */
+  .actionbar{position:fixed;bottom:0;left:0;right:0;z-index:60;background:var(--card);border-top:1px solid var(--line);
+    padding:10px 14px calc(10px + env(safe-area-inset-bottom))}
+  .ab-in{display:flex;gap:10px;max-width:720px;margin:0 auto}
+  .actionbar button{flex:1;min-height:48px;padding:12px;border-radius:12px;font-weight:700;font-size:.92rem;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;gap:8px}
+  .actionbar .btn-secondary{flex:0 0 38%}
+  .btn-secondary{background:var(--sun-soft);color:var(--sun-ink)}
   .btn-primary{background:var(--brand);color:#fff}
 
   .modal{position:fixed;inset:0;background:rgba(21,34,31,.55);z-index:100;display:none;align-items:flex-end;justify-content:center}
   .modal.open{display:flex}
-  .modal-card{background:var(--card);width:100%;max-width:720px;border-radius:18px 18px 0 0;max-height:85vh;display:flex;flex-direction:column}
+  .modal-card{background:var(--card);width:100%;max-width:720px;border-radius:18px 18px 0 0;max-height:88vh;display:flex;flex-direction:column}
   .modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
   .modal-head h2{font-size:1rem}
-  .modal-close{border:none;background:none;font-size:1.3rem;cursor:pointer;color:var(--ink-soft);padding:4px 8px}
+  .modal-close{border:none;background:none;font-size:1.3rem;cursor:pointer;color:var(--ink-soft);padding:4px 8px;min-width:44px;min-height:44px}
   .modal-body{overflow-y:auto;padding:14px 16px}
-  pre#reportText{white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.78rem;line-height:1.5;background:#fbfcfb;border:1px solid var(--line);border-radius:10px;padding:12px}
+  pre#reportText{white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.78rem;line-height:1.5;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:12px}
   .modal-foot{display:flex;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
-  .modal-foot button{flex:1;padding:12px;border-radius:10px;border:none;font-weight:700;cursor:pointer}
-  .hint{font-size:.75rem;color:var(--ink-soft);margin-top:8px;font-style:italic}
+  .modal-foot button{flex:1;min-height:46px;padding:12px;border-radius:12px;border:none;font-weight:700;cursor:pointer}
 
   /* ============ GUIDED MODE ============ */
   #wizard{position:fixed;top:0;left:0;right:0;height:100%;height:100dvh;z-index:80;background:var(--paper);display:none;flex-direction:column}
   #wizard.open{display:flex}
   .wiz-screen{flex:1;overflow-y:auto;display:none;flex-direction:column}
   .wiz-screen.on{display:flex}
-  .wiz-topbar{background:var(--brand);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;flex:none}
+  .wiz-topbar{background:var(--brand);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;flex:none}
   .wiz-topbar h2{font-size:1rem;flex:1}
-  .wiz-topbar button{border:none;background:rgba(255,255,255,.18);color:#fff;font-size:.78rem;font-weight:700;padding:8px 14px;border-radius:99px;cursor:pointer}
+  .wiz-topbar button{border:none;background:rgba(255,255,255,.18);color:#fff;font-size:.8rem;font-weight:700;padding:8px 14px;border-radius:99px;cursor:pointer;min-height:36px}
   .sec-grid{padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:720px;margin:0 auto;width:100%}
   @media(min-width:520px){.sec-grid{grid-template-columns:1fr 1fr 1fr}}
-  .sec-tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 12px;cursor:pointer;position:relative;min-height:104px;display:flex;flex-direction:column;transition:transform .08s}
+  .sec-tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 12px;cursor:pointer;position:relative;min-height:110px;display:flex;flex-direction:column;transition:transform .08s}
   .sec-tile:active{transform:scale(.97)}
   .sec-tile .tnum{font-size:.68rem;font-weight:800;color:var(--brand);background:var(--brand-soft);width:fit-content;padding:2px 8px;border-radius:6px}
-  .sec-tile .tname{font-size:.82rem;font-weight:700;margin-top:8px;line-height:1.25;flex:1}
+  .sec-tile .tname{font-size:.84rem;font-weight:700;margin-top:8px;line-height:1.25;flex:1}
   .sec-tile .tcount{font-size:.7rem;color:var(--ink-soft);margin-top:8px}
   .sec-tile .mini{height:4px;border-radius:99px;background:var(--line);margin-top:6px;overflow:hidden}
   .sec-tile .mini i{display:block;height:100%;background:var(--sun);border-radius:99px}
@@ -120,8 +188,8 @@
 
   .q-top{background:var(--brand);color:#fff;padding:12px 16px;flex:none}
   .q-top-row{display:flex;align-items:center;gap:10px}
-  .q-top-row button{border:none;background:rgba(255,255,255,.18);color:#fff;font-size:.75rem;font-weight:700;padding:7px 12px;border-radius:99px;cursor:pointer}
-  .q-top-row .q-sec{flex:1;font-size:.85rem;font-weight:700;text-align:center}
+  .q-top-row button{border:none;background:rgba(255,255,255,.18);color:#fff;font-size:.78rem;font-weight:700;padding:8px 12px;border-radius:99px;cursor:pointer;min-height:36px}
+  .q-top-row .q-sec{flex:1;font-size:.85rem;font-weight:700;text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .q-progress{margin-top:10px;background:rgba(255,255,255,.2);border-radius:99px;height:6px;overflow:hidden}
   .q-progress i{display:block;height:100%;background:var(--sun);border-radius:99px;transition:width .25s}
   .q-count{font-size:.68rem;opacity:.85;margin-top:4px;text-align:center}
@@ -129,31 +197,36 @@
   .q-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;padding:16px 20px 30px;max-width:640px;margin:0 auto;width:100%;-webkit-overflow-scrolling:touch}
   .q-card{animation:slideIn .22s ease}
   @keyframes slideIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){.q-card,.done-wrap{animation:none}}
   .q-where{font-size:.7rem;font-weight:700;color:var(--ink-soft);margin-bottom:10px}
   .q-where b{color:var(--brand)}
-  .q-context{font-size:.72rem;font-weight:800;color:var(--sun);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+  .q-context{font-size:.72rem;font-weight:800;color:var(--sun-ink);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
   .q-question{font-size:1.15rem;font-weight:800;line-height:1.3;margin-bottom:14px}
   .q-input input,.q-input textarea{width:100%;padding:14px;font-size:1.05rem;border:2px solid var(--line);border-radius:14px;background:var(--card);-webkit-user-select:text;user-select:text}
   .q-input textarea{min-height:100px}
-  .q-paste{margin-top:8px;padding:9px 14px;border-radius:10px;border:1.5px dashed var(--line);background:#fbfcfb;font-size:.78rem;font-weight:700;color:var(--ink-soft);cursor:pointer}
-  .q-input input:focus,.q-input textarea:focus{outline:none;border-color:var(--brand)}
+  .q-paste{margin-top:8px;padding:9px 14px;border-radius:10px;border:1.5px dashed var(--line2);background:var(--field);font-size:.78rem;font-weight:700;color:var(--ink-soft);cursor:pointer}
+  .q-input input:focus,.q-input textarea:focus{outline:none;border-color:var(--brand);box-shadow:none}
   .q-options{display:flex;flex-direction:column;gap:10px}
   .q-options button{padding:15px 16px;border-radius:14px;border:2px solid var(--line);background:var(--card);font-size:1rem;font-weight:600;text-align:left;cursor:pointer;transition:all .12s}
   .q-options button.picked{border-color:var(--brand);background:var(--brand-soft);color:var(--brand)}
+  .q-compass{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:320px;margin:0 auto}
+  .q-compass button{padding:18px 0;border-radius:14px;border:2px solid var(--line);background:var(--card);font-size:1.05rem;font-weight:800;cursor:pointer}
+  .q-compass button.picked{border-color:var(--brand);background:var(--brand);color:#fff}
+  .q-compass span{display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
   .q-yn{display:flex;gap:12px}
   .q-yn button{flex:1;padding:20px;border-radius:16px;border:2px solid var(--line);background:var(--card);font-size:1.15rem;font-weight:800;cursor:pointer}
   .q-yn button.yes.picked{border-color:var(--brand);background:var(--brand);color:#fff}
   .q-yn button.no.picked{border-color:var(--danger);background:var(--danger);color:#fff}
   .q-comment{margin-top:16px}
   .q-comment label{display:block;font-size:.75rem;font-weight:700;color:var(--ink-soft);margin-bottom:6px}
-  .q-comment textarea{width:100%;padding:12px;font-size:.95rem;border:2px solid var(--line);border-radius:12px;background:var(--card);min-height:70px}
+  .q-comment textarea{width:100%;padding:12px;font-size:16px;border:2px solid var(--line);border-radius:12px;background:var(--card);min-height:70px}
   .q-check{width:100%;padding:22px;border-radius:16px;border:2px solid var(--line);background:var(--card);font-size:1.1rem;font-weight:800;cursor:pointer;color:var(--ink-soft)}
   .q-check.picked{border-color:var(--brand);background:var(--brand);color:#fff}
 
   .q-actions{display:flex;gap:10px;margin-top:18px}
-  .q-actions button{padding:14px;border-radius:12px;border:none;font-weight:800;font-size:.95rem;cursor:pointer}
+  .q-actions button{padding:14px;border-radius:12px;border:none;font-weight:800;font-size:.95rem;cursor:pointer;min-height:50px}
   .q-back{flex:0 0 84px;background:var(--paper);color:var(--ink-soft);border:1px solid var(--line) !important}
-  .q-skip{flex:0 0 84px;background:var(--sun-soft);color:#8a5b00}
+  .q-skip{flex:0 0 84px;background:var(--sun-soft);color:var(--sun-ink)}
   .q-ok{flex:1;background:var(--brand);color:#fff}
 
   .done-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;animation:slideIn .25s ease}
@@ -162,69 +235,73 @@
   .done-wrap p{color:var(--ink-soft);font-size:.9rem;margin-bottom:26px}
   .done-wrap .done-actions{display:flex;flex-direction:column;gap:10px;width:100%;max-width:340px}
   .done-actions button{padding:15px;border-radius:14px;border:none;font-weight:800;font-size:.98rem;cursor:pointer}
-  .done-add{background:var(--sun-soft);color:#8a5b00}
+  .done-add{background:var(--sun-soft);color:var(--sun-ink)}
   .done-next{background:var(--brand);color:#fff}
   .done-form{background:var(--card);color:var(--ink-soft);border:1px solid var(--line) !important}
 
-  @media print{header,.actionbar,#wizard{display:none !important}details.section{page-break-inside:avoid}}
+  @media print{header,.actionbar,#wizard,.hint,.add-btn,.cmt-toggle,.rep-del,.stepper button,.inbtn{display:none !important}
+    details.section{page-break-inside:avoid;border:1px solid #ccc}body{padding:0;background:#fff}}
 </style>
 </head>
 <body>
 
 <header>
   <div class="head-top">
-    <div>
+    <div class="ttl">
       <h1>Solar Site Survey</h1>
-      <div class="doc"><span>SE-IMS-OP-01-FRM-XX</span><span>Rev 00</span></div>
+      <div class="doc">SE-IMS-OP-01-FRM-XX · Rev 00</div>
     </div>
-    <div class="mode-switch">
+    <div class="mode-switch" role="group" aria-label="View">
       <button id="modeForm" class="on" onclick="setMode('form')">Form</button>
       <button id="modeGuided" onclick="setMode('guided')">Guided</button>
     </div>
   </div>
-  <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
-  <div class="progress-label" id="progressLabel">0% complete</div>
+  <div class="prog">
+    <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <span class="progress-label" id="progressLabel">0% done</span>
+  </div>
 </header>
 
 <main id="app">
 
-  <!-- 1. GENERAL + PROPERTY (merged) -->
+  <!-- 1. GENERAL + PROPERTY -->
   <details class="section" open data-sec="General & Property Information">
-    <summary><span class="sec-num">1</span>General &amp; Property Info<span class="chev">▼</span></summary>
+    <summary><span class="sec-num">1</span><span class="sec-t">General &amp; Property<small>Project, site and coordinator</small></span>
+      <span class="sec-count"></span><span class="chev"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3.5 6l4.5 4.5L12.5 6"/></svg></span></summary>
     <div class="sec-body">
-      <div class="grid2">
-        <div class="field"><label>Inspection Date</label><input type="date" data-k="Inspection date"></div>
-        <div class="field"><label>Project Reference No.</label><input type="text" data-k="Project reference no"></div>
-      </div>
+      <h4 class="grp">Project</h4>
       <div class="field"><label>Project Name</label><input type="text" data-k="Project name"></div>
       <div class="grid2">
+        <div class="field"><label>Inspection Date</label><input type="date" data-k="Inspection date"></div>
         <div class="field"><label>Inspected By</label><input type="text" data-k="Inspected by"></div>
-        <div class="field"><label>Site Coordinator Contact</label><input type="tel" data-k="Site coordinator contact"></div>
       </div>
-      <div class="field"><label>Property Name</label><input type="text" data-k="Property name"></div>
+      <h4 class="grp">Site</h4>
       <div class="field"><label>Area / Municipality</label><input type="text" data-k="Area municipality"></div>
-      <div class="field"><label>Google Map Location</label><input type="text" data-k="Google map location" placeholder="Paste link or coordinates"></div>
+      <div class="field"><label>Google Map Location</label>
+        <div class="inp has-btn"><input type="text" data-k="Google map location" placeholder="Paste link or coordinates">
+          <button type="button" class="inbtn" onclick="useLocation(this)" aria-label="Use my current location">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>Locate</button></div></div>
+      <h4 class="grp">Site coordinator</h4>
+      <div class="grid2">
+        <div class="field"><label>Name</label><input type="text" data-k="Site coordinator name"></div>
+        <div class="field"><label>Phone Number</label><input type="tel" data-k="Site coordinator phone"></div>
+      </div>
     </div>
   </details>
 
-  <!-- 2. LOCAL CONTACT -->
-  <details class="section" data-sec="Local Contact Person">
-    <summary><span class="sec-num">2</span>Local Contact Person<span class="chev">▼</span></summary>
-    <div class="sec-body">
-      <div class="field"><label>Name</label><input type="text" data-k="Contact name"></div>
-      <div class="field"><label>Company</label><input type="text" data-k="Contact company"></div>
-      <div class="field"><label>Contact Number</label><input type="tel" data-k="Contact number"></div>
-    </div>
-  </details>
-
-  <!-- 3. ROOF AREAS (setup + generated cards) -->
+  <!-- 2. ROOF AREAS -->
   <details class="section" data-sec="Roof / Installation Areas">
-    <summary><span class="sec-num">3</span>Roof / Installation Areas<span class="chev">▼</span></summary>
+    <summary><span class="sec-num">2</span><span class="sec-t">Roof / Installation Areas<small>Areas, roof details and proposal</small></span>
+      <span class="sec-count"></span><span class="chev"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3.5 6l4.5 4.5L12.5 6"/></svg></span></summary>
     <div class="sec-body">
       <div class="setup-box">
         <div class="field">
           <label>How many roof / installation areas?</label>
-          <input type="number" min="0" max="20" id="areaCount" data-k="Number of areas" data-regen="1">
+          <div class="stepper">
+            <button type="button" onclick="stepAreas(-1)" aria-label="One area less">−</button>
+            <input type="number" min="0" max="20" inputmode="numeric" id="areaCount" data-k="Number of areas" data-regen="1" placeholder="0">
+            <button type="button" onclick="stepAreas(1)" aria-label="One area more">+</button>
+          </div>
         </div>
         <div id="typeRows"></div>
       </div>
@@ -232,38 +309,46 @@
     </div>
   </details>
 
-  <!-- 4. POC / LV PANELS -->
+  <!-- 3. POC / LV PANELS -->
   <details class="section" data-sec="POC Details — LV/MDB Panels" data-rep-label="LV/MDB Panel">
-    <summary><span class="sec-num">4</span>POC — LV/MDB Panels<span class="chev">▼</span></summary>
+    <summary><span class="sec-num">3</span><span class="sec-t">POC — LV/MDB Panels<small>Panels, supply and POC options</small></span>
+      <span class="sec-count"></span><span class="chev"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3.5 6l4.5 4.5L12.5 6"/></svg></span></summary>
     <div class="sec-body">
       <div id="lvList"></div>
       <button class="add-btn" onclick="addLV()">＋ Add LV/MDB Panel</button>
     </div>
   </details>
 
-  <!-- 5. SAFETY -->
+  <!-- 4. SAFETY -->
   <details class="section" data-sec="Safety Issues / Checklist">
-    <summary><span class="sec-num">5</span>Safety Checklist<span class="chev">▼</span></summary>
+    <summary><span class="sec-num">4</span><span class="sec-t">Safety Checklist<small>Roof access, hazards and notes</small></span>
+      <span class="sec-count"></span><span class="chev"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3.5 6l4.5 4.5L12.5 6"/></svg></span></summary>
     <div class="sec-body" id="safetyList">
-      <div class="field"><label>Height of the Roofs (meters)</label><input type="text" inputmode="decimal" data-k="Roof heights m"></div>
-      <div class="field"><label>Describe How Roof is Accessed</label><textarea data-k="Roof access description"></textarea></div>
+      <h4 class="grp">Roof access</h4>
+      <div class="field"><label>Describe How Roof is Accessed</label><textarea data-k="Roof access description" placeholder="e.g. Internal staircase to roof door, cat ladder from mezzanine"></textarea></div>
+      <h4 class="grp">Site hazards</h4>
+      <div id="hazards"></div>
+      <h4 class="grp">Notes</h4>
       <div class="field"><label>Additional Safety Notes</label><textarea data-k="Safety notes"></textarea></div>
     </div>
   </details>
 
-  <!-- 6. FINAL CHECKLIST (tick list) -->
+  <!-- 5. FINAL CHECKLIST -->
   <details class="section" data-sec="Final Checklist">
-    <summary><span class="sec-num">6</span>Final Checklist<span class="chev">▼</span></summary>
+    <summary><span class="sec-num">5</span><span class="sec-t">Final Checklist<small>Documents and photos to collect</small></span>
+      <span class="sec-count"></span><span class="chev"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3.5 6l4.5 4.5L12.5 6"/></svg></span></summary>
     <div class="sec-body" id="finalList"></div>
   </details>
 
-  <p class="hint">Data stays in this page until you export — generate the report before closing.</p>
+  <p class="hint"><span>⚠</span><span>Data stays on this page until you export — generate the report before closing.</span></p>
 </main>
 
-<div class="actionbar">
-  <button class="btn-secondary" onclick="window.print()">Print / PDF</button>
-  <button class="btn-primary" onclick="openReport()">Generate Report</button>
-</div>
+<div class="actionbar"><div class="ab-in">
+  <button class="btn-secondary" onclick="window.print()">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>Print / PDF</button>
+  <button class="btn-primary" onclick="openReport()">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>Generate Report</button>
+</div></div>
 
 <!-- ================= GUIDED MODE ================= -->
 <div id="wizard">
@@ -294,7 +379,7 @@
   <div class="modal-card">
     <div class="modal-head">
       <h2>Survey Report</h2>
-      <button class="modal-close" onclick="closeReport()">✕</button>
+      <button class="modal-close" onclick="closeReport()" aria-label="Close">✕</button>
     </div>
     <div class="modal-body"><pre id="reportText"></pre></div>
     <div class="modal-foot">
@@ -305,103 +390,107 @@
 </div>
 
 <script>
+/* inside the toolkit (iframe) the menu bar already shows the title */
+try{if(window.self!==window.top)document.body.classList.add('embedded')}catch(e){document.body.classList.add('embedded')}
+
+/* ================= FIELD HELPERS =================
+   txt  = text box          num  = number with a unit shown in the box
+   cnt  = whole-number count yn   = Yes / No tap buttons
+   pick = tap buttons for a short list      grp = group heading
+   The data-k name is what appears in the report — keep it unchanged. */
+const txt=(label,key,ph='',type='text')=>`<div class="field"><label>${label}</label><input type="${type}" data-k="${key}"${ph?` placeholder="${ph}"`:''}></div>`;
+const num=(label,key,unit)=>`<div class="field"><label>${label}</label><div class="inp"><input type="text" inputmode="decimal" data-k="${key}" data-unit="${unit}"><span class="u">${unit}</span></div></div>`;
+const cnt=(label,key)=>`<div class="field"><label>${label}</label><input type="number" min="0" inputmode="numeric" data-k="${key}" placeholder="0"></div>`;
+const pick=(label,key,opts,cls='')=>`<div class="field"><label>${label}</label><select data-k="${key}" data-chips="${cls}"><option value="">— Select —</option>${opts.map(o=>`<option>${o}</option>`).join('')}</select></div>`;
+const yn=(label,key)=>pick(label,key,["Yes","No"],"yn");
+/* number box with a "No"/"None" button inside — e.g. parapet: type a height or tap No */
+const numNo=(label,key,unit,btn,val)=>`<div class="field"><label>${label}</label><div class="inp has-no"><input type="text" inputmode="decimal" data-k="${key}" data-unit="${unit}" data-no="${val}"><span class="u">${unit}</span><button type="button" class="nobtn" onclick="toggleNo(this)">${btn}</button></div></div>`;
+/* extra question that only shows for certain answers of another question (same area) */
+const reveal=(key,on,html)=>`<div class="other-box" data-for="${key}" data-on="${on}" hidden>${html}</div>`;
+/* compass direction picker — tap all that apply */
+const dirs=(label,key)=>`<div class="field"><label>${label}</label><input type="hidden" data-k="${key}" data-multi="NW|N|NE|W||E|SW|S|SE" data-order="N|NE|E|SE|S|SW|W|NW"></div>`;
+const grp=t=>`<h4 class="grp">${t}</h4>`;
+const g2=(...f)=>`<div class="grid2">${f.join('')}</div>`;
+
 /* ================= AREA TYPES & TEMPLATES ================= */
 const AREA_TYPES=["Flat Concrete Roof","Metal Sheet Roof","Carport","Ground Mount"];
 
-function commonRoofFields(){
-  return `
-    <div class="grid2">
-      <div class="field"><label>Roof Slope</label><input type="text" data-k="Roof slope"></div>
-      <div class="field"><label>Estimated Available Area (m²)</label><input type="text" inputmode="decimal" data-k="Available area"></div>
-      <div class="field"><label>Height Above Ground (m)</label><input type="text" inputmode="decimal" data-k="Height above ground"></div>
-      <div class="field"><label>Parapet Height (m)</label><input type="text" inputmode="decimal" data-k="Parapet height"></div>
-    </div>
-    <div class="field"><label>Loading Method</label><input type="text" data-k="Loading method"></div>
-    <div class="grid2">
-      <div class="field"><label>Age of Building</label><input type="text" inputmode="numeric" data-k="Building age"></div>
-      <div class="field"><label>Skylights Available</label><input type="text" data-k="Skylights"></div>
-      <div class="field"><label>Lifeline Available</label><input type="text" data-k="Lifeline"></div>
-      <div class="field"><label>Walkways Available</label><input type="text" data-k="Walkways"></div>
-    </div>
-    <div class="field"><label>High-rise Buildings Nearby — Height</label><input type="text" inputmode="decimal" data-k="Highrise nearby"></div>
-    <div class="field"><label>Electrical Shaft from Roof to Ground</label><input type="text" data-k="Electrical shaft"></div>
-    <div class="field"><label>Access to Rooftop</label><input type="text" data-k="Rooftop access"></div>`;
+function roofDetails(){
+  return grp('Roof')+g2(
+      txt('Roof Slope','Roof slope','e.g. 5°'),
+      num('Roof Height (approx.)','Height above ground','m'),
+      num('Age of Building','Building age','yrs'),
+      num('Usable Roof Area','Usable roof area','%'))+
+    `<div class="fhint">Usable area: rough share of the roof free for panels — leave out skylights and ventilation.</div>`+
+    numNo('Parapet Height','Parapet height','m','No','No parapet')+
+    yn('Enough Space for a Crane to Lift the Panels?','Crane space')+
+    reveal('Crane space','No',txt('Other Loading Method','Loading method','e.g. Manual lift by stairs, hoist'));
 }
+function roofAccess(){
+  return grp('Access & safety')+
+    pick('Skylights Available?','Skylights',["No","3 × 1 m","4 × 1 m","4.5 × 1 m","Other"],"c3")+
+    reveal('Skylights','Other',txt('Other Skylight Size','Skylight size other','e.g. 5 × 1.2 m'))+
+    g2(yn('Lifeline Available','Lifeline'),
+       yn('Walkways Available','Walkways'))+
+    yn('Electrical Shaft (Roof to Ground)','Electrical shaft')+
+    txt('Access to Rooftop','Rooftop access','e.g. Internal staircase');
+}
+const surroundings=(trenchLabel)=>grp(trenchLabel?'Surroundings & cable route':'Surroundings')+
+  numNo('High-rise Buildings Nearby — Height','Highrise nearby','m','None','None')+
+  dirs('Which Side of the Site? (tap all that apply)','Highrise direction')+
+  (trenchLabel?txt(trenchLabel,'Cable trench','Route and approx. length'):'');
 function proposalFields(systems){
-  const opts=systems.map(s=>`<option>${s}</option>`).join('');
-  return `
-    <div class="field"><label>Proposed Solar System</label>
-      <select data-k="Proposed system"><option value="">— Select —</option>${opts}</select></div>
-    <div class="field"><label>Proposed Inverter Location</label><input type="text" data-k="Inverter location"></div>
-    <div class="field"><label>Proposed POC (MDB/SMDB)</label><input type="text" data-k="POC"></div>`;
+  return grp('Proposal')+
+    pick('Proposed Solar System','Proposed system',systems,systems.length===4?'c2':'');
 }
+const cardHead=(i,type)=>`<div class="rep-head"><h3>Area ${i}</h3><span class="type-tag">${type}</span></div>`;
+const cardOpen=(i,type)=>`<div class="rep-card" data-area="${i}" data-type="${type}" data-rep="Area ${i} — ${type}">${cardHead(i,type)}`;
+
 function flatTemplate(i){
-  return `<div class="rep-card" data-area="${i}" data-type="Flat Concrete Roof" data-rep="Area ${i} — Flat Concrete Roof">
-    <div class="rep-head"><h3>Area ${i}</h3><span class="type-tag">Flat Concrete Roof</span></div>
-    ${commonRoofFields()}
-    ${proposalFields(["Minirail + long rail","Low tilt ballast","Raised structures","Canopy"])}
-  </div>`;
+  return cardOpen(i,"Flat Concrete Roof")+roofDetails()+roofAccess()+surroundings()+
+    proposalFields(["Minirail + long rail","Low tilt ballast","Raised structures","Canopy"])+`</div>`;
 }
 function metalRoofTemplate(i){
-  return `<div class="rep-card" data-area="${i}" data-type="Metal Sheet Roof" data-rep="Area ${i} — Metal Sheet Roof">
-    <div class="rep-head"><h3>Area ${i}</h3><span class="type-tag">Metal Sheet Roof</span></div>
-    <div class="grid2">
-      <div class="field"><label>Sheet Type</label>
-        <select data-k="Sheet type"><option value="">— Select —</option><option>Aluminium</option><option>HDG</option></select></div>
-      <div class="field"><label>Sheet Style</label>
-        <select data-k="Sheet style"><option value="">— Select —</option><option>Corrugated</option><option>Standing Seam</option></select></div>
-    </div>
-    <div class="field"><label>Roof Construction</label>
-      <select data-k="Roof construction"><option value="">— Select —</option><option>Single skin</option><option>Sandwich</option><option>Standing seam</option></select></div>
-    ${commonRoofFields()}
-    <div class="field"><label>Condition of Roof — Damages</label>
-      <select data-k="Roof damage level"><option value="">— Select —</option><option>No</option><option>Low</option><option>Medium</option><option>High</option></select></div>
-    <div class="field"><label>Any History of Water Leakage</label><input type="text" data-k="Water leakage history"></div>
-    <div class="field"><label>Physical Damages on Roof Sheet</label><input type="text" data-k="Damage roof sheet"></div>
-    <div class="field"><label>Physical Damages on Skylights</label><input type="text" data-k="Damage skylights"></div>
-    <div class="field"><label>Physical Damages on Ventilation System</label><input type="text" data-k="Damage ventilation"></div>
-    ${proposalFields(["Minirail + long rail","Low tilt ballast","Raised structures","Canopy"])}
-  </div>`;
+  return cardOpen(i,"Metal Sheet Roof")+
+    grp('Roof sheet')+
+    pick('Sheet Type','Sheet type',["Aluminium","HDG"],"yn")+
+    pick('Sheet Style','Sheet style',["Corrugated","Standing Seam"],"yn")+
+    pick('Roof Construction','Roof construction',["Single skin","Sandwich","Standing seam"])+
+    roofDetails()+roofAccess()+surroundings()+
+    grp('Roof condition')+
+    pick('Damage Level','Roof damage level',["No","Low","Medium","High"])+
+    reveal('Roof damage level','Low|Medium|High',
+      txt('Physical Damages (all types)','Physical damages','Where and what — sheet, skylights, vents…'))+
+    pick('Any History of Water Leakage','Water leakage history',["Yes","No","To be checked"],"c3")+
+    proposalFields(["Minirail + long rail","Low tilt ballast","Raised structures","Canopy"])+`</div>`;
 }
 function carportTemplate(i){
-  return `<div class="rep-card" data-area="${i}" data-type="Carport" data-rep="Area ${i} — Carport">
-    <div class="rep-head"><h3>Area ${i}</h3><span class="type-tag">Carport</span></div>
-    <div class="field"><label>Carpark Type</label>
-      <select data-k="Carpark type"><option value="">— Select —</option><option>Single</option><option>Double</option><option>Single + Double</option></select></div>
-    <div class="grid2">
-      <div class="field"><label>No. of Single Carpark Arrays</label><input type="number" data-k="Single carpark arrays"></div>
-      <div class="field"><label>No. of Double Carpark Arrays</label><input type="number" data-k="Double carpark arrays"></div>
-      <div class="field"><label>No. of Foundations to Remove</label><input type="number" data-k="Foundations to remove"></div>
-      <div class="field"><label>No. of Carpark Shades to Remove</label><input type="number" data-k="Carpark shades to remove"></div>
-    </div>
-    <div class="field"><label>High-rise Building Nearby — Height</label><input type="text" inputmode="decimal" data-k="Highrise nearby"></div>
-    <div class="grid2">
-      <div class="field"><label>No. of Trees to Remove</label><input type="number" data-k="Trees to remove"></div>
-      <div class="field"><label>No. of Street Lights to Remove</label><input type="number" data-k="Street lights to remove"></div>
-    </div>
-    <div class="field"><label>Cable Trench from Carpark to LV Room</label><input type="text" data-k="Cable trench"></div>
-    ${proposalFields(["Diagonal","Parallel","Garage"])}
-  </div>`;
+  return cardOpen(i,"Carport")+
+    grp('Layout')+
+    pick('Carpark Type','Carpark type',["Single","Double","Single + Double"])+
+    g2(cnt('Single Carpark Arrays','Single carpark arrays'),
+       cnt('Double Carpark Arrays','Double carpark arrays'))+
+    grp('To remove')+
+    g2(cnt('Foundations','Foundations to remove'),
+       cnt('Carpark Shades','Carpark shades to remove'),
+       cnt('Trees','Trees to remove'),
+       cnt('Street Lights','Street lights to remove'))+
+    surroundings('Cable Trench — Carpark to LV Room')+
+    proposalFields(["Diagonal","Parallel","Garage"])+`</div>`;
 }
 function groundTemplate(i){
-  return `<div class="rep-card" data-area="${i}" data-type="Ground Mount" data-rep="Area ${i} — Ground Mount">
-    <div class="rep-head"><h3>Area ${i}</h3><span class="type-tag">Ground Mount</span></div>
-    <div class="field"><label>Ground Type</label>
-      <select data-k="Ground type"><option value="">— Select —</option><option>Terrain</option><option>Flat ground</option><option>Canopy</option></select></div>
-    <div class="grid2">
-      <div class="field"><label>Soil Report Available</label><input type="text" data-k="Soil report"></div>
-      <div class="field"><label>Land Levelling Required</label><input type="text" data-k="Land levelling"></div>
-      <div class="field"><label>Fence Available</label><input type="text" data-k="Fence"></div>
-      <div class="field"><label>Street Lights Available</label><input type="text" data-k="Street lights available"></div>
-    </div>
-    <div class="field"><label>High-rise Building Nearby — Height</label><input type="text" inputmode="decimal" data-k="Highrise nearby"></div>
-    <div class="grid2">
-      <div class="field"><label>No. of Trees to Remove</label><input type="number" data-k="Trees to remove"></div>
-      <div class="field"><label>No. of Street Lights to Remove</label><input type="number" data-k="Street lights to remove"></div>
-    </div>
-    <div class="field"><label>Cable Trench from Ground to LV Room</label><input type="text" data-k="Cable trench"></div>
-    ${proposalFields(["Ballast system","Pile foundation","Ramming pile"])}
-  </div>`;
+  return cardOpen(i,"Ground Mount")+
+    grp('Ground')+
+    pick('Ground Type','Ground type',["Terrain","Flat ground","Canopy"])+
+    g2(yn('Soil Report Available','Soil report'),
+       yn('Land Levelling Required','Land levelling'),
+       yn('Fence Available','Fence'),
+       yn('Street Lights Available','Street lights available'))+
+    grp('To remove')+
+    g2(cnt('Trees','Trees to remove'),
+       cnt('Street Lights','Street lights to remove'))+
+    surroundings('Cable Trench — Ground to LV Room')+
+    proposalFields(["Ballast system","Pile foundation","Ramming pile"])+`</div>`;
 }
 const TEMPLATES={
   "Flat Concrete Roof":flatTemplate,
@@ -414,29 +503,41 @@ const TEMPLATES={
 function renderTypeRows(n){
   const wrap=document.getElementById('typeRows');
   const existing=wrap.querySelectorAll('.area-type-row').length;
-  // remove extras
   for(let i=existing;i>n;i--){
     wrap.querySelector(`.area-type-row[data-area="${i}"]`)?.remove();
     document.querySelector(`#areaCards .rep-card[data-area="${i}"]`)?.remove();
   }
-  // add missing
   for(let i=existing+1;i<=n;i++){
     const opts=AREA_TYPES.map(t=>`<option>${t}</option>`).join('');
     wrap.insertAdjacentHTML('beforeend',
       `<div class="area-type-row" data-area="${i}">
+        <div class="ar-head">Area ${i}</div>
         <div class="field">
-          <label>Area ${i} — Name</label>
+          <label><span class="lp">Area ${i} — </span>Name</label>
           <input type="text" data-k="Area ${i} name" placeholder="e.g. Block A, Old Building" oninput="updateAreaName(${i},this.value)">
         </div>
         <div class="field">
-          <label>Area ${i} — Type</label>
-          <select data-k="Area ${i} type" data-regen="1" onchange="createAreaCard(${i},this.value)">
+          <label><span class="lp">Area ${i} — </span>Type</label>
+          <select data-k="Area ${i} type" data-regen="1" data-chips="c2" onchange="createAreaCard(${i},this.value)">
             <option value="">— Select type —</option>${opts}
           </select>
         </div>
       </div>`);
   }
   updateProgress();
+}
+function stepAreas(d){
+  const inp=document.getElementById('areaCount');
+  const cur=Math.max(0,Math.min(20,parseInt(inp.value)||0));
+  const n=Math.max(0,Math.min(20,cur+d));
+  if(n===cur)return;
+  if(d<0&&cardHasData(cur)&&!confirm(`Remove Area ${cur}? Its details will be cleared.`))return;
+  inp.value=n||'';
+  inp.dispatchEvent(new Event('input',{bubbles:true}));
+}
+function cardHasData(i){
+  const card=document.querySelector(`#areaCards .rep-card[data-area="${i}"]`);
+  return !!card&&[...card.querySelectorAll('[data-k]')].some(el=>el.value.trim()!=='');
 }
 function areaName(i){
   const inp=document.querySelector(`[data-k="Area ${i} name"]`);
@@ -454,15 +555,20 @@ function createAreaCard(i,type){
   const old=holder.querySelector(`.rep-card[data-area="${i}"]`);
   if(old){
     if(old.dataset.type===type)return;
+    /* changing the type would clear what was typed — ask first */
+    if(cardHasData(i)&&!confirm(`Change Area ${i} to ${type||'no type'}? Details already entered for this area will be cleared.`)){
+      const sel=document.querySelector(`[data-k="Area ${i} type"]`);
+      sel.value=old.dataset.type;sel.dispatchEvent(new Event('change',{bubbles:true}));
+      return;
+    }
     old.remove();
   }
-  if(!type||!TEMPLATES[type])return;
-  // insert in area order
+  if(!type||!TEMPLATES[type]){updateProgress();return}
   const after=[...holder.querySelectorAll('.rep-card')].find(c=>+c.dataset.area>i);
   const html=TEMPLATES[type](i);
   if(after)after.insertAdjacentHTML('beforebegin',html);
   else holder.insertAdjacentHTML('beforeend',html);
-  updateAreaName(i,areaName(i));   // apply name (e.g. Block A) to the new card
+  updateAreaName(i,areaName(i));
   updateProgress();
 }
 document.getElementById('areaCount').addEventListener('input',e=>{
@@ -476,67 +582,158 @@ function lvTemplate(n){
   return `
   <div class="rep-card" data-rep="LV/MDB Panel ${n}">
     <div class="rep-head"><h3>LV/MDB Panel ${n}</h3><button class="rep-del" onclick="delRep(this)">Remove</button></div>
-    <div class="grid2">
-      <div class="field"><label>LV Panel Reference No.</label><input type="text" data-k="Panel ref no"></div>
-      <div class="field"><label>Location</label><input type="text" data-k="Location"></div>
-      <div class="field"><label>Incomer Rating — Breaker Size</label><input type="text" data-k="Incomer rating"></div>
-      <div class="field"><label>Account Number</label><input type="text" data-k="Account number"></div>
-    </div>
-    <div class="field"><label>SLD and Load Schedule Available</label><input type="text" data-k="SLD available"></div>
-    <div class="field"><label>Annual Electricity Consumption</label><input type="text" data-k="Annual consumption"></div>
-    <div class="field"><label>Fed From</label><input type="text" data-k="Fed from"></div>
-    <div class="field"><label>Incomer Cable Size and Run</label><input type="text" data-k="Incomer cable"></div>
-    <div class="field"><label>POC Option 1 — LV Panel Extension / SMDB Modification</label><input type="text" data-k="POC option 1"></div>
-    <div class="field"><label>POC Option 2 — LV Extension + Capacitor Bank Shifting</label><input type="text" data-k="POC option 2"></div>
-    <div class="field"><label>POC Option 3 — Space in LV Panel / Spare Breakers</label><input type="text" data-k="POC option 3"></div>
-    <div class="field"><label>POC Option 4 — MDB/SMDB Breaker Rearrangement</label><input type="text" data-k="POC option 4"></div>
-    <div class="grid2">
-      <div class="field"><label>Space for ACDB</label><input type="text" data-k="Space ACDB"></div>
-      <div class="field"><label>Space for Meter Cabinet</label><input type="text" data-k="Space meter cabinet"></div>
-    </div>
-    <div class="field"><label>Proposed Buildings for POC</label><input type="text" data-k="Proposed buildings"></div>
+    ${grp('Panel')}
+    ${g2(txt('Panel Reference No.','Panel ref no'),
+         txt('Location','Location'),
+         txt('Incomer Rating — Breaker','Incomer rating','e.g. 1600 A'),
+         txt('Meter Number','Meter number'))}
+    ${grp('Consumption & drawings')}
+    ${txt('Annual Electricity Consumption (ask coordinator for approx.)','Annual consumption','e.g. 1,200,000 kWh')}
+    ${g2(yn('SLD Available','SLD available'),
+         yn('Load Schedule Available','Load schedule available'))}
+    ${grp('Point of connection')}
+    <div class="field"><label>POC Option</label>
+      <select data-k="POC option">
+        <option value="">— Select —</option>
+        <option>1 — LV panel extension</option>
+        <option>2 — LV extension + capacitor bank shifting</option>
+        <option>3 — Space in LV panel / spare breakers</option>
+        <option>4 — LV rearrangement</option>
+        <option>5 — SMDB rearrangement</option>
+      </select></div>
+    ${txt('POC Building Name','POC building name')}
+    ${grp('Space available')}
+    ${g2(yn('Space for ACCB','Space ACCB'),
+         yn('Space for Meter Cabinet','Space meter cabinet'))}
   </div>`;
 }
 function addLV(){lvN++;document.getElementById('lvList').insertAdjacentHTML('beforeend',lvTemplate(lvN));updateProgress();return lvN}
-function delRep(btn){btn.closest('.rep-card').remove();updateProgress()}
+function delRep(btn){
+  const card=btn.closest('.rep-card');
+  const filled=[...card.querySelectorAll('[data-k]')].some(el=>el.value.trim()!=='');
+  if(filled&&!confirm('Remove this panel and everything entered for it?'))return;
+  card.remove();updateProgress();
+}
+
+/* ================= TAP CHIPS =================
+   Any <select data-chips> shows as tap buttons. The select stays (hidden), so the
+   report, progress and Guided mode read it exactly as before. */
+var chipify=function(){
+  document.querySelectorAll('select[data-chips]:not([data-chipped])').forEach(sel=>{
+    sel.dataset.chipped='1';sel.hidden=true;
+    const box=document.createElement('div');
+    box.className='chips '+(sel.dataset.chips||'');
+    box.setAttribute('role','group');
+    const keep=!!sel.dataset.regen;   /* area type: tapping again does not clear it */
+    [...sel.options].filter(o=>o.value).forEach(o=>{
+      const b=document.createElement('button');
+      b.type='button';b.textContent=o.textContent;b.dataset.v=o.value;
+      b.onclick=()=>{
+        const v=(sel.value===o.value&&!keep)?'':o.value;
+        if(v===sel.value)return;
+        sel.value=v;
+        sel.dispatchEvent(new Event('input',{bubbles:true}));
+        sel.dispatchEvent(new Event('change',{bubbles:true}));
+      };
+      box.appendChild(b);
+    });
+    sel.after(box);
+    const sync=()=>box.querySelectorAll('button').forEach(b=>{const on=b.dataset.v===sel.value;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
+    sel.addEventListener('change',sync);sync();
+  });
+};
+function chipifyMulti(){
+  document.querySelectorAll('input[data-multi]:not([data-chipped])').forEach(inp=>{
+    inp.dataset.chipped='1';
+    const opts=inp.dataset.multi.split('|');
+    const box=document.createElement('div');box.className='chips compass';box.setAttribute('role','group');
+    opts.forEach(o=>{
+      if(!o){box.insertAdjacentHTML('beforeend','<span class="mid">Site</span>');return}
+      const b=document.createElement('button');b.type='button';b.textContent=o;b.dataset.v=o;
+      b.onclick=()=>{
+        const cur=new Set(inp.value?inp.value.split(', '):[]);
+        cur.has(o)?cur.delete(o):cur.add(o);
+        inp.value=(inp.dataset.order||inp.dataset.multi).split('|').filter(x=>x&&cur.has(x)).join(', ');
+        inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));
+      };
+      box.appendChild(b);
+    });
+    inp.after(box);
+    const sync=()=>{const cur=inp.value.split(', ');box.querySelectorAll('button').forEach(b=>{const on=cur.includes(b.dataset.v);b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)})};
+    inp.addEventListener('change',sync);sync();
+  });
+}
+const _chipifyOne=chipify;
+chipify=function(){_chipifyOne();chipifyMulti()};
+function toggleNo(btn){
+  const inp=btn.parentElement.querySelector('input');
+  inp.value=inp.value===inp.dataset.no?'':inp.dataset.no;
+  inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));
+}
+document.addEventListener('input',e=>{
+  const el=e.target;if(el.dataset&&el.dataset.no)el.parentElement.classList.toggle('is-no',el.value===el.dataset.no);
+});
+/* show / hide follow-up questions; a hidden one is cleared so it never reaches the report */
+document.addEventListener('change',e=>{
+  const el=e.target;if(!el.dataset||!el.dataset.k)return;
+  const scope=el.closest('.rep-card')||el.closest('.sec-body')||document;
+  scope.querySelectorAll(`.other-box[data-for="${CSS.escape(el.dataset.k)}"]`).forEach(box=>{
+    const on=box.dataset.on.split('|').includes(el.value);
+    box.hidden=!on;
+    if(!on)box.querySelectorAll('[data-k]').forEach(i=>{i.value=''});
+  });
+  updateProgress();
+});
+new MutationObserver(()=>chipify()).observe(document.getElementById('app'),{childList:true,subtree:true});
+
+/* ================= LOCATION ================= */
+function useLocation(btn){
+  const inp=btn.parentElement.querySelector('input');
+  if(!navigator.geolocation){alert("Location is not available on this device.");return}
+  const label=btn.lastChild.textContent;btn.lastChild.textContent='…';
+  navigator.geolocation.getCurrentPosition(p=>{
+    inp.value=`${p.coords.latitude.toFixed(6)}, ${p.coords.longitude.toFixed(6)}`;
+    inp.dispatchEvent(new Event('input',{bubbles:true}));
+    btn.lastChild.textContent=label;
+  },()=>{btn.lastChild.textContent=label;alert("Could not get your location. Allow location access, or paste the map link.")},
+  {enableHighAccuracy:true,timeout:15000});
+}
 
 /* ================= SAFETY (yes/no + comment) ================= */
+/* each item: text, and its two answers (default Yes / No). The first answer shows green, the second red. */
 const safetyItems=[
-  "Work at heights",
-  "Use / operation of facility may interfere with work or safety of employees / customers",
-  "High traffic area",
-  "Toxic fumes or chemicals",
-  "Chemical factory nearby",
-  "Safety of existing electrical network (organized or needs repair)",
-  "Trenching works required (may interfere with other services)",
-  "Documentation of underground services exists",
-  "Client has HSE policies and procedures in place"
+  {t:"High traffic area"},
+  {t:"Toxic fumes or chemicals"},
+  {t:"Chemical factory nearby"},
+  {t:"Bird droppings chance (any millet / grain warehouse nearby?)"},
+  {t:"Safety of existing electrical network",a:["Safe","Unsafe"],cmtOn:"Unsafe"},
+  {t:"Trenching works required (may interfere with other services)"},
+  {t:"Documentation of underground services exists"},
+  {t:"Client has HSE policies and procedures in place"}
 ];
-function ynRow(text){
-  return `<div class="check-row" data-check="${text}">
+function ynRow(it){
+  const [a1,a2]=it.a||["Yes","No"];
+  return `<div class="check-row" data-check="${it.t}" data-opts="${a1}|${a2}" data-cmt-on="${it.cmtOn||''}">
     <div class="check-main">
-      <div class="txt">${text}</div>
+      <div class="txt">${it.t}</div>
       <div class="yn">
-        <button class="yes" onclick="setYN(this,'Yes')">Yes</button>
-        <button class="no" onclick="setYN(this,'No')">No</button>
+        <button class="yes" data-v="${a1}" onclick="setYN(this,'${a1}')">${a1}</button>
+        <button class="no" data-v="${a2}" onclick="setYN(this,'${a2}')">${a2}</button>
       </div>
     </div>
     <button class="cmt-toggle" onclick="toggleCmt(this)">＋ Add comment</button>
     <div class="cmt-box"><textarea data-opt="1" placeholder="Comment…" oninput="this.closest('.check-row').dataset.cmt=this.value"></textarea></div>
   </div>`;
 }
-function setYN(btn,val){
-  const row=btn.closest('.check-row');
-  row.querySelectorAll('.yn button').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  row.dataset.val=val;
-  updateProgress();
-}
+function setYN(btn,val){applyYN(btn.closest('.check-row'),val)}
 function applyYN(row,val){
-  row.querySelectorAll('.yn button').forEach(b=>b.classList.remove('on'));
-  const btn=row.querySelector(val==='Yes'?'.yes':'.no');
-  if(btn)btn.classList.add('on');
+  row.querySelectorAll('.yn button').forEach(b=>b.classList.toggle('on',b.dataset.v===val));
   row.dataset.val=val;
+  /* e.g. "Unsafe" opens the comment box straight away */
+  if(row.dataset.cmtOn&&row.dataset.cmtOn===val){
+    const box=row.querySelector('.cmt-box');
+    if(!box.classList.contains('open')){box.classList.add('open');row.querySelector('.cmt-toggle').textContent='－ Hide comment'}
+  }
   updateProgress();
 }
 function toggleCmt(btn){
@@ -548,41 +745,51 @@ function toggleCmt(btn){
 
 /* ================= FINAL CHECKLIST (3-state) ================= */
 const TODO_STATES=["Collected","To be requested","Requested"];
+const PHOTO_STATES=["Taken","To be requested","Collected"];   /* photos the surveyor takes on site */
 const finalItems=[
-  "Coordinates of premises (for Google Map placement)",
-  "Copy of last 12 months' electricity bills",
-  "As-built architectural and electrical drawings",
-  "Load schedule for the LV and SMDB panels",
-  "Pictures and videos of roof — folder wise",
-  "Pictures of main breaker and proposed connection point",
-  "Pictures and videos of LV room and electrical room — folder wise"
+  {t:"Copy of last 12 months' electricity bills"},
+  {t:"As-built architectural and electrical drawings"},
+  {t:"Load schedule for the LV and SMDB panels"},
+  {t:"Pictures and videos of roof — folder wise",s:PHOTO_STATES},
+  {t:"Pictures of main breaker and proposed connection point",s:PHOTO_STATES}
 ];
-function todoRow(text){
-  const btns=TODO_STATES.map(s=>`<button data-v="${s}" onclick="setTodo(this,'${s}')">${s}</button>`).join('');
-  return `<div class="todo-row" data-check="${text}">
-    <div class="txt">${text}</div>
+function todoRow(it){
+  const st=it.s||TODO_STATES;
+  const btns=st.map(s=>`<button data-v="${s}" onclick="setTodo(this,'${s}')">${s}</button>`).join('');
+  return `<div class="todo-row" data-check="${it.t}" data-states="${st.join('|')}">
+    <div class="txt">${it.t}</div>
     <div class="todo-opts">${btns}</div>
   </div>`;
 }
 function setTodoVal(row,val){
-  row.dataset.val=(row.dataset.val===val)?'':val;   // tap same option again to clear
+  row.dataset.val=(row.dataset.val===val)?'':val;
   row.querySelectorAll('.todo-opts button').forEach(b=>b.classList.toggle('on',b.dataset.v===row.dataset.val));
   updateProgress();
 }
 function setTodo(btn,val){setTodoVal(btn.closest('.todo-row'),val)}
 
 (function init(){
-  const safetyBody=document.getElementById('safetyList');
-  const notesField=safetyBody.querySelector('[data-k="Safety notes"]').closest('.field');
-  safetyItems.forEach(t=>notesField.insertAdjacentHTML('beforebegin',ynRow(t)));
+  const hz=document.getElementById('hazards');
+  safetyItems.forEach(t=>hz.insertAdjacentHTML('beforeend',ynRow(t)));
   const fin=document.getElementById('finalList');
   finalItems.forEach(t=>fin.insertAdjacentHTML('beforeend',todoRow(t)));
   addLV();
+  chipify();
+  /* inspection date starts as today */
+  const d=document.querySelector('[data-k="Inspection date"]'),t=new Date();
+  if(d&&!d.value)d.value=new Date(t.getTime()-t.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+  /* opening a section brings its header to the top */
+  document.querySelectorAll('details.section').forEach(sec=>sec.addEventListener('toggle',()=>{
+    if(sec.open&&sec.dataset.userOpen){sec.scrollIntoView({block:'start',behavior:'smooth'})}
+    delete sec.dataset.userOpen;
+  }));
+  document.querySelectorAll('details.section>summary').forEach(s=>s.addEventListener('click',()=>{s.parentElement.dataset.userOpen='1'}));
+  updateProgress();
 })();
 
 /* ================= PROGRESS ================= */
 function sectionStats(sec){
-  const inputs=[...sec.querySelectorAll('input,select,textarea')].filter(el=>!el.dataset.opt);
+  const inputs=[...sec.querySelectorAll('input,select,textarea')].filter(el=>!el.dataset.opt&&!el.closest('.other-box[hidden]'));
   const checks=[...sec.querySelectorAll('.check-row')];
   const todos=[...sec.querySelectorAll('.todo-row')];
   const total=inputs.length+checks.length+todos.length;
@@ -595,10 +802,12 @@ function updateProgress(){
   let done=0,total=0;
   document.querySelectorAll('details.section').forEach(sec=>{
     const s=sectionStats(sec);done+=s.done;total+=s.total;
+    const c=sec.querySelector('.sec-count');
+    if(c){c.textContent=`${s.done}/${s.total}`;c.classList.toggle('full',s.total>0&&s.done===s.total)}
   });
   const pct=total?Math.round(done/total*100):0;
   document.getElementById('progressBar').style.width=pct+'%';
-  document.getElementById('progressLabel').textContent=pct+'% complete';
+  document.getElementById('progressLabel').textContent=pct+'% done';
   if(document.getElementById('wizard').classList.contains('open')&&
      document.getElementById('wizSections').classList.contains('on'))renderSecGrid();
 }
@@ -641,15 +850,16 @@ let wq={sec:null,list:[],idx:0};
 
 function fieldLabel(el){
   const f=el.closest('.field');
-  return f?f.querySelector('label').textContent:el.dataset.k;
+  const u=el.dataset.unit;
+  return (f?f.querySelector('label').textContent:el.dataset.k)+(u?` (${u})`:'');
 }
 function collectQuestions(sec){
   const list=[];
   sec.querySelectorAll('[data-k]').forEach(el=>{
-    if(el.dataset.opt)return;
+    if(el.dataset.opt||el.closest('.other-box[hidden]'))return;
     const card=el.closest('.rep-card');
     list.push({
-      kind: el.tagName==='SELECT'?'select':(el.tagName==='TEXTAREA'?'textarea':'input'),
+      kind: el.dataset.multi?'multi':el.tagName==='SELECT'?'select':(el.tagName==='TEXTAREA'?'textarea':'input'),
       el, ctx: card?card.dataset.rep:'', label: fieldLabel(el)
     });
   });
@@ -682,9 +892,10 @@ function renderQ(){
   if(q.kind==='yn'){
     const v=q.row.dataset.val||'';
     const cmt=q.row.dataset.cmt||'';
+    const [a1,a2]=(q.row.dataset.opts||"Yes|No").split('|');
     html+=`<div class="q-yn">
-      <button class="yes ${v==='Yes'?'picked':''}" onclick="pickYN(this,'Yes')">Yes</button>
-      <button class="no ${v==='No'?'picked':''}" onclick="pickYN(this,'No')">No</button>
+      <button class="yes ${v===a1?'picked':''}" onclick="pickYN(this,'${a1}')">${a1}</button>
+      <button class="no ${v===a2?'picked':''}" onclick="pickYN(this,'${a2}')">${a2}</button>
     </div>
     <div class="q-comment">
       <label>Comment (optional)</label>
@@ -693,10 +904,14 @@ function renderQ(){
   }else if(q.kind==='check'){
     const v=q.row.dataset.val||'';
     html+='<div class="q-options">';
-    TODO_STATES.forEach(o=>{
+    (q.row.dataset.states?q.row.dataset.states.split('|'):TODO_STATES).forEach(o=>{
       html+=`<button class="${v===o?'picked':''}" onclick="pickTodo('${o}')">${o}</button>`;
     });
     html+='</div>';
+  }else if(q.kind==='multi'){
+    const cur=q.el.value.split(', ');
+    html+='<div class="q-compass">'+q.el.dataset.multi.split('|').map(o=>o
+      ?`<button class="${cur.includes(o)?'picked':''}" onclick="toggleMultiQ(this,'${o}')">${o}</button>`:'<span>Site</span>').join('')+'</div>';
   }else if(q.kind==='select'){
     html+='<div class="q-options">';
     [...q.el.options].forEach(o=>{
@@ -711,7 +926,8 @@ function renderQ(){
     const t=q.el.type==='date'?'date':(q.el.type==='number'?'number':(q.el.type==='tel'?'tel':'text'));
     const im=q.el.getAttribute('inputmode');
     const paste=(t==='text'||t==='tel')?'<button class="q-paste" onclick="pasteInto()">📋 Paste from clipboard</button>':'';
-    html+=`<div class="q-input"><input id="qField" type="${t}" ${im?`inputmode="${im}"`:''} value="${(q.el.value||'').replace(/"/g,'&quot;')}" placeholder="Type your answer…">${paste}</div>`;
+    const noBtn=q.el.dataset.no?`<button class="q-paste" onclick="noQ()">Answer: ${q.el.dataset.no}</button>`:'';
+    html+=`<div class="q-input"><input id="qField" type="${t}" ${im?`inputmode="${im}"`:''} value="${(q.el.value||'').replace(/"/g,'&quot;')}" placeholder="Type your answer…">${noBtn||paste}</div>`;
   }
 
   html+=`<div class="q-actions">
@@ -738,12 +954,20 @@ function pasteInto(){
     }).catch(()=>{f.focus();alert("Tap and hold the field, then choose Paste.");});
   }else{f.focus();alert("Tap and hold the field, then choose Paste.");}
 }
+function toggleMultiQ(btn,o){
+  const q=wq.list[wq.idx],opts=q.el.dataset.multi.split('|');
+  const cur=new Set(q.el.value?q.el.value.split(', '):[]);
+  cur.has(o)?cur.delete(o):cur.add(o);
+  q.el.value=(q.el.dataset.order||q.el.dataset.multi).split('|').filter(x=>x&&cur.has(x)).join(', ');
+  q.el.dispatchEvent(new Event('input',{bubbles:true}));q.el.dispatchEvent(new Event('change',{bubbles:true}));
+  btn.classList.toggle('picked',cur.has(o));
+}
+function noQ(){const f=document.getElementById('qField');f.value=wq.list[wq.idx].el.dataset.no;okQ()}
 function pickYN(btn,val){
   const q=wq.list[wq.idx];
   applyYN(q.row,val);
   document.querySelectorAll('#qCard .q-yn button').forEach(b=>b.classList.remove('picked'));
   btn.classList.add('picked');
-  // don't auto-advance — user may add a comment; OK continues
 }
 function pickTodo(val){
   const q=wq.list[wq.idx];
@@ -763,7 +987,7 @@ function answerSelect(val){
   document.querySelectorAll('#qCard .q-options button').forEach(b=>{
     b.classList.toggle('picked',b.textContent===val);
   });
-  setTimeout(()=>{regen?regenAndNext():nextQ();},180);
+  setTimeout(()=>regenAndNext(),180);   /* re-read: an answer can show a follow-up question */
 }
 function okQ(){
   const q=wq.list[wq.idx];
@@ -776,7 +1000,7 @@ function okQ(){
     }
     nextQ();return;
   }
-  if(q.kind==='check'){nextQ();return;}
+  if(q.kind==='check'||q.kind==='multi'){nextQ();return;}
   const f=document.getElementById('qField');
   if(f){
     q.el.value=f.value;
@@ -787,7 +1011,6 @@ function okQ(){
   nextQ();
 }
 function regenAndNext(){
-  // question list changed (new type rows / area cards) — re-collect, keep position
   const cur=wq.idx;
   wq.list=collectQuestions(wq.sec);
   wq.idx=cur;
@@ -829,6 +1052,7 @@ function wizAddAnother(){
 }
 
 /* ================= REPORT ================= */
+function withUnit(el){const v=el.value.trim(),u=el.dataset.unit;return u&&/^[~\d.,\s\-–]+$/.test(v)?v+(u==='%'?'%':' '+u):v}
 function buildReport(){
   const L=[];
   L.push("SOLAR SITE SURVEY REPORT");
@@ -841,18 +1065,17 @@ function buildReport(){
     sec.querySelectorAll('.rep-card').forEach(cardEl=>{
       const sub=[];
       cardEl.querySelectorAll('[data-k]').forEach(el=>{
-        if(el.value.trim())sub.push("   "+el.dataset.k+": "+el.value.trim());
+        if(el.value.trim())sub.push("   "+el.dataset.k+": "+withUnit(el));
       });
       if(sub.length){lines.push(" • "+cardEl.dataset.rep);lines.push(...sub);}
     });
     sec.querySelectorAll('[data-k]').forEach(el=>{
       if(el.closest('.rep-card')||el.dataset.opt)return;
-      if(el.value.trim())lines.push(" "+el.dataset.k+": "+el.value.trim());
+      if(el.value.trim())lines.push(" "+el.dataset.k+": "+withUnit(el));
     });
     sec.querySelectorAll('.check-row').forEach(row=>{
       if(row.dataset.val){
-        let line=" ["+row.dataset.val+"] "+row.dataset.check;
-        lines.push(line);
+        lines.push(" ["+row.dataset.val+"] "+row.dataset.check);
         if(row.dataset.cmt&&row.dataset.cmt.trim())lines.push("      ↳ "+row.dataset.cmt.trim());
       }
     });
@@ -888,18 +1111,14 @@ document.getElementById('reportModal').addEventListener('click',e=>{
 });
 
 /* ===== Mobile keyboard fixes ===== */
-/* Keep the wizard exactly as tall as the visible area, so the
-   Back / Skip / OK bar sits above the keyboard instead of behind it (iOS). */
 (function(){
   if(!window.visualViewport) return;
   const wiz=document.getElementById('wizard');
-  const fit=()=>{ wiz.style.height=window.visualViewport.height+'px'; window.scrollTo(0,0); };
+  const fit=()=>{ wiz.style.height=window.visualViewport.height+'px'; if(wiz.classList.contains('open'))window.scrollTo(0,0); };
   visualViewport.addEventListener('resize',fit);
   visualViewport.addEventListener('scroll',fit);
   fit();
 })();
-/* When a field (text, date, etc.) gets focus, scroll the question into view
-   so the title stays visible above the keyboard / date picker. */
 document.addEventListener('focusin',e=>{
   if(e.target.closest('#wizard') && e.target.matches('input,textarea,select')){
     setTimeout(()=>{
