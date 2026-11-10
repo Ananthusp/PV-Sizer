@@ -429,7 +429,7 @@ function pkgCalc(dd,act){ const out={}; PKGS.forEach(p=>{ let w=0,pl=0,ac=0; LEA
 function overall(pk,key){ let sw=0,v=0; PKGS.forEach(p=>{ if(!pk[p.k]?.w) return; const w=+S.weights[p.k]||0; sw+=w; v+=w*pk[p.k][key]; }); return sw?v/sw:0; }
 const plannedOverallAt=dd=>overall(pkgCalc(dd,{}),'pl');
 function calc(){ const we=S.report.weekEnd, wn=weekNo(we); const pk=pkgCalc(we,S.actual), pkLast=pkgCalc(we,S.lastActual);
-  const pl=overall(pk,'pl'), ac=overall(pk,'ac'); return {we,wn,pk,pkLast,pl,ac,varr:ac-pl,ws:addD(we,-6),elapsed:diffD(SITE.meta.cStart||W1,we),remaining:diffD(we,SITE.meta.cEnd||we)}; }
+  const pl=overall(pk,'pl'), ac=overall(pk,'ac'); return {we,wn,pk,pkLast,pl,ac,varr:ac-pl,ws:addD(we,-6),elapsed:Math.max(0,diffD(SITE.meta.cStart||W1,we)+1),remaining:Math.max(0,diffD(we,SITE.meta.cEnd||we))}   /* counted days: start day included; remaining = days after the week end up to completion */; }
 const refNo=c=>(S.report.refPrefix||'')+String(c.wn).padStart(2,'0')+'-'+(S.report.rev||'R00');
 function statusPill(a,p){ if(a>=100) return '<span class="pill ok">Done</span>'; const d=a-p; if(p===0&&a===0) return '<span class="pill n">Not due</span>'; if(d<=-10) return '<span class="pill bad">Behind '+Math.round(-d)+'%</span>'; if(d<=-3) return '<span class="pill warn">Behind '+Math.round(-d)+'%</span>'; return '<span class="pill ok">On track</span>'; }
 const PCT_OPTS=[0,5,10,15,20,25,30,40,50,60,70,75,80,90,95,100];
