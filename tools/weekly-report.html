@@ -759,7 +759,7 @@ function twPanel(){ const tot=Object.values(S.tw||{}).reduce((a,b)=>a+(+b||0),0)
    <textarea id="twPaste" rows="6" placeholder="Site Survey&#9;3 days&#9;3&#9;0.39%"></textarea>
    <div class="toolbar"><button class="btn small primary" data-act2="twapply">Apply weightage</button>${TWON?'<button class="btn small" data-act2="twclear">Clear — weight by duration</button>':''}<span class="count">${esc(TW_MSG)}</span></div></details>`; }
 R.scurve=p=>shell(p,'Planned line is built week by week from the programme: each activity\'s planned % at the week end × its weightage. Actual line comes from each week you report.',
-  `<canvas class="preview" id="sCanvas" width="1200" height="440"></canvas>${(()=>{ const d=sCurveData(); let r1='<tr><th>Week</th>', r2='<tr><td><b>Week ending</b></td>', r3='<tr><td><b>Planned %</b></td>', r4='<tr><td><b>Actual %</b></td>';
+  `<div class="toolbar" style="margin:0 0 8px"><label class="row count" style="gap:6px;cursor:pointer"><input type="checkbox" data-sclbl="1" ${S.scLabels!==false?'checked':''} style="width:auto"> Show numbers (%) on the S-curve — screen and report</label></div><canvas class="preview" id="sCanvas" width="1200" height="440"></canvas>${(()=>{ const d=sCurveData(); let r1='<tr><th>Week</th>', r2='<tr><td><b>Week ending</b></td>', r3='<tr><td><b>Planned %</b></td>', r4='<tr><td><b>Actual %</b></td>';
     d.cats.forEach((c,i)=>{ const w=i+1, cur=w===d.cur; r1+=`<th class="c"${cur?' style="background:var(--hot)"':''}>${c}</th>`; r2+=`<td class="c nw">${dmyS(weekEndOf(w)).slice(0,6)}</td>`; r3+=`<td class="c">${d.pl[i].toFixed(1)}</td>`;
       r4+= w<d.cur?`<td class="c"><input type="number" step="0.1" min="0" max="100" data-h="${w}" value="${S.history[w]??''}" style="width:62px;min-width:0;text-align:right"></td>` : `<td class="c">${cur?d.ac[i].toFixed(1):''}</td>`; });
     return `<h3 style="margin:16px 0 8px;font-size:17px">Week by week <span class="auto">planned auto · past actuals editable</span></h3><div class="tw"><table class="sum-t">${r1}</tr>${r2}</tr>${r3}</tr>${r4}</tr></table></div>`; })()}`);
@@ -846,9 +846,9 @@ function drawS(cv){ if(!cv) return; const g=cv.getContext('2d'),W=cv.width,H=cv.
   if(d.cur>=1&&d.cur<=n){ g.strokeStyle='#1090f1'; g.setLineDash([5,5]); g.beginPath(); g.moveTo(x(d.cur-1),T); g.lineTo(x(d.cur-1),H-B); g.stroke(); g.setLineDash([]); }
   const line=(arr,col)=>{ g.strokeStyle=col; g.lineWidth=3; g.beginPath(); let st=false; arr.forEach((v,i)=>{ if(v==null) return; st?g.lineTo(x(i),y(v)):(g.moveTo(x(i),y(v)),st=true); }); g.stroke(); g.fillStyle=col; arr.forEach((v,i)=>{ if(v==null) return; g.beginPath(); g.arc(x(i),y(v),3.5,0,7); g.fill(); }); };
   line(d.pl,'#0b3a66'); line(d.ac,'#1090f1');
-  g.font='600 12px "Source Sans 3",sans-serif'; g.textAlign='center'; const lstep=n>20?2:1;
+  if(S.scLabels!==false){ g.font='600 12px "Source Sans 3",sans-serif'; g.textAlign='center'; const lstep=n>20?2:1;
   d.pl.forEach((v,i)=>{ if(v==null||(i%lstep&&i!==d.cur-1)) return; g.fillStyle='#0b3a66'; g.fillText(v.toFixed(0)+'%',x(i),y(v)-12); });
-  d.ac.forEach((v,i)=>{ if(v==null||(i%lstep&&i!==d.cur-1)) return; g.fillStyle='#1090f1'; g.fillText(v.toFixed(0)+'%',x(i),y(v)+14); });
+  d.ac.forEach((v,i)=>{ if(v==null||(i%lstep&&i!==d.cur-1)) return; g.fillStyle='#1090f1'; g.fillText(v.toFixed(0)+'%',x(i),y(v)+14); }); }
   g.textAlign='left'; g.font='600 15px "Source Sans 3",sans-serif'; g.fillStyle='#0b3a66'; g.fillRect(L,H-18,22,4); g.fillText('Planned (cumulative %)',L+30,H-16); g.fillStyle='#1090f1'; g.fillRect(L+230,H-18,22,4); g.fillText('Actual (cumulative %)',L+260,H-16); }
 function ganttRows(we){ const MAXR=30,pick=[];
   LEAF.forEach(t=>{ const a=+S.actual[t.id]||0, la=+S.lastActual[t.id]||0; const late=t.finish<=we&&a<100, moved=a>la&&t.finish>=addD(we,-21);
@@ -985,6 +985,8 @@ async function dropSlides(zip,files){ if(!files.length) return;
   zip.file('ppt/presentation.xml',serX(pres)); zip.file('ppt/_rels/presentation.xml.rels',serX(prels)); zip.file('[Content_Types].xml',ct);
   const app=zip.file('docProps/app.xml'); if(app){ let a=await app.async('string'); a=a.replace(/<Slides>\d+<\/Slides>/,`<Slides>${PAGES.length-files.length}</Slides>`); zip.file('docProps/app.xml',a); } }
 async function writeChart(zip,X,sd){ const ch=await X('ppt/charts/chart1.xml'), n=sd.cats.length;
+  const on=S.scLabels!==false; [...ch.getElementsByTagNameNS(NS.c,'dLbls')].forEach(dl=>{ const sv=dl.getElementsByTagNameNS(NS.c,'showVal')[0]; if(sv) sv.setAttribute('val',on?'1':'0');
+    [...dl.getElementsByTagNameNS(NS.c,'numFmt'),...dl.getElementsByTagNameNS(NS.c,'dLblPos')].forEach(x=>x.remove()); if(on){ const nf=ch.createElementNS(NS.c,'c:numFmt'); nf.setAttribute('formatCode','0"%"'); nf.setAttribute('sourceLinked','0'); const ps=ch.createElementNS(NS.c,'c:dLblPos'); ps.setAttribute('val','t'); const lk=dl.getElementsByTagNameNS(NS.c,'showLegendKey')[0]; dl.insertBefore(nf,dl.firstChild); dl.insertBefore(ps,lk||null); } });
   [...ch.getElementsByTagNameNS(NS.c,'ser')].forEach((ser,si)=>{ const vals=si===0?sd.pl:sd.ac;
     const cat=ser.getElementsByTagNameNS(NS.c,'cat')[0]; cat.getElementsByTagNameNS(NS.c,'f')[0].textContent=`Sheet1!$A$2:$A$${n+1}`; const sc=cat.getElementsByTagNameNS(NS.c,'strCache')[0];
     [...sc.getElementsByTagNameNS(NS.c,'pt')].forEach(p=>p.remove()); sc.getElementsByTagNameNS(NS.c,'ptCount')[0].setAttribute('val',n);
@@ -1026,6 +1028,7 @@ document.addEventListener('input',e=>{ const t=e.target, ds=t.dataset; if(!SITE)
   else if(ds.rv){ const r=RAW[+ds.i]; if(ds.rv==='sum'||ds.rv==='ms') r[ds.rv]=t.checked; else r[ds.rv]=t.value; } });
 function updHse(){ const c=hseCalc(); [['hTW',c.tw],['hMH',c.mh],['hMHC',c.mhCum],['hSF',c.safe],['hSFC',c.safeCum]].forEach(([id,v])=>{ const el=$(id); if(el) el.textContent=v; }); }
 document.addEventListener('change',e=>{ const t=e.target, ds=t.dataset;
+  if(ds.sclbl){ S.scLabels=t.checked; save(); drawS($('sCanvas')); return; }
   if(ds.act && t.tagName==='INPUT'){ t.value=+S.actual[ds.act]||0; }   /* show the cleaned value (0–100) after typing */
   else if(ds.ms){ S.msDate ||= {}; if(t.checked) S.msDate[ds.ms] ||= S.report.weekEnd; else delete S.msDate[ds.ms]; S.actual[ds.ms]=t.checked?100:0; save(); renderHeader(); renderPage(); }
   else if(ds.pp){ const k=ds.pp; DRAFT.pages=t.checked?[...new Set([...DRAFT.pages,k])]:DRAFT.pages.filter(x=>x!==k); DRAFT.pages=PAGES.map(p=>p.k).filter(x=>DRAFT.pages.includes(x)); t.closest('label').classList.toggle('off',!t.checked); }
