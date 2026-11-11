@@ -384,7 +384,7 @@ function openSite(id){
   PKGS.forEach(p=>{ if(S.weights[p.k]==null) S.weights[p.k]=defaultWeight(p.n); }); refreshTW(); computeSpans();
   const start=SITE.meta.cStart||TASKS[0]?.start||todayIso(); const d=D(start); const back=(d.getUTCDay()-((weekEndDay()+1)%7)+7)%7; W1=addD(start,-back);
   const end=TASKS.reduce((m,t)=>t.finish>m?t.finish:m, SITE.meta.cEnd||start); LASTW=Math.max(1,weekNo(weekEndOfDate(end)));
-  /* the report week ends on the report date (report on 11-Nov → week 05-Nov to 11-Nov); week no. counts from the contract start */
+  /* the report week ends on the report date (report on 11-Nov → week 04-Nov to 11-Nov); week no. counts from the contract start */
   if(!S.report.reportDate) S.report.reportDate=S.report.weekEnd||todayIso(); S.report.weekEnd=S.report.reportDate;
   if(!S.report.forecastEnd) S.report.forecastEnd=SITE.meta.cEnd||end;
   PHOTOS=[]; GANTT_UP=null; loadShots(); if(!SITE.pages.includes(PAGE)) PAGE='cover';
@@ -629,7 +629,7 @@ const plannedOverallAt=dd=>timeMode()?spanPct(PROJ.s,PROJ.f,dd):overall(pkgCalc(
 /* S-curve planned line: always built from the programme — each task's planned % at the week end × its weightage (or its duration when no weightage is set) */
 const plannedProgAt=dd=>overall(pkgCalc(dd,{},true),'pl');
 function calc(){ const we=S.report.weekEnd, wn=weekNo(we), ao=asOf(); const pk=pkgCalc(ao,S.actual), pkLast=pkgCalc(ao,S.lastActual);
-  const pl=plannedOverallAt(ao), ac=overall(pk,'ac'); return {we,wn,pk,pkLast,pl,ac,varr:ac-pl,ws:S.report.weekStart||addD(we,-6),elapsed:Math.max(0,diffD(SITE.meta.cStart||W1,we)+1),remaining:Math.max(0,diffD(we,SITE.meta.cEnd||we))}   /* counted days: start day included; remaining = days after the week end up to completion */; }
+  const pl=plannedOverallAt(ao), ac=overall(pk,'ac'); return {we,wn,pk,pkLast,pl,ac,varr:ac-pl,ws:S.report.weekStart||addD(we,-7),elapsed:Math.max(0,diffD(SITE.meta.cStart||W1,we)+1),remaining:Math.max(0,diffD(we,SITE.meta.cEnd||we))}   /* counted days: start day included; remaining = days after the week end up to completion */; }
 const refNo=c=>(S.report.refPrefix||'')+String(c.wn).padStart(2,'0')+'-'+(S.report.rev||'R00');
 function statusPill(a,p){ if(a>=100) return '<span class="pill ok">Done</span>'; const d=a-p; if(p===0&&a===0) return '<span class="pill n">Not due</span>'; if(d<=-10) return '<span class="pill bad">Behind '+Math.round(-d)+'%</span>'; if(d<=-3) return '<span class="pill warn">Behind '+Math.round(-d)+'%</span>'; return '<span class="pill ok">On track</span>'; }
 const PCT_OPTS=[0,5,10,15,20,25,30,40,50,60,70,75,80,90,95,100];
@@ -726,7 +726,7 @@ function shell(p,desc,body){ const pages=PAGES.filter(x=>SITE.pages.includes(x.k
   <div class="navbtns">${prev?`<button class="btn" data-page="${prev.k}">← ${esc(prev.t)}</button>`:'<span></span>'}${next?`<button class="btn primary" data-page="${next.k}">${esc(next.t)} →</button>`:`<button class="btn primary" data-dl="1">Download report (.pptx)</button>`}</div>`; }
 const R={};
 R.cover=p=>{ const c=calc(); return shell(p,'Project details come from Site settings. Pick the week; the number, period and reference follow.',
-  `<div class="grid"><label class="f">Report date <span class="auto">the week ends on this day · planned % worked out on it</span><input type="date" data-bind="report.reportDate" value="${S.report.reportDate}"></label><label class="f">Week start <span class="auto">${S.report.weekStart?'changed · display only':'auto · 6 days before · display only'}</span><input type="date" data-bind="report.weekStart" value="${c.ws}"></label>
+  `<div class="grid"><label class="f">Report date <span class="auto">the week ends on this day · planned % worked out on it</span><input type="date" data-bind="report.reportDate" value="${S.report.reportDate}"></label><label class="f">Week start <span class="auto">${S.report.weekStart?'changed · display only':'auto · 7 days before · display only'}</span><input type="date" data-bind="report.weekStart" value="${c.ws}"></label>
    <label class="f">Week no. <span class="auto">auto</span><input readonly value="W${String(c.wn).padStart(2,'0')}"></label><label class="f">Reporting period <span class="auto">auto</span><input readonly id="periodOut" value="${dmy(c.ws)} to ${dmy(c.we)}"></label>
    <label class="f">Reference prefix<input data-bind="report.refPrefix" value="${esc(S.report.refPrefix)}"></label><label class="f">Revision<input data-bind="report.rev" value="${esc(S.report.rev)}"></label>
    <label class="f">Reference no. <span class="auto">auto</span><input readonly id="refOut" value="${esc(refNo(c))}"></label></div>
@@ -1022,7 +1022,7 @@ document.addEventListener('input',e=>{ const t=e.target, ds=t.dataset; if(!SITE)
   else if(ds.hse){ S.hse[ds.hse][+ds.r][+ds.c]=+t.value||0; save(); document.querySelectorAll(`[data-hse="${ds.hse}"][data-r="${ds.r}"][data-c="${ds.c}"]`).forEach(x=>{ if(x!==t) x.value=t.value; }); const r=S.hse[ds.hse][+ds.r], cc=document.querySelector(`[data-hcum="${ds.hse}-${ds.r}"]`); if(cc) cc.textContent=(+r[0]||0)+(+r[1]||0); updHse(); }
   else if(ds.hsev){ S.hse[ds.hsev]=+t.value||0; save(); updHse(); }
   else if(ds.li){ const a=listArr(ds.li); a[+ds.i]=t.value; listSet(ds.li,a); }
-  else if(ds.bind){ let v=t.type==='number'?+t.value:t.value; if(ds.bind==='report.reportDate'){ if(!v) return; S.report.weekEnd=v; S.report.weekStart=''; } if(ds.bind==='report.weekStart'&&(!v||v===addD(S.report.reportDate,-6))) v=''; setPath(S,ds.bind,v); save(); renderHeader(); if(ds.bind==='report.reportDate'){ renderBanners(); keepFocus(renderPage); } else if(ds.bind==='report.weekStart'){ const po=$('periodOut'); if(po){ const c2=calc(); po.value=dmy(c2.ws)+' to '+dmy(c2.we); } } const ro=$('refOut'); if(ro) ro.value=refNo(calc()); if(ds.bind==='report.schedRev') drawGantt($('gCanvas')); if(ds.bind.startsWith('hse.')) updHse(); }
+  else if(ds.bind){ let v=t.type==='number'?+t.value:t.value; if(ds.bind==='report.reportDate'){ if(!v) return; S.report.weekEnd=v; S.report.weekStart=''; } if(ds.bind==='report.weekStart'&&(!v||v===addD(S.report.reportDate,-7))) v=''; setPath(S,ds.bind,v); save(); renderHeader(); if(ds.bind==='report.reportDate'){ renderBanners(); keepFocus(renderPage); } else if(ds.bind==='report.weekStart'){ const po=$('periodOut'); if(po){ const c2=calc(); po.value=dmy(c2.ws)+' to '+dmy(c2.we); } } const ro=$('refOut'); if(ro) ro.value=refNo(calc()); if(ds.bind==='report.schedRev') drawGantt($('gCanvas')); if(ds.bind.startsWith('hse.')) updHse(); }
   else if(ds.pc!=null) PHOTOS[+ds.pc].caption=t.value; else if(ds.pd!=null) PHOTOS[+ds.pd].date=t.value;
   else if(ds.msd){ (S.msDate ||= {})[ds.msd]=t.value; save(); }
   else if(ds.m){ DRAFT.meta[ds.m]=t.value; } else if(ds.dref){ DRAFT.state.report.refPrefix=t.value; }
