@@ -764,9 +764,9 @@ function twPanel(){ const tot=Object.values(S.tw||{}).reduce((a,b)=>a+(+b||0),0)
    <p class="help">Paste the task list with its weightage from Excel or MS Project (task name … weight %, one row per line — phase rows can stay in). Rows are matched to this site's schedule by name and order. Progress % of every task, package and the overall project then follows these weights. ${TWON&&Math.abs(tot-100)>0.5?'<b>Total is not 100% — percentages are scaled to the total.</b>':''}</p>
    <textarea id="twPaste" rows="6" placeholder="Site Survey&#9;3 days&#9;3&#9;0.39%"></textarea>
    <div class="toolbar"><button class="btn small primary" data-act2="twapply">Apply weightage</button>${TWON?'<button class="btn small" data-act2="twclear">Clear — weight by duration</button>':''}<span class="count">${esc(TW_MSG)}</span></div></details>`; }
-R.scurve=p=>shell(p,'Planned line is built week by week from the programme: each activity\'s planned % at the week end × its weightage. Actual line comes from each week you report.',
+R.scurve=p=>shell(p,'Planned line uses the same rule as the Planned box (set on page 5 — default is the MS Project rule), one point per week on the report day. Actual line comes from each week you report.',
   `<div class="toolbar" style="margin:0 0 8px"><label class="row count" style="gap:6px;cursor:pointer"><input type="checkbox" data-sclbl="1" ${S.scLabels!==false?'checked':''} style="width:auto"> Show numbers (%) on the S-curve — screen and report</label></div><canvas class="preview" id="sCanvas" width="1200" height="440"></canvas>${(()=>{ const d=sCurveData(); let r1='<tr><th>Week</th>', r2='<tr><td><b>Week ending</b></td>', r3='<tr><td><b>Planned %</b></td>', r4='<tr><td><b>Actual %</b></td>';
-    d.cats.forEach((c,i)=>{ const w=i+1, cur=w===d.cur; r1+=`<th class="c"${cur?' style="background:var(--hot)"':''}>${c}</th>`; r2+=`<td class="c nw">${dmyS(weekEndOf(w)).slice(0,6)}</td>`; r3+=`<td class="c">${d.pl[i].toFixed(1)}</td>`;
+    d.cats.forEach((c,i)=>{ const w=i+1, cur=w===d.cur; r1+=`<th class="c"${cur?' style="background:var(--hot)"':''}>${c}</th>`; r2+=`<td class="c nw">${dmyS(weekPoint(w)).slice(0,6)}</td>`; r3+=`<td class="c">${d.pl[i].toFixed(1)}</td>`;
       r4+= w<d.cur?`<td class="c"><input type="number" step="0.1" min="0" max="100" data-h="${w}" value="${S.history[w]??''}" style="width:62px;min-width:0;text-align:right"></td>` : `<td class="c">${cur?d.ac[i].toFixed(1):''}</td>`; });
     return `<h3 style="margin:16px 0 8px;font-size:17px">Week by week <span class="auto">planned auto · past actuals editable</span></h3><div class="tw"><table class="sum-t">${r1}</tr>${r2}</tr>${r3}</tr>${r4}</tr></table></div>`; })()}`);
 R.ms=p=>{ const rows=milestoneRows(S.report.weekEnd); return shell(p,'Milestones from the schedule. Tick when one is achieved; the date is recorded for you. Remarks are yours to edit — clear one to get the automatic text back.',
@@ -840,8 +840,11 @@ function applySchedule(target){ const {tasks,pkgs}=nestRows(RAW.map(r=>({...r}))
 }
 
 /* ============ S7 · CHARTS ============ */
+/* each week's point sits on the report day of that week (report 11-Nov → W15 = 11-Nov, W16 = 18-Nov …),
+   using the same planned rule as the Planned box — so the current week matches it exactly (MS Project: 46% on 11-Nov) */
+const weekPoint=w=>addD(asOf(),7*(w-weekNo(S.report.weekEnd)));
 function sCurveData(){ const c=calc(), cats=[], pl=[], ac=[];
-  for(let w=1;w<=LASTW;w++){ cats.push('W'+w); pl.push(Math.round(plannedProgAt(weekEndOf(w))*10)/10);
+  for(let w=1;w<=LASTW;w++){ cats.push('W'+w); pl.push(w===c.wn?Math.round(c.pl*10)/10:Math.round(plannedOverallAt(weekPoint(w))*10)/10);
     ac.push(w<c.wn?(S.history[w]!=null&&S.history[w]!==''?+S.history[w]:null):w===c.wn?Math.round(c.ac*10)/10:null); }
   return {cats,pl,ac,cur:c.wn}; }
 function drawS(cv){ if(!cv) return; const g=cv.getContext('2d'),W=cv.width,H=cv.height,d=sCurveData(); g.fillStyle='#fff'; g.fillRect(0,0,W,H);
