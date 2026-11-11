@@ -151,7 +151,7 @@ details.more summary{cursor:pointer;color:var(--hot);font-weight:600;font-size:1
       <div class="row" style="gap:6px"><span class="chip" id="hdrWeek">W—</span><span class="chip" id="hdrRef">—</span><span class="chip cloud" id="cloud"><i></i><span>Saved on this browser</span></span></div>
     </div>
     <div class="kpis">
-      <div class="kpi pl"><span>Planned</span><b id="kPl">0%</b></div>
+      <div class="kpi pl"><span id="kPlLbl">Planned</span><b id="kPl">0%</b></div>
       <div class="kpi ac"><span>Actual</span><b id="kAc">0%</b></div>
       <div class="kpi var" id="kVarBox"><span>Variance</span><b id="kVar">0%</b></div>
       <div class="kpi"><span>Days left</span><b id="kDays">0</b></div>
@@ -377,7 +377,7 @@ function openSite(id){
   CUR=id; SITE=SITES[id]; S=SITE.state; OFF=WEEKEND[SITE.meta.workweek]||[0];
   TASKS=SITE.tasks||[]; LEAF=TASKS.filter(t=>!t.sum); WD={}; LEAF.forEach(t=>{ WD[t.id]=t.ms?0:Math.max(1,workdays(t.start,t.finish)); });
   PKGS=(SITE.pkgs||[]).map(p=>({k:p.k,n:p.n}));
-  PKGS.forEach(p=>{ if(S.weights[p.k]==null) S.weights[p.k]=defaultWeight(p.n); }); refreshTW();
+  PKGS.forEach(p=>{ if(S.weights[p.k]==null) S.weights[p.k]=defaultWeight(p.n); }); refreshTW(); computeSpans();
   const start=SITE.meta.cStart||TASKS[0]?.start||todayIso(); const d=D(start); const back=(d.getUTCDay()-((weekEndDay()+1)%7)+7)%7; W1=addD(start,-back);
   const end=TASKS.reduce((m,t)=>t.finish>m?t.finish:m, SITE.meta.cEnd||start); LASTW=Math.max(1,weekNo(weekEndOfDate(end)));
   if(!S.report.weekEnd){ let we=weekEndOfDate(addD(todayIso(),-3)); if(we<weekEndOf(1)) we=weekEndOf(1); S.report.weekEnd=we; S.report.reportDate=todayIso(); }
@@ -576,7 +576,7 @@ function refreshTW(){ TWON=!!S && Object.values(S.tw||{}).some(v=>+v>0); }
 const taskW=t=>TWON?(+S.tw[t.id]||0):(WD[t.id]||0);
 const fmtW=v=>(Math.round(v*100)/100).toFixed(2).replace(/\.?0+$/,'')+'%';
 function pkgWeight(k,pk){ return TWON?(pk[k]?.w||0):(+S.weights[k]||0); }
-function pkgCalc(dd,act){ const out={}; PKGS.forEach(p=>{ let w=0,pl=0,ac=0; LEAF.filter(t=>t.pkg===p.k&&!t.ms).forEach(t=>{ const d=taskW(t); w+=d; pl+=d*plannedPct(t,dd); ac+=d*(+(act?.[t.id])||0); }); out[p.k]={pl:w?pl/w:0,ac:w?ac/w:0,w}; }); return out; }
+function pkgCalc(dd,act){ const out={}; PKGS.forEach(p=>{ let w=0,pl=0,ac=0; LEAF.filter(t=>t.pkg===p.k&&!t.ms).forEach(t=>{ const d=taskW(t); w+=d; pl+=d*plannedPct(t,dd); ac+=d*(+(act?.[t.id])||0); }); out[p.k]={pl:timeMode()?(PSPAN[p.k]?spanPct(PSPAN[p.k].s,PSPAN[p.k].f,dd):0):(w?pl/w:0),ac:w?ac/w:0,w}; }); return out; }
 function overall(pk,key){ let sw=0,v=0; PKGS.forEach(p=>{ if(!pk[p.k]?.w) return; const w=pkgWeight(p.k,pk); sw+=w; v+=w*pk[p.k][key]; }); return sw?v/sw:0; }
 /* match pasted rows [{name,w}] to schedule activities by name, keeping the order (so Phase 1 / Phase 2 duplicates land on the right rows) */
 const STOP=new Set(['and','the','to','from','of','for','incl','including','with','all','on','in','at','by']);
@@ -605,9 +605,20 @@ function applyWeights(rows,quiet){ const {tw,miss}=matchWeights(rows); const n=O
   save(); if(!quiet) toast(TW_MSG); return true; }
 function autoWeights(){ const s=SITES['zu-carport']; if(!s || s.state.tw!==undefined) return; const keep=CUR;
   if(CUR!=='zu-carport') openSite('zu-carport'); applyWeights(ZU_TW,true); if(keep!==CUR) openSite(keep); else renderAll(); }
-const plannedOverallAt=dd=>overall(pkgCalc(dd,{}),'pl');
-function calc(){ const we=S.report.weekEnd, wn=weekNo(we); const pk=pkgCalc(we,S.actual), pkLast=pkgCalc(we,S.lastActual);
-  const pl=overall(pk,'pl'), ac=overall(pk,'ac'); return {we,wn,pk,pkLast,pl,ac,varr:ac-pl,ws:addD(we,-6),elapsed:Math.max(0,diffD(SITE.meta.cStart||W1,we)+1),remaining:Math.max(0,diffD(we,SITE.meta.cEnd||we))}   /* counted days: start day included; remaining = days after the week end up to completion */; }
+/* PLANNED % — default is the same rule as the "Planned %" column in the MS Project file:
+   working days (Mon–Sat) from start up to the date ÷ working days from start to finish, using each row's own dates.
+   Task → its own dates · package → first start to last finish of its tasks · overall → the whole project's dates.
+   The date used is the report date (the date the report is sent = MS Project status date).
+   Option "weight": planned is built up from the task weightage instead. */
+const asOf=()=>S.report.reportDate||S.report.weekEnd;
+const timeMode=()=>(S.plMethod||'time')==='time';
+function spanPct(s,f,dd){ if(!s||!f||dd<s) return 0; if(dd>=f) return 100; return 100*workdays(s,dd)/(workdays(s,f)||1); }
+let PSPAN={}, PROJ={};
+function computeSpans(){ PSPAN={}; PKGS.forEach(p=>{ const ts=LEAF.filter(t=>t.pkg===p.k); if(ts.length) PSPAN[p.k]={s:ts.reduce((m,t)=>t.start<m?t.start:m,ts[0].start),f:ts.reduce((m,t)=>t.finish>m?t.finish:m,ts[0].finish)}; });
+  const root=TASKS.find(t=>t.sum&&t.lvl===0); PROJ=root?{s:root.start,f:root.finish}:TASKS.length?{s:TASKS.reduce((m,t)=>t.start<m?t.start:m,TASKS[0].start),f:TASKS.reduce((m,t)=>t.finish>m?t.finish:m,TASKS[0].finish)}:{}; }
+const plannedOverallAt=dd=>timeMode()?spanPct(PROJ.s,PROJ.f,dd):overall(pkgCalc(dd,{}),'pl');
+function calc(){ const we=S.report.weekEnd, wn=weekNo(we), ao=asOf(); const pk=pkgCalc(ao,S.actual), pkLast=pkgCalc(ao,S.lastActual);
+  const pl=plannedOverallAt(ao), ac=overall(pk,'ac'); return {we,wn,pk,pkLast,pl,ac,varr:ac-pl,ws:addD(we,-6),elapsed:Math.max(0,diffD(SITE.meta.cStart||W1,we)+1),remaining:Math.max(0,diffD(we,SITE.meta.cEnd||we))}   /* counted days: start day included; remaining = days after the week end up to completion */; }
 const refNo=c=>(S.report.refPrefix||'')+String(c.wn).padStart(2,'0')+'-'+(S.report.rev||'R00');
 function statusPill(a,p){ if(a>=100) return '<span class="pill ok">Done</span>'; const d=a-p; if(p===0&&a===0) return '<span class="pill n">Not due</span>'; if(d<=-10) return '<span class="pill bad">Behind '+Math.round(-d)+'%</span>'; if(d<=-3) return '<span class="pill warn">Behind '+Math.round(-d)+'%</span>'; return '<span class="pill ok">On track</span>'; }
 const PCT_OPTS=[0,5,10,15,20,25,30,40,50,60,70,75,80,90,95,100];
@@ -684,7 +695,7 @@ function hseTable(labels,arr,key){
 function renderSitePick(){ $('sitePick').innerHTML=Object.values(SITES).sort((a,b)=>a.meta.name.localeCompare(b.meta.name)).map(s=>`<option value="${s.id}"${s.id===CUR?' selected':''}>${esc(s.meta.short||s.meta.name)}</option>`).join(''); }
 function renderHeader(){ if(!SITE) return; const c=calc();
   $('hdrWeek').textContent=`W${String(c.wn).padStart(2,'0')} · ${dmyS(c.ws)} to ${dmyS(c.we)}`; $('hdrRef').textContent=refNo(c);
-  $('kPl').textContent=pct(c.pl); $('kAc').textContent=pct(c.ac); $('kVar').textContent=sgn(c.varr); $('kVarBox').className='kpi var '+(c.varr<-0.05?'neg':c.varr>0.05?'pos':''); $('kDays').textContent=c.remaining; }
+  $('kPl').textContent=pct(c.pl); $('kPlLbl').textContent='Planned · '+dmyS(asOf()); $('kAc').textContent=pct(c.ac); $('kVar').textContent=sgn(c.varr); $('kVarBox').className='kpi var '+(c.varr<-0.05?'neg':c.varr>0.05?'pos':''); $('kDays').textContent=c.remaining; }
 function renderRail(){ const pages=PAGES.filter(p=>SITE.pages.includes(p.k)); let n=0;
   $('rail').innerHTML='<div class="rh">Report pages</div>'+pages.map(p=>{ n++; return `<button class="pg" data-page="${p.k}"${p.k===PAGE?' aria-current="page"':''}><span class="n">${n}</span><span>${esc(p.t)}</span><span class="tag ${p.kind}">${KIND_TXT[p.kind]||''}</span></button>`; }).join(''); }
 function renderBanners(){ const c=calc(), t=todayIso(); let h='';
@@ -704,7 +715,7 @@ function shell(p,desc,body){ const pages=PAGES.filter(x=>SITE.pages.includes(x.k
   <div class="navbtns">${prev?`<button class="btn" data-page="${prev.k}">← ${esc(prev.t)}</button>`:'<span></span>'}${next?`<button class="btn primary" data-page="${next.k}">${esc(next.t)} →</button>`:`<button class="btn primary" data-dl="1">Download report (.pptx)</button>`}</div>`; }
 const R={};
 R.cover=p=>{ const c=calc(); return shell(p,'Project details come from Site settings. Pick the week; the number, period and reference follow.',
-  `<div class="grid"><label class="f">Week ending<input type="date" data-bind="report.weekEnd" value="${S.report.weekEnd}"></label><label class="f">Report date<input type="date" data-bind="report.reportDate" value="${S.report.reportDate}"></label>
+  `<div class="grid"><label class="f">Week ending<input type="date" data-bind="report.weekEnd" value="${S.report.weekEnd}"></label><label class="f">Report date <span class="auto">planned % is worked out on this date</span><input type="date" data-bind="report.reportDate" value="${S.report.reportDate}"></label>
    <label class="f">Week no. <span class="auto">auto</span><input readonly value="W${String(c.wn).padStart(2,'0')}"></label><label class="f">Reporting period <span class="auto">auto</span><input readonly value="${dmy(c.ws)} to ${dmy(c.we)}"></label>
    <label class="f">Reference prefix<input data-bind="report.refPrefix" value="${esc(S.report.refPrefix)}"></label><label class="f">Revision<input data-bind="report.rev" value="${esc(S.report.rev)}"></label>
    <label class="f">Reference no. <span class="auto">auto</span><input readonly id="refOut" value="${esc(refNo(c))}"></label></div>
@@ -720,7 +731,7 @@ function isActive(t,we){ if(t.ms) return false; const a=+S.actual[t.id]||0, la=+
 R.wp=p=>{ const c=calc(); let h='<tr><th>Activity</th><th>Finish</th>'+(TWON?'<th class="c">Weight %</th>':'')+'<th class="c">Should be</th><th class="c">Last week</th><th class="c">This week</th><th>Status</th></tr>', n=0;
   PKGS.forEach(pk=>{ const rows=LEAF.filter(t=>t.pkg===pk.k&&(filterAll||isActive(t,c.we))); if(!rows.length) return;
     h+=`<tr class="grp"><td colspan="2">${esc(pk.n)}</td>${TWON?`<td class="c" data-pkw="${pk.k}">${fmtW(c.pk[pk.k].w)}</td>`:''}<td class="c">${pct(c.pk[pk.k].pl,0)}</td><td class="c">${pct(c.pkLast[pk.k].ac,0)}</td><td class="c" data-pkac="${pk.k}">${pct(c.pk[pk.k].ac,0)}</td><td></td></tr>`;
-    rows.forEach(t=>{ n++; const pl=plannedPct(t,c.we), a=+S.actual[t.id]||0, la=+S.lastActual[t.id]||0;
+    rows.forEach(t=>{ n++; const pl=plannedPct(t,asOf()), a=+S.actual[t.id]||0, la=+S.lastActual[t.id]||0;
       if(t.ms){ h+=`<tr class="ms"><td>◆ ${esc(t.name)}</td><td class="nw">${dmyS(t.finish)}</td>${TWON?'<td></td>':''}<td class="c">${pl>=100?'Due':'—'}</td><td class="c">${la>=100?'Yes':'—'}</td><td class="c"><label class="row" style="gap:4px;justify-content:center"><input type="checkbox" data-ms="${t.id}" ${a>=100?'checked':''} style="width:auto"> achieved</label></td><td></td></tr>`; return; }
       h+=`<tr><td>${esc(t.name)}</td><td class="nw">${dmyS(t.finish)}</td>${TWON?`<td class="c"><input class="twin" type="number" step="0.01" min="0" data-tw="${t.id}" value="${+S.tw[t.id]||0}" aria-label="Weight %"></td>`:''}<td class="c">${pl.toFixed(0)}%</td><td class="c">${la}%</td><td class="c">${pctSelect(t.id,a,la)}</td><td data-st="${t.id}">${statusPill(a,pl)}</td></tr>`; }); });
   if(!n) h+='<tr><td colspan="7" style="padding:12px;color:var(--muted)">Nothing running in this week. Tap "All activities".</td></tr>';
@@ -729,7 +740,8 @@ R.wp=p=>{ const c=calc(); let h='<tr><th>Activity</th><th>Finish</th>'+(TWON?'<t
   return shell(p,'Each row shows last week\'s %. Change only the activities that moved. This drives pages 3, 4, 5, 6 and 7.',
    `<div class="tw" style="max-height:560px"><table id="actTable">${h}</table></div>
     <div class="toolbar"><div class="seg" role="group" aria-label="Activity filter"><button data-filter="0" aria-pressed="${!filterAll}">Running now</button><button data-filter="1" aria-pressed="${filterAll}">All activities</button></div><span class="count">${n} shown</span></div>
-    <h3 style="margin:18px 0 8px;font-size:17px">Work package summary <span class="auto">${TWON?'auto · weight = sum of its task weightage':'auto · weights editable'}</span></h3><div class="tw"><table class="sum-t" id="pkgTable">${sum}</table></div>
+    <div class="toolbar" style="margin-top:18px"><span class="count">Planned % on ${dmyS(asOf())} (report date):</span><div class="seg" role="group" aria-label="Planned method"><button data-plm="time" aria-pressed="${timeMode()}">By schedule dates — same as MS Project</button><button data-plm="weight" aria-pressed="${!timeMode()}">By task weightage</button></div></div>
+    <h3 style="margin:10px 0 8px;font-size:17px">Work package summary <span class="auto">${TWON?'auto · weight = sum of its task weightage':'auto · weights editable'}</span></h3><div class="tw"><table class="sum-t" id="pkgTable">${sum}</table></div>
     ${twPanel()}`); };
 function twPanel(){ const tot=Object.values(S.tw||{}).reduce((a,b)=>a+(+b||0),0), n=Object.values(S.tw||{}).filter(v=>+v>0).length;
   return `<details class="more"${TWON?'':' open'}><summary>Task weightage — ${TWON?`${n} activities · total ${fmtW(tot)}`:'not set (tasks weighted by duration)'}</summary>
@@ -905,7 +917,7 @@ async function buildPptx(){
   if(inc('exec')){ s=await X('ppt/slides/slide3.xml'); setText(byId(s,6),pct(c.pl)); setText(byId(s,9),pct(c.ac)); setText(byId(s,12),sgn(c.varr));
     tb=firstTable(s); [dmy(M.cStart),dmy(M.cEnd),dmy(Rp.forecastEnd||M.cEnd),String(c.elapsed),String(c.remaining)].forEach((v,i)=>setCell(cellAt(tb,1,i),v,'222222'));
     setParas(byId(s,18),lines(S.highlights).slice(0,6),'333333'); setParas(byId(s,20),lines(S.issues).slice(0,6),'333333'); }
-  if(inc('scurve')){ s=await X('ppt/slides/slide4.xml'); setText(byId(s,7),sgn(c.ac-overall(c.pkLast,'ac'))); setText(byId(s,10),sgn(c.pl-plannedOverallAt(addD(c.we,-7)))); setText(byId(s,13),sgn(c.varr)); setText(byId(s,16),wk); await writeChart(zip,X,sCurveData()); }
+  if(inc('scurve')){ s=await X('ppt/slides/slide4.xml'); setText(byId(s,7),sgn(c.ac-overall(c.pkLast,'ac'))); setText(byId(s,10),sgn(c.pl-plannedOverallAt(addD(asOf(),-7)))); setText(byId(s,13),sgn(c.varr)); setText(byId(s,16),wk); await writeChart(zip,X,sCurveData()); }
   if(inc('wp')){ s=await X('ppt/slides/slide5.xml'); tb=firstTable(s); const rowsN=tableRows(tb).length-1; const used=PKGS.filter(p=>c.pk[p.k].w);
     used.slice(0,rowsN).forEach((p,i)=>{ const x=c.pk[p.k], d=x.ac-x.pl; const st=x.ac>=99.95?'Complete':(x.pl<.05&&x.ac<.05)?'Not started':d<=-3?'Behind':'On track';
       setCell(cellAt(tb,i+1,1),p.n); [fmtW(pkgWeight(p.k,c.pk)),pct(x.pl),pct(x.ac),sgn(x.ac-c.pkLast[p.k].ac).replace('±0.0%','0.0%'),sgn(d),pct(100-x.ac),st].forEach((v,j)=>setCell(cellAt(tb,i+1,j+2),v)); });
@@ -977,7 +989,7 @@ function startNextWeek(){ const c=calc(); S.history[c.wn]=Math.round(c.ac*10)/10
   toast(`Now on W${String(c.wn+1).padStart(2,'0')}. Everything carried over; highlights, incidents and talks cleared.`); }
 
 document.addEventListener('input',e=>{ const t=e.target, ds=t.dataset; if(!SITE) return;
-  if(ds.act){ const v=Math.max(0,Math.min(100,+t.value||0)); S.actual[ds.act]=v; t.classList.toggle('moved',v!==(+S.lastActual[ds.act]||0)); const task=TASKS.find(x=>String(x.id)===ds.act); const st=document.querySelector(`[data-st="${ds.act}"]`); if(st&&task) st.innerHTML=statusPill(v,plannedPct(task,S.report.weekEnd)); save(); renderHeader(); const c=calc(); PKGS.forEach(p=>{ const el=document.querySelector(`[data-pkac="${p.k}"]`); if(el) el.textContent=pct(c.pk[p.k].ac,0); }); }
+  if(ds.act){ const v=Math.max(0,Math.min(100,+t.value||0)); S.actual[ds.act]=v; t.classList.toggle('moved',v!==(+S.lastActual[ds.act]||0)); const task=TASKS.find(x=>String(x.id)===ds.act); const st=document.querySelector(`[data-st="${ds.act}"]`); if(st&&task) st.innerHTML=statusPill(v,plannedPct(task,asOf())); save(); renderHeader(); const c=calc(); PKGS.forEach(p=>{ const el=document.querySelector(`[data-pkac="${p.k}"]`); if(el) el.textContent=pct(c.pk[p.k].ac,0); }); }
   else if(ds.w){ S.weights[ds.w]=+t.value||0; save(); renderHeader(); }
   else if(ds.tw){ S.tw[ds.tw]=Math.max(0,+t.value||0); refreshTW(); save(); renderHeader(); const c=calc(); PKGS.forEach(p=>{ const a=document.querySelector(`[data-pkac="${p.k}"]`); if(a) a.textContent=pct(c.pk[p.k].ac,0); document.querySelectorAll(`[data-pkw="${p.k}"],[data-pkw2="${p.k}"]`).forEach(el=>el.textContent=fmtW(c.pk[p.k].w)); }); }
   else if(ds.h){ S.history[ds.h]=t.value===''?null:+t.value; save(); drawS($('sCanvas')); }
@@ -986,7 +998,7 @@ document.addEventListener('input',e=>{ const t=e.target, ds=t.dataset; if(!SITE)
   else if(ds.hse){ S.hse[ds.hse][+ds.r][+ds.c]=+t.value||0; save(); document.querySelectorAll(`[data-hse="${ds.hse}"][data-r="${ds.r}"][data-c="${ds.c}"]`).forEach(x=>{ if(x!==t) x.value=t.value; }); const r=S.hse[ds.hse][+ds.r], cc=document.querySelector(`[data-hcum="${ds.hse}-${ds.r}"]`); if(cc) cc.textContent=(+r[0]||0)+(+r[1]||0); updHse(); }
   else if(ds.hsev){ S.hse[ds.hsev]=+t.value||0; save(); updHse(); }
   else if(ds.li){ const a=listArr(ds.li); a[+ds.i]=t.value; listSet(ds.li,a); }
-  else if(ds.bind){ let v=t.type==='number'?+t.value:t.value; if(ds.bind==='report.weekEnd'){ if(!v) return; v=weekEndOfDate(v); } setPath(S,ds.bind,v); save(); renderHeader(); if(ds.bind==='report.weekEnd'){ t.value=v; renderBanners(); renderPage(); } const ro=$('refOut'); if(ro) ro.value=refNo(calc()); if(ds.bind==='report.schedRev') drawGantt($('gCanvas')); if(ds.bind.startsWith('hse.')) updHse(); }
+  else if(ds.bind){ let v=t.type==='number'?+t.value:t.value; if(ds.bind==='report.weekEnd'){ if(!v) return; v=weekEndOfDate(v); } setPath(S,ds.bind,v); save(); renderHeader(); if(ds.bind==='report.weekEnd'){ t.value=v; renderBanners(); renderPage(); } else if(ds.bind==='report.reportDate') renderBanners(); const ro=$('refOut'); if(ro) ro.value=refNo(calc()); if(ds.bind==='report.schedRev') drawGantt($('gCanvas')); if(ds.bind.startsWith('hse.')) updHse(); }
   else if(ds.pc!=null) PHOTOS[+ds.pc].caption=t.value; else if(ds.pd!=null) PHOTOS[+ds.pd].date=t.value;
   else if(ds.msd){ (S.msDate ||= {})[ds.msd]=t.value; save(); }
   else if(ds.m){ DRAFT.meta[ds.m]=t.value; } else if(ds.dref){ DRAFT.state.report.refPrefix=t.value; }
@@ -1003,6 +1015,7 @@ document.addEventListener('change',e=>{ const t=e.target, ds=t.dataset;
 document.addEventListener('click',async e=>{ const b=e.target.closest('button'); if(!b) return; const ds=b.dataset;
   if(ds.page){ go(ds.page); }
   else if(ds.filter!=null){ filterAll=ds.filter==='1'; renderPage(); }
+  else if(ds.plm){ S.plMethod=ds.plm; save(); renderHeader(); renderPage(); }
   else if(ds.add){ const def=TDEF[ds.add]; if(S.tables[ds.add].length>=def.max){ toast(`The slide holds ${def.max} rows. Remove a closed item first.`); return; } S.tables[ds.add].push(def.cols.map(()=>'')); save(); renderPage(); }
   else if(ds.delrow){ S.tables[ds.delrow].splice(+ds.r,1); save(); renderPage(); }
   else if(ds.pdel!=null){ PHOTOS.splice(+ds.pdel,1); renderPage(); }
