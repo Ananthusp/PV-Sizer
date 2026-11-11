@@ -360,6 +360,10 @@ function blankState(){
       trn:[[0,0],[0,0],[0,0],[0,0],[0,0]],perf:[[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]],ptw:[[0,0],[0,0],[0,0],[0,0],[0,0]]}};
 }
 let SITES={}, CUR='', PAGE='cover', PHOTOS=[], GANTT_UP=null;
+/* screenshots used instead of a log table (kept on this computer, per site) */
+const SHOT_PAGES={msub:{slide:10,frame:11}}; let SHOTS={};
+const shotKey=k=>'wr_shot_'+k+'_'+(SITE?.id||'');
+function loadShots(){ SHOTS={}; Object.keys(SHOT_PAGES).forEach(k=>{ try{ const u=localStorage.getItem(shotKey(k)); if(u){ const [m,b]=u.split(','), bin=atob(b), a=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) a[i]=bin.charCodeAt(i); const im=new Image(); const sh={url:u,buf:a.buffer,w:0,h:0}; im.onload=()=>{ sh.w=im.naturalWidth; sh.h=im.naturalHeight; }; im.src=u; SHOTS[k]=sh; } }catch(e){} }); }
 function fixSite(s){ s.state=Object.assign(blankState(),s.state||{}); s.state.report=Object.assign(blankState().report,s.state.report||{});
   s.state.tables=Object.assign(blankState().tables,s.state.tables||{}); s.state.hse=Object.assign(blankState().hse,s.state.hse||{});
   s.pages=s.pages||PRESETS.full.slice(); s.meta=Object.assign({workweek:'monsat'},s.meta||{}); return s; }
@@ -382,7 +386,7 @@ function openSite(id){
   const end=TASKS.reduce((m,t)=>t.finish>m?t.finish:m, SITE.meta.cEnd||start); LASTW=Math.max(1,weekNo(weekEndOfDate(end)));
   if(!S.report.weekEnd){ let we=weekEndOfDate(addD(todayIso(),-3)); if(we<weekEndOf(1)) we=weekEndOf(1); S.report.weekEnd=we; S.report.reportDate=todayIso(); }
   if(!S.report.forecastEnd) S.report.forecastEnd=SITE.meta.cEnd||end;
-  PHOTOS=[]; GANTT_UP=null; if(!SITE.pages.includes(PAGE)) PAGE='cover';
+  PHOTOS=[]; GANTT_UP=null; loadShots(); if(!SITE.pages.includes(PAGE)) PAGE='cover';
   saveLocal(); renderAll();
 }
 function defaultWeight(n){ n=n.toLowerCase();
@@ -575,8 +579,12 @@ let TWON=false;
 function refreshTW(){ TWON=!!S && Object.values(S.tw||{}).some(v=>+v>0); }
 const taskW=t=>TWON?(+S.tw[t.id]||0):(WD[t.id]||0);
 const fmtW=v=>(Math.round(v*100)/100).toFixed(2).replace(/\.?0+$/,'')+'%';
+/* package weights shown as whole numbers that add up to 100 (largest remainder) — maths still uses the exact values */
+function roundW(pk){ const ks=PKGS.filter(p=>pk[p.k]?.w).map(p=>p.k), raw=ks.map(k=>pkgWeight(k,pk)), tot=raw.reduce((a,b)=>a+b,0)||1;
+  const sc=raw.map(v=>v*100/tot), fl=sc.map(Math.floor); let left=100-fl.reduce((a,b)=>a+b,0); sc.map((v,i)=>[v-fl[i],i]).sort((a,b)=>b[0]-a[0]).forEach(([,i])=>{ if(left>0){ fl[i]++; left--; } });
+  const o={}; ks.forEach((k,i)=>o[k]=fl[i]); return o; }
 function pkgWeight(k,pk){ return TWON?(pk[k]?.w||0):(+S.weights[k]||0); }
-function pkgCalc(dd,act){ const out={}; PKGS.forEach(p=>{ let w=0,pl=0,ac=0; LEAF.filter(t=>t.pkg===p.k&&!t.ms).forEach(t=>{ const d=taskW(t); w+=d; pl+=d*plannedPct(t,dd); ac+=d*(+(act?.[t.id])||0); }); out[p.k]={pl:timeMode()?(PSPAN[p.k]?spanPct(PSPAN[p.k].s,PSPAN[p.k].f,dd):0):(w?pl/w:0),ac:w?ac/w:0,w}; }); return out; }
+function pkgCalc(dd,act,prog){ const out={}; PKGS.forEach(p=>{ let w=0,pl=0,ac=0; LEAF.filter(t=>t.pkg===p.k&&!t.ms).forEach(t=>{ const d=taskW(t); w+=d; pl+=d*plannedPct(t,dd); ac+=d*(+(act?.[t.id])||0); }); out[p.k]={pl:(timeMode()&&!prog)?(PSPAN[p.k]?spanPct(PSPAN[p.k].s,PSPAN[p.k].f,dd):0):(w?pl/w:0),ac:w?ac/w:0,w}; }); return out; }
 function overall(pk,key){ let sw=0,v=0; PKGS.forEach(p=>{ if(!pk[p.k]?.w) return; const w=pkgWeight(p.k,pk); sw+=w; v+=w*pk[p.k][key]; }); return sw?v/sw:0; }
 /* match pasted rows [{name,w}] to schedule activities by name, keeping the order (so Phase 1 / Phase 2 duplicates land on the right rows) */
 const STOP=new Set(['and','the','to','from','of','for','incl','including','with','all','on','in','at','by']);
@@ -617,6 +625,8 @@ let PSPAN={}, PROJ={};
 function computeSpans(){ PSPAN={}; PKGS.forEach(p=>{ const ts=LEAF.filter(t=>t.pkg===p.k); if(ts.length) PSPAN[p.k]={s:ts.reduce((m,t)=>t.start<m?t.start:m,ts[0].start),f:ts.reduce((m,t)=>t.finish>m?t.finish:m,ts[0].finish)}; });
   const root=TASKS.find(t=>t.sum&&t.lvl===0); PROJ=root?{s:root.start,f:root.finish}:TASKS.length?{s:TASKS.reduce((m,t)=>t.start<m?t.start:m,TASKS[0].start),f:TASKS.reduce((m,t)=>t.finish>m?t.finish:m,TASKS[0].finish)}:{}; }
 const plannedOverallAt=dd=>timeMode()?spanPct(PROJ.s,PROJ.f,dd):overall(pkgCalc(dd,{}),'pl');
+/* S-curve planned line: always built from the programme — each task's planned % at the week end × its weightage (or its duration when no weightage is set) */
+const plannedProgAt=dd=>overall(pkgCalc(dd,{},true),'pl');
 function calc(){ const we=S.report.weekEnd, wn=weekNo(we), ao=asOf(); const pk=pkgCalc(ao,S.actual), pkLast=pkgCalc(ao,S.lastActual);
   const pl=plannedOverallAt(ao), ac=overall(pk,'ac'); return {we,wn,pk,pkLast,pl,ac,varr:ac-pl,ws:addD(we,-6),elapsed:Math.max(0,diffD(SITE.meta.cStart||W1,we)+1),remaining:Math.max(0,diffD(we,SITE.meta.cEnd||we))}   /* counted days: start day included; remaining = days after the week end up to completion */; }
 const refNo=c=>(S.report.refPrefix||'')+String(c.wn).padStart(2,'0')+'-'+(S.report.rev||'R00');
@@ -728,15 +738,15 @@ R.exec=p=>{ const c=calc(); return shell(p,'Planned, actual and variance come fr
    <div class="two">${listHTML('highlights','Work done this week')}${listHTML('issues','Problems / help needed from client (optional)')}</div>`); };
 let filterAll=false;
 function isActive(t,we){ if(t.ms) return false; const a=+S.actual[t.id]||0, la=+S.lastActual[t.id]||0; return t.start<=we&&(a<100||a>la); }
-R.wp=p=>{ const c=calc(); let h='<tr><th>Activity</th><th>Finish</th>'+(TWON?'<th class="c">Weight %</th>':'')+'<th class="c">Should be</th><th class="c">Last week</th><th class="c">This week</th><th>Status</th></tr>', n=0;
+R.wp=p=>{ const c=calc(), RW=roundW(c.pk); let h='<tr><th>Activity</th><th>Finish</th>'+(TWON?'<th class="c">Weight %</th>':'')+'<th class="c">Should be</th><th class="c">Last week</th><th class="c">This week</th><th>Status</th></tr>', n=0;
   PKGS.forEach(pk=>{ const rows=LEAF.filter(t=>t.pkg===pk.k&&(filterAll||isActive(t,c.we))); if(!rows.length) return;
-    h+=`<tr class="grp"><td colspan="2">${esc(pk.n)}</td>${TWON?`<td class="c" data-pkw="${pk.k}">${fmtW(c.pk[pk.k].w)}</td>`:''}<td class="c">${pct(c.pk[pk.k].pl,0)}</td><td class="c">${pct(c.pkLast[pk.k].ac,0)}</td><td class="c" data-pkac="${pk.k}">${pct(c.pk[pk.k].ac,0)}</td><td></td></tr>`;
+    h+=`<tr class="grp"><td colspan="2">${esc(pk.n)}</td>${TWON?`<td class="c" data-pkw="${pk.k}">${RW[pk.k]??0}%</td>`:''}<td class="c">${pct(c.pk[pk.k].pl,0)}</td><td class="c">${pct(c.pkLast[pk.k].ac,0)}</td><td class="c" data-pkac="${pk.k}">${pct(c.pk[pk.k].ac,0)}</td><td></td></tr>`;
     rows.forEach(t=>{ n++; const pl=plannedPct(t,asOf()), a=+S.actual[t.id]||0, la=+S.lastActual[t.id]||0;
       if(t.ms){ h+=`<tr class="ms"><td>◆ ${esc(t.name)}</td><td class="nw">${dmyS(t.finish)}</td>${TWON?'<td></td>':''}<td class="c">${pl>=100?'Due':'—'}</td><td class="c">${la>=100?'Yes':'—'}</td><td class="c"><label class="row" style="gap:4px;justify-content:center"><input type="checkbox" data-ms="${t.id}" ${a>=100?'checked':''} style="width:auto"> achieved</label></td><td></td></tr>`; return; }
       h+=`<tr><td>${esc(t.name)}</td><td class="nw">${dmyS(t.finish)}</td>${TWON?`<td class="c"><input class="twin" type="number" step="0.01" min="0" data-tw="${t.id}" value="${+S.tw[t.id]||0}" aria-label="Weight %"></td>`:''}<td class="c">${pl.toFixed(0)}%</td><td class="c">${la}%</td><td class="c">${pctSelect(t.id,a,la)}</td><td data-st="${t.id}">${statusPill(a,pl)}</td></tr>`; }); });
   if(!n) h+='<tr><td colspan="7" style="padding:12px;color:var(--muted)">Nothing running in this week. Tap "All activities".</td></tr>';
   let sum='<tr><th>#</th><th>Work package</th><th>Weight</th><th>Planned</th><th>Actual</th><th>This week</th><th>Variance</th></tr>';
-  PKGS.forEach((pk,i)=>{ const x=c.pk[pk.k]; if(!x.w) return; const d=x.ac-x.pl; sum+=`<tr><td>${i+1}</td><td>${esc(pk.n)}</td><td>${TWON?`<span data-pkw2="${pk.k}">${fmtW(x.w)}</span>`:`<input type="number" min="0" max="100" data-w="${pk.k}" value="${S.weights[pk.k]}" style="width:64px;min-width:0" aria-label="Weight">`}</td><td>${pct(x.pl)}</td><td>${pct(x.ac)}</td><td>${sgn(x.ac-c.pkLast[pk.k].ac)}</td><td>${d<-3?'<span class="pill bad">'+sgn(d)+'</span>':d<0?'<span class="pill warn">'+sgn(d)+'</span>':'<span class="pill ok">'+sgn(d)+'</span>'}</td></tr>`; });
+  PKGS.forEach((pk,i)=>{ const x=c.pk[pk.k]; if(!x.w) return; const d=x.ac-x.pl; sum+=`<tr><td>${i+1}</td><td>${esc(pk.n)}</td><td>${TWON?`<span data-pkw2="${pk.k}">${RW[pk.k]??0}%</span>`:`<input type="number" min="0" max="100" data-w="${pk.k}" value="${S.weights[pk.k]}" style="width:64px;min-width:0" aria-label="Weight">`}</td><td>${pct(x.pl)}</td><td>${pct(x.ac)}</td><td>${sgn(x.ac-c.pkLast[pk.k].ac)}</td><td>${d<-3?'<span class="pill bad">'+sgn(d)+'</span>':d<0?'<span class="pill warn">'+sgn(d)+'</span>':'<span class="pill ok">'+sgn(d)+'</span>'}</td></tr>`; });
   return shell(p,'Each row shows last week\'s %. Change only the activities that moved. This drives pages 3, 4, 5, 6 and 7.',
    `<div class="tw" style="max-height:560px"><table id="actTable">${h}</table></div>
     <div class="toolbar"><div class="seg" role="group" aria-label="Activity filter"><button data-filter="0" aria-pressed="${!filterAll}">Running now</button><button data-filter="1" aria-pressed="${filterAll}">All activities</button></div><span class="count">${n} shown</span></div>
@@ -748,8 +758,11 @@ function twPanel(){ const tot=Object.values(S.tw||{}).reduce((a,b)=>a+(+b||0),0)
    <p class="help">Paste the task list with its weightage from Excel or MS Project (task name … weight %, one row per line — phase rows can stay in). Rows are matched to this site's schedule by name and order. Progress % of every task, package and the overall project then follows these weights. ${TWON&&Math.abs(tot-100)>0.5?'<b>Total is not 100% — percentages are scaled to the total.</b>':''}</p>
    <textarea id="twPaste" rows="6" placeholder="Site Survey&#9;3 days&#9;3&#9;0.39%"></textarea>
    <div class="toolbar"><button class="btn small primary" data-act2="twapply">Apply weightage</button>${TWON?'<button class="btn small" data-act2="twclear">Clear — weight by duration</button>':''}<span class="count">${esc(TW_MSG)}</span></div></details>`; }
-R.scurve=p=>shell(p,'Planned line comes from the schedule; the actual line from each week you report.',
-  `<canvas class="preview" id="sCanvas" width="1200" height="440"></canvas><details class="more"><summary>Actual % of past weeks</summary><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(92px,1fr));margin-top:8px">${(()=>{ const c=calc(); let h=''; for(let w=1;w<c.wn;w++) h+=`<label class="f">W${String(w).padStart(2,'0')}<input type="number" step="0.1" min="0" max="100" data-h="${w}" value="${S.history[w]??''}"></label>`; return h||'<span class="count">No past weeks yet.</span>'; })()}</div></details>`);
+R.scurve=p=>shell(p,'Planned line is built week by week from the programme: each activity\'s planned % at the week end × its weightage. Actual line comes from each week you report.',
+  `<canvas class="preview" id="sCanvas" width="1200" height="440"></canvas>${(()=>{ const d=sCurveData(); let r1='<tr><th>Week</th>', r2='<tr><td><b>Week ending</b></td>', r3='<tr><td><b>Planned %</b></td>', r4='<tr><td><b>Actual %</b></td>';
+    d.cats.forEach((c,i)=>{ const w=i+1, cur=w===d.cur; r1+=`<th class="c"${cur?' style="background:var(--hot)"':''}>${c}</th>`; r2+=`<td class="c nw">${dmyS(weekEndOf(w)).slice(0,6)}</td>`; r3+=`<td class="c">${d.pl[i].toFixed(1)}</td>`;
+      r4+= w<d.cur?`<td class="c"><input type="number" step="0.1" min="0" max="100" data-h="${w}" value="${S.history[w]??''}" style="width:62px;min-width:0;text-align:right"></td>` : `<td class="c">${cur?d.ac[i].toFixed(1):''}</td>`; });
+    return `<h3 style="margin:16px 0 8px;font-size:17px">Week by week <span class="auto">planned auto · past actuals editable</span></h3><div class="tw"><table class="sum-t">${r1}</tr>${r2}</tr>${r3}</tr>${r4}</tr></table></div>`; })()}`);
 R.ms=p=>{ const rows=milestoneRows(S.report.weekEnd); return shell(p,'Milestones from the schedule. Tick when one is achieved; the date is recorded for you.',
   `<div class="tw"><table><tr><th>Milestone</th><th>Planned</th><th>Actual / forecast</th><th>Status</th><th>Remarks</th><th class="c">Achieved</th><th>Date</th></tr>${rows.map(r=>`<tr><td>${esc(r[0])}</td><td class="nw">${r[1]}</td><td class="nw">${r[2]}</td><td>${r[3]==='Achieved'?'<span class="pill ok">Achieved</span>':r[3]==='Overdue'?'<span class="pill bad">Overdue</span>':r[3]==='Due soon'?'<span class="pill warn">Due soon</span>':'<span class="pill n">Upcoming</span>'}</td><td>${esc(r[4])}</td><td class="c"><input type="checkbox" data-ms="${r[5]}" ${r[3]==='Achieved'?'checked':''} style="width:auto"></td><td>${r[3]==='Achieved'?`<input type="date" data-msd="${r[5]}" value="${(S.msDate||{})[r[5]]||''}" style="min-width:130px">`:''}</td></tr>`).join('')||'<tr><td colspan="7">No milestones in the schedule.</td></tr>'}</table></div>`); };
 R.sched=p=>shell(p,'Bar chart drawn from the schedule with this week\'s progress and the data date. You can use a Primavera screenshot instead.',
@@ -762,7 +775,10 @@ R.look=p=>{ const rows=lookRows(), on=new Set(rows.map(t=>String(t.id))), hidden
    <div class="two" style="margin-top:14px">${listHTML('upcoming','Inspections &amp; approvals – next 4 weeks',' <span class="auto">auto, editable</span>')}${listHTML('laNotes','Notes')}</div>`); };
 R.mat=p=>shell(p,'Kept from last week. Change only quantities or status that changed.',tableHTML('mat'));
 R.doc=p=>shell(p,'Kept from last week. Update the status when the client replies.',tableHTML('doc'));
-R.msub=p=>shell(p,'Kept from last week.',tableHTML('msub'));
+R.msub=p=>shell(p,'Kept from last week. Fill the table, or upload a screenshot of your log instead — it goes on the slide in place of the table.',shotOrTable('msub'));
+function shotOrTable(k){ const sh=SHOTS[k];
+  if(sh) return `<img src="${sh.url}" alt="Screenshot used on the slide" style="width:100%;border:1px solid var(--line);border-radius:8px;background:#fff"><div class="toolbar"><span class="count">This screenshot goes on the slide instead of the table (saved on this computer).</span><label class="btn small">Replace screenshot<input type="file" accept="image/*" data-shot="${k}" hidden></label><button class="btn small" data-shotclear="${k}">Use the table instead</button></div>`;
+  return tableHTML(k)+`<div class="toolbar"><label class="btn small">Use a screenshot instead of this table<input type="file" accept="image/*" data-shot="${k}" hidden></label></div>`; }
 R.wir=p=>shell(p,'Kept from last week. Add new inspection requests here.',tableHTML('wir'));
 R.risk=p=>shell(p,'Kept from last week.',tableHTML('risk'));
 R.delay=p=>{ const auto=autoDelays(), room=Math.max(0,7-S.tables.delay.length);
@@ -785,6 +801,7 @@ R.photo=p=>shell(p,'Add up to 6 photos for this week. They go into the report yo
 function renderPage(){ const p=PAGES.find(x=>x.k===PAGE); $('main').innerHTML=R[PAGE](p); afterPage(); }
 function afterPage(){ if(PAGE==='scurve') drawS($('sCanvas')); if(PAGE==='sched') drawGantt($('gCanvas'));
   const dz=$('dropZone'); if(dz){ dz.onclick=()=>$('photoFile').click(); dz.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); $('photoFile').click(); } }; dz.ondragover=e=>{e.preventDefault();dz.classList.add('over')}; dz.ondragleave=()=>dz.classList.remove('over'); dz.ondrop=e=>{e.preventDefault();addPhotos(e.dataTransfer.files)}; }
+  document.querySelectorAll('input[data-shot]').forEach(inp=>inp.onchange=async e=>{ const f=e.target.files[0], k=inp.dataset.shot; if(!f) return; try{ const im=await processImage(f,null,2000); SHOTS[k]=im; try{ localStorage.setItem(shotKey(k),im.dataUrl); }catch(err){ toast('Screenshot used for now, but too big to keep on this computer.'); } renderPage(); }catch(err){ toast('Could not read that image.'); } });
   const gf=$('ganttFile'); if(gf) gf.onchange=async e=>{ const f=e.target.files[0]; if(!f) return; try{ GANTT_UP=await processImage(f,11277295/4572000,2400); renderPage(); }catch(err){ toast('Could not read that image.'); } }; }
 function renderAll(){ if(!SITE) return; renderSitePick(); renderHeader(); renderRail(); renderBanners(); renderPage(); }
 function go(k){ PAGE=k; renderRail(); renderPage(); window.scrollTo({top:0}); }
@@ -818,7 +835,7 @@ function applySchedule(target){ const {tasks,pkgs}=nestRows(RAW.map(r=>({...r}))
 
 /* ============ S7 · CHARTS ============ */
 function sCurveData(){ const c=calc(), cats=[], pl=[], ac=[];
-  for(let w=1;w<=LASTW;w++){ cats.push('W'+w); pl.push(Math.round(plannedOverallAt(weekEndOf(w))*10)/10);
+  for(let w=1;w<=LASTW;w++){ cats.push('W'+w); pl.push(Math.round(plannedProgAt(weekEndOf(w))*10)/10);
     ac.push(w<c.wn?(S.history[w]!=null&&S.history[w]!==''?+S.history[w]:null):w===c.wn?Math.round(c.ac*10)/10:null); }
   return {cats,pl,ac,cur:c.wn}; }
 function drawS(cv){ if(!cv) return; const g=cv.getContext('2d'),W=cv.width,H=cv.height,d=sCurveData(); g.fillStyle='#fff'; g.fillRect(0,0,W,H);
@@ -829,6 +846,9 @@ function drawS(cv){ if(!cv) return; const g=cv.getContext('2d'),W=cv.width,H=cv.
   if(d.cur>=1&&d.cur<=n){ g.strokeStyle='#1090f1'; g.setLineDash([5,5]); g.beginPath(); g.moveTo(x(d.cur-1),T); g.lineTo(x(d.cur-1),H-B); g.stroke(); g.setLineDash([]); }
   const line=(arr,col)=>{ g.strokeStyle=col; g.lineWidth=3; g.beginPath(); let st=false; arr.forEach((v,i)=>{ if(v==null) return; st?g.lineTo(x(i),y(v)):(g.moveTo(x(i),y(v)),st=true); }); g.stroke(); g.fillStyle=col; arr.forEach((v,i)=>{ if(v==null) return; g.beginPath(); g.arc(x(i),y(v),3.5,0,7); g.fill(); }); };
   line(d.pl,'#0b3a66'); line(d.ac,'#1090f1');
+  g.font='600 12px "Source Sans 3",sans-serif'; g.textAlign='center'; const lstep=n>20?2:1;
+  d.pl.forEach((v,i)=>{ if(v==null||(i%lstep&&i!==d.cur-1)) return; g.fillStyle='#0b3a66'; g.fillText(v.toFixed(0)+'%',x(i),y(v)-12); });
+  d.ac.forEach((v,i)=>{ if(v==null||(i%lstep&&i!==d.cur-1)) return; g.fillStyle='#1090f1'; g.fillText(v.toFixed(0)+'%',x(i),y(v)+14); });
   g.textAlign='left'; g.font='600 15px "Source Sans 3",sans-serif'; g.fillStyle='#0b3a66'; g.fillRect(L,H-18,22,4); g.fillText('Planned (cumulative %)',L+30,H-16); g.fillStyle='#1090f1'; g.fillRect(L+230,H-18,22,4); g.fillText('Actual (cumulative %)',L+260,H-16); }
 function ganttRows(we){ const MAXR=30,pick=[];
   LEAF.forEach(t=>{ const a=+S.actual[t.id]||0, la=+S.lastActual[t.id]||0; const late=t.finish<=we&&a<100, moved=a>la&&t.finish>=addD(we,-21);
@@ -868,7 +888,7 @@ function drawGantt(cv){ if(!cv) return; const g=cv.getContext('2d'),W=cv.width,H
 async function processImage(file,aspect,maxW){ const url=URL.createObjectURL(file); const im=await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=url; });
   let sw=im.naturalWidth,sh=im.naturalHeight,sx=0,sy=0; if(aspect){ if(sw/sh>aspect){ const nw=sh*aspect; sx=(sw-nw)/2; sw=nw; } else { const nh=sw/aspect; sy=(sh-nh)/2; sh=nh; } }
   const w=Math.min(maxW,sw),h=Math.round(w*sh/sw); const cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(im,sx,sy,sw,sh,0,0,w,h); URL.revokeObjectURL(url);
-  const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',.82)); return {url:URL.createObjectURL(blob),buf:await blob.arrayBuffer()}; }
+  const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',.82)); return {url:URL.createObjectURL(blob),buf:await blob.arrayBuffer(),w,h,dataUrl:cv.toDataURL('image/jpeg',.82)}; }
 async function addPhotos(files){ for(const f of [...files]){ if(PHOTOS.length>=6) break; if(!f.type.startsWith('image/')) continue;
   try{ const r=await processImage(f,3576218/1920240,1600); PHOTOS.push({...r,caption:'',date:iso(new Date(f.lastModified||Date.now()))}); }catch(e){ toast('Could not read '+f.name); } } if(PAGE==='photo') renderPage(); }
 
@@ -899,9 +919,10 @@ function setText(sp,text,color){ if(!sp) return; const r=sp.getElementsByTagName
 function replaceRun(sp,oldT,newT,color){ [...sp.getElementsByTagNameNS(NS.a,'r')].forEach(r=>{ const t=r.getElementsByTagNameNS(NS.a,'t')[0]; if(t&&t.textContent===oldT){ t.textContent=newT; fixRPr(kids(r,NS.a,'rPr')[0],color); } }); }
 function xfrmOf(sp){ const off=sp.getElementsByTagNameNS(NS.a,'off')[0], ext=sp.getElementsByTagNameNS(NS.a,'ext')[0]; return {x:off.getAttribute('x'),y:off.getAttribute('y'),cx:ext.getAttribute('cx'),cy:ext.getAttribute('cy')}; }
 const picXml=(id,name,rid,f)=>`<p:pic xmlns:p="${NS.p}" xmlns:a="${NS.a}" xmlns:r="${NS.r}"><p:nvPicPr><p:cNvPr id="${id}" name="${name}"/><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="${rid}"/><a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr><a:xfrm><a:off x="${f.x}" y="${f.y}"/><a:ext cx="${f.cx}" cy="${f.cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:ln w="6350"><a:solidFill><a:srgbClr val="D3E0EC"/></a:solidFill></a:ln></p:spPr></p:pic>`;
-function putPicture(doc,relsDoc,zip,dropSp,removeSps,buf,ext,n,picId,name){ const media=`ppt/media/wr_${name.replace(/\W/g,'')}_${n}.${ext}`; zip.file(media,buf);
+function putPicture(doc,relsDoc,zip,dropSp,removeSps,buf,ext,n,picId,name,fit){ const media=`ppt/media/wr_${name.replace(/\W/g,'')}_${n}.${ext}`; zip.file(media,buf);
   const rid='rIdWr'+picId, rel=relsDoc.createElementNS(NS.rel,'Relationship'); rel.setAttribute('Id',rid); rel.setAttribute('Type','http://schemas.openxmlformats.org/officeDocument/2006/relationships/image'); rel.setAttribute('Target','../media/'+media.split('/').pop()); relsDoc.documentElement.appendChild(rel);
-  const pic=doc.importNode(parseX(picXml(picId,name,rid,xfrmOf(dropSp))).documentElement,true); dropSp.parentNode.insertBefore(pic,dropSp); dropSp.remove(); removeSps.forEach(s=>s&&s.remove()); }
+  const pic=doc.importNode(parseX(picXml(picId,name,rid,fit?fitFrame(xfrmOf(dropSp),fit):xfrmOf(dropSp))).documentElement,true); dropSp.parentNode.insertBefore(pic,dropSp); dropSp.remove(); removeSps.forEach(s=>s&&s.remove()); }
+function fitFrame(f,im){ const bx=+f.x,by=+f.y,bw=+f.cx,bh=+f.cy; if(!im.w||!im.h) return f; const r=Math.min(bw/im.w,bh/im.h), w=Math.round(im.w*r), h=Math.round(im.h*r); return {x:String(Math.round(bx+(bw-w)/2)),y:String(by),cx:String(w),cy:String(h)}; }
 const canvasPng=cv=>new Promise(r=>cv.toBlob(async b=>r(await b.arrayBuffer()),'image/png'));
 let TPL_BUF=null;
 async function getTemplate(){ if(TPL_BUF) return TPL_BUF; if(typeof TPL_B64_INLINE==='string') return TPL_BUF=TPL_B64_INLINE;
@@ -920,7 +941,7 @@ async function buildPptx(){
   if(inc('scurve')){ s=await X('ppt/slides/slide4.xml'); setText(byId(s,7),sgn(c.ac-overall(c.pkLast,'ac'))); setText(byId(s,10),sgn(c.pl-plannedOverallAt(addD(asOf(),-7)))); setText(byId(s,13),sgn(c.varr)); setText(byId(s,16),wk); await writeChart(zip,X,sCurveData()); }
   if(inc('wp')){ s=await X('ppt/slides/slide5.xml'); tb=firstTable(s); const rowsN=tableRows(tb).length-1; const used=PKGS.filter(p=>c.pk[p.k].w);
     used.slice(0,rowsN).forEach((p,i)=>{ const x=c.pk[p.k], d=x.ac-x.pl; const st=x.ac>=99.95?'Complete':(x.pl<.05&&x.ac<.05)?'Not started':d<=-3?'Behind':'On track';
-      setCell(cellAt(tb,i+1,1),p.n); [fmtW(pkgWeight(p.k,c.pk)),pct(x.pl),pct(x.ac),sgn(x.ac-c.pkLast[p.k].ac).replace('±0.0%','0.0%'),sgn(d),pct(100-x.ac),st].forEach((v,j)=>setCell(cellAt(tb,i+1,j+2),v)); });
+      setCell(cellAt(tb,i+1,1),p.n); [(roundW(c.pk)[p.k]??0)+'%',pct(x.pl),pct(x.ac),sgn(x.ac-c.pkLast[p.k].ac).replace('±0.0%','0.0%'),sgn(d),pct(100-x.ac),st].forEach((v,j)=>setCell(cellAt(tb,i+1,j+2),v)); });
     tableRows(tb).slice(used.length+1).forEach(tr=>tr.remove()); }
   if(inc('ms')){ s=await X('ppt/slides/slide18.xml'); tb=firstTable(s); const mr=milestoneRows(c.we).slice(0,12); mr.forEach((r,i)=>r.slice(0,5).forEach((v,j)=>setCell(cellAt(tb,i+1,j+1),v)));
     tableRows(tb).slice(Math.max(1,mr.length)+1).forEach(tr=>tr.remove());
@@ -930,7 +951,7 @@ async function buildPptx(){
   if(inc('look')){ s=await X('ppt/slides/slide7.xml'); tb=firstTable(s); lookRows().slice(0,6).forEach((t,i)=>{ const o=S.la[t.id]||{}; [t.name,dmy(t.start),dmy(t.finish),o.resp??respFor(t),o.rem??laRem(t)].forEach((v,j)=>setCell(cellAt(tb,i+1,j+1),v)); });
     setParas(byId(s,6),lines(listGet('upcoming')).slice(0,4),'333333'); setParas(byId(s,4),lines(S.laNotes).slice(0,4),'333333'); }
   const fill=async(n,rows,startCol,map)=>{ const d=await X(`ppt/slides/slide${n}.xml`), t=firstTable(d), rn=tableRows(t).length-1; rows.slice(0,rn).forEach((r,i)=>(map?map(r):r).forEach((v,j)=>setCell(cellAt(t,i+1,j+startCol),v))); };
-  if(inc('mat')) await fill(8,S.tables.mat,1); if(inc('doc')) await fill(9,S.tables.doc,1); if(inc('msub')) await fill(10,S.tables.msub,1); if(inc('wir')) await fill(11,S.tables.wir,1);
+  if(inc('mat')) await fill(8,S.tables.mat,1); if(inc('doc')) await fill(9,S.tables.doc,1); if(inc('msub')){ if(SHOTS.msub){ const sp=SHOT_PAGES.msub; s=await X(`ppt/slides/slide${sp.slide}.xml`); const rels=await X(`ppt/slides/_rels/slide${sp.slide}.xml.rels`); putPicture(s,rels,zip,byId(s,sp.frame),[],SHOTS.msub.buf,'jpeg',c.wn,902,'MaterialSubmittals',SHOTS.msub); } else await fill(10,S.tables.msub,1); } if(inc('wir')) await fill(11,S.tables.wir,1);
   if(inc('delay')){ await fill(12,delayRowsAll(),0,r=>[r[0],r[1],dmy(r[2]),dmy(r[3]),dmy(r[4]),dmy(r[5])||'Ongoing',delayDays(r),r[7]]); s=await X('ppt/slides/slide12.xml'); setText(byId(s,5),'Notes: '+(S.delayNotes||'—'),'333333'); }
   if(inc('risk')) await fill(13,S.tables.risk,1,r=>[r[0],r[1],dmy(r[2]),dmy(r[3]),dmy(r[4]),r[5],r[6]]);
   const hs=S.hse;
@@ -991,7 +1012,7 @@ function startNextWeek(){ const c=calc(); S.history[c.wn]=Math.round(c.ac*10)/10
 document.addEventListener('input',e=>{ const t=e.target, ds=t.dataset; if(!SITE) return;
   if(ds.act){ const v=Math.max(0,Math.min(100,+t.value||0)); S.actual[ds.act]=v; t.classList.toggle('moved',v!==(+S.lastActual[ds.act]||0)); const task=TASKS.find(x=>String(x.id)===ds.act); const st=document.querySelector(`[data-st="${ds.act}"]`); if(st&&task) st.innerHTML=statusPill(v,plannedPct(task,asOf())); save(); renderHeader(); const c=calc(); PKGS.forEach(p=>{ const el=document.querySelector(`[data-pkac="${p.k}"]`); if(el) el.textContent=pct(c.pk[p.k].ac,0); }); }
   else if(ds.w){ S.weights[ds.w]=+t.value||0; save(); renderHeader(); }
-  else if(ds.tw){ S.tw[ds.tw]=Math.max(0,+t.value||0); refreshTW(); save(); renderHeader(); const c=calc(); PKGS.forEach(p=>{ const a=document.querySelector(`[data-pkac="${p.k}"]`); if(a) a.textContent=pct(c.pk[p.k].ac,0); document.querySelectorAll(`[data-pkw="${p.k}"],[data-pkw2="${p.k}"]`).forEach(el=>el.textContent=fmtW(c.pk[p.k].w)); }); }
+  else if(ds.tw){ S.tw[ds.tw]=Math.max(0,+t.value||0); refreshTW(); save(); renderHeader(); const c=calc(); PKGS.forEach(p=>{ const a=document.querySelector(`[data-pkac="${p.k}"]`); if(a) a.textContent=pct(c.pk[p.k].ac,0); const rw=roundW(c.pk); document.querySelectorAll(`[data-pkw="${p.k}"],[data-pkw2="${p.k}"]`).forEach(el=>el.textContent=(rw[p.k]??0)+'%'); }); }
   else if(ds.h){ S.history[ds.h]=t.value===''?null:+t.value; save(); drawS($('sCanvas')); }
   else if(ds.la){ (S.la[ds.la] ||= {})[ds.k]=t.value; save(); }
   else if(ds.t){ S.tables[ds.t][+ds.r][+ds.c]=t.value; save(); if(ds.t==='delay'){ const cell=document.querySelector(`[data-dd="${ds.r}"]`); if(cell) cell.textContent=delayDays(S.tables.delay[+ds.r]); } }
@@ -1015,6 +1036,7 @@ document.addEventListener('change',e=>{ const t=e.target, ds=t.dataset;
 document.addEventListener('click',async e=>{ const b=e.target.closest('button'); if(!b) return; const ds=b.dataset;
   if(ds.page){ go(ds.page); }
   else if(ds.filter!=null){ filterAll=ds.filter==='1'; renderPage(); }
+  else if(ds.shotclear){ delete SHOTS[ds.shotclear]; try{ localStorage.removeItem(shotKey(ds.shotclear)); }catch(err){} renderPage(); }
   else if(ds.plm){ S.plMethod=ds.plm; save(); renderHeader(); renderPage(); }
   else if(ds.add){ const def=TDEF[ds.add]; if(S.tables[ds.add].length>=def.max){ toast(`The slide holds ${def.max} rows. Remove a closed item first.`); return; } S.tables[ds.add].push(def.cols.map(()=>'')); save(); renderPage(); }
   else if(ds.delrow){ S.tables[ds.delrow].splice(+ds.r,1); save(); renderPage(); }
