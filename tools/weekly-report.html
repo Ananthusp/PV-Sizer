@@ -385,7 +385,10 @@ function openSite(id){
   const start=SITE.meta.cStart||TASKS[0]?.start||todayIso(); const d=D(start); const back=(d.getUTCDay()-((weekEndDay()+1)%7)+7)%7; W1=addD(start,-back);
   const end=TASKS.reduce((m,t)=>t.finish>m?t.finish:m, SITE.meta.cEnd||start); LASTW=Math.max(1,weekNo(weekEndOfDate(end)));
   /* the report week ends on the report date (report on 11-Nov → week 04-Nov to 11-Nov); week no. counts from the contract start */
-  if(!S.report.reportDate) S.report.reportDate=S.report.weekEnd||todayIso(); S.report.weekEnd=S.report.reportDate;
+  if(!S.report.reportDate) S.report.reportDate=S.report.weekEnd||todayIso();
+  /* follow today (like the MS Project status date): within the report's week the report date moves to today by itself */
+  { const t=todayIso(); if(S.report.followToday!==false && S.report.reportDate<t && weekNo(t)===weekNo(S.report.reportDate)){ S.report.reportDate=t; S.report.weekStart=''; } }
+  S.report.weekEnd=S.report.reportDate;
   if(!S.report.forecastEnd) S.report.forecastEnd=SITE.meta.cEnd||end;
   PHOTOS=[]; GANTT_UP=null; loadShots(); if(!SITE.pages.includes(PAGE)) PAGE='cover';
   saveLocal(); renderAll();
@@ -731,7 +734,7 @@ function shell(p,desc,body){ const pages=PAGES.filter(x=>SITE.pages.includes(x.k
   <div class="navbtns">${prev?`<button class="btn" data-page="${prev.k}">← ${esc(prev.t)}</button>`:'<span></span>'}${next?`<button class="btn primary" data-page="${next.k}">${esc(next.t)} →</button>`:`<button class="btn primary" data-dl="1">Download report (.pptx)</button>`}</div>`; }
 const R={};
 R.cover=p=>{ const c=calc(); return shell(p,'Project details come from Site settings. Pick the week; the number, period and reference follow.',
-  `<div class="grid"><label class="f">Report date <span class="auto">the week ends on this day · planned % worked out on it</span><input type="date" data-bind="report.reportDate" value="${S.report.reportDate}"></label><label class="f">Week start <span class="auto">${S.report.weekStart?'changed · display only':'auto · 7 days before · display only'}</span><input type="date" data-bind="report.weekStart" value="${c.ws}"></label>
+  `<div class="grid"><label class="f">Report date <span class="auto">the week ends on this day · planned % worked out on it</span><input type="date" data-bind="report.reportDate" value="${S.report.reportDate}"><label class="row count" style="gap:6px;margin-top:6px;cursor:pointer;font-weight:400"><input type="checkbox" data-follow="1" ${S.report.followToday!==false?'checked':''} style="width:auto"> Follow today's date</label></label><label class="f">Week start <span class="auto">${S.report.weekStart?'changed · display only':'auto · 7 days before · display only'}</span><input type="date" data-bind="report.weekStart" value="${c.ws}"></label>
    <label class="f">Week no. <span class="auto">auto</span><input readonly value="W${String(c.wn).padStart(2,'0')}"></label><label class="f">Reporting period <span class="auto">auto</span><input readonly id="periodOut" value="${dmy(c.ws)} to ${dmy(c.we)}"></label>
    <label class="f">Reference prefix<input data-bind="report.refPrefix" value="${esc(S.report.refPrefix)}"></label><label class="f">Revision<input data-bind="report.rev" value="${esc(S.report.rev)}"></label>
    <label class="f">Reference no. <span class="auto">auto</span><input readonly id="refOut" value="${esc(refNo(c))}"></label></div>
@@ -1024,7 +1027,7 @@ let toastT; function toast(m){ const t=$('toast'); t.textContent=m; t.hidden=fal
 function setPath(obj,path,v){ const k=path.split('.'); let o=obj; k.slice(0,-1).forEach(x=>o=o[x]); o[k[k.length-1]]=v; }
 function startNextWeek(){ const c=calc(); S.history[c.wn]=Math.round(c.ac*10)/10; S.lastActual=Object.assign({},S.actual); cloudSaveWeek();
   const h=S.hse,hc=hseCalc(); ['man','trn','perf','ptw'].forEach(k=>h[k].forEach(r=>{ r[1]=(+r[1]||0)+(+r[0]||0); if(k!=='man') r[0]=0; })); h.manHoursPrev=hc.mhCum; h.safePrev=hc.safeCum;
-  S.report.reportDate=addD(c.we,7); S.report.weekEnd=S.report.reportDate; S.report.weekStart=''; S.upcoming=null; S._upAuto=true; S.highlights=''; PHOTOS=[]; GANTT_UP=null; save(); renderAll();
+  S.report.reportDate=(S.report.followToday!==false&&weekNo(todayIso())>c.wn)?todayIso():addD(c.we,7); S.report.weekEnd=S.report.reportDate; S.report.weekStart=''; S.upcoming=null; S._upAuto=true; S.highlights=''; PHOTOS=[]; GANTT_UP=null; save(); renderAll();
   toast(`Now on W${String(c.wn+1).padStart(2,'0')}. Everything carried over; highlights, incidents and talks cleared.`); }
 
 document.addEventListener('input',e=>{ const t=e.target, ds=t.dataset; if(!SITE) return;
@@ -1037,7 +1040,7 @@ document.addEventListener('input',e=>{ const t=e.target, ds=t.dataset; if(!SITE)
   else if(ds.hse){ S.hse[ds.hse][+ds.r][+ds.c]=+t.value||0; save(); document.querySelectorAll(`[data-hse="${ds.hse}"][data-r="${ds.r}"][data-c="${ds.c}"]`).forEach(x=>{ if(x!==t) x.value=t.value; }); const r=S.hse[ds.hse][+ds.r], cc=document.querySelector(`[data-hcum="${ds.hse}-${ds.r}"]`); if(cc) cc.textContent=(+r[0]||0)+(+r[1]||0); updHse(); }
   else if(ds.hsev){ S.hse[ds.hsev]=+t.value||0; save(); updHse(); }
   else if(ds.li){ const a=listArr(ds.li); a[+ds.i]=t.value; listSet(ds.li,a); }
-  else if(ds.bind){ let v=t.type==='number'?+t.value:t.value; if(ds.bind==='report.reportDate'){ if(!v) return; S.report.weekEnd=v; S.report.weekStart=''; } if(ds.bind==='report.weekStart'&&(!v||v===addD(S.report.reportDate,-7))) v=''; setPath(S,ds.bind,v); save(); renderHeader(); if(ds.bind==='report.reportDate'){ renderBanners(); keepFocus(renderPage); } else if(ds.bind==='report.weekStart'){ const po=$('periodOut'); if(po){ const c2=calc(); po.value=dmy(c2.ws)+' to '+dmy(c2.we); } } const ro=$('refOut'); if(ro) ro.value=refNo(calc()); if(ds.bind==='report.schedRev') drawGantt($('gCanvas')); if(ds.bind.startsWith('hse.')) updHse(); }
+  else if(ds.bind){ let v=t.type==='number'?+t.value:t.value; if(ds.bind==='report.reportDate'){ if(!v) return; S.report.weekEnd=v; S.report.weekStart=''; S.report.followToday=(v===todayIso()); } if(ds.bind==='report.weekStart'&&(!v||v===addD(S.report.reportDate,-7))) v=''; setPath(S,ds.bind,v); save(); renderHeader(); if(ds.bind==='report.reportDate'){ renderBanners(); keepFocus(renderPage); } else if(ds.bind==='report.weekStart'){ const po=$('periodOut'); if(po){ const c2=calc(); po.value=dmy(c2.ws)+' to '+dmy(c2.we); } } const ro=$('refOut'); if(ro) ro.value=refNo(calc()); if(ds.bind==='report.schedRev') drawGantt($('gCanvas')); if(ds.bind.startsWith('hse.')) updHse(); }
   else if(ds.pc!=null) PHOTOS[+ds.pc].caption=t.value; else if(ds.pd!=null) PHOTOS[+ds.pd].date=t.value;
   else if(ds.msd){ (S.msDate ||= {})[ds.msd]=t.value; save(); }
   else if(ds.msrem){ (S.msRem ||= {})[ds.msrem]=t.value.trim(); if(!S.msRem[ds.msrem]) delete S.msRem[ds.msrem]; save(); }
@@ -1046,6 +1049,7 @@ document.addEventListener('input',e=>{ const t=e.target, ds=t.dataset; if(!SITE)
 function updHse(){ const c=hseCalc(); [['hTW',c.tw],['hMH',c.mh],['hMHC',c.mhCum],['hSF',c.safe],['hSFC',c.safeCum]].forEach(([id,v])=>{ const el=$(id); if(el) el.textContent=v; }); }
 document.addEventListener('change',e=>{ const t=e.target, ds=t.dataset;
   if(ds.sclbl){ S.scLabels=t.checked; save(); drawS($('sCanvas')); return; }
+  if(ds.follow){ S.report.followToday=t.checked; if(t.checked){ const td=todayIso(); if(weekNo(td)>=weekNo(S.report.reportDate)){ S.report.reportDate=td; S.report.weekEnd=td; S.report.weekStart=''; } } save(); renderAll(); return; }
   if(ds.act && t.tagName==='INPUT'){ t.value=+S.actual[ds.act]||0; }   /* show the cleaned value (0–100) after typing */
   else if(ds.ms){ S.msDate ||= {}; if(t.checked) S.msDate[ds.ms] ||= S.report.weekEnd; else delete S.msDate[ds.ms]; S.actual[ds.ms]=t.checked?100:0; save(); renderHeader(); renderPage(); }
   else if(ds.pp){ const k=ds.pp; DRAFT.pages=t.checked?[...new Set([...DRAFT.pages,k])]:DRAFT.pages.filter(x=>x!==k); DRAFT.pages=PAGES.map(p=>p.k).filter(x=>DRAFT.pages.includes(x)); t.closest('label').classList.toggle('off',!t.checked); }
