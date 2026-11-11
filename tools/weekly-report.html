@@ -628,7 +628,7 @@ function autoWeights(){ const s=SITES['zu-carport']; if(!s || s.state.tw!==undef
    The date used is the report date (the date the report is sent = MS Project status date).
    Option "weight": planned is built up from the task weightage instead. */
 const asOf=()=>S.report.reportDate||S.report.weekEnd;
-const timeMode=()=>(S.plMethod||'time')==='time';
+const timeMode=()=>true;   /* planned % always uses the MS Project rule (task weightage only drives actual %) */
 function spanPct(s,f,dd){ if(!s||!f||dd<s) return 0; if(dd>=f) return 100; return 100*workdays(s,dd)/(workdays(s,f)||1); }
 let PSPAN={}, PROJ={};
 function computeSpans(){ PSPAN={}; PKGS.forEach(p=>{ const ts=LEAF.filter(t=>t.pkg===p.k); if(ts.length) PSPAN[p.k]={s:ts.reduce((m,t)=>t.start<m?t.start:m,ts[0].start),f:ts.reduce((m,t)=>t.finish>m?t.finish:m,ts[0].finish)}; });
@@ -759,7 +759,7 @@ R.wp=p=>{ const c=calc(), RW=roundW(c.pk); let h='<tr><th>Activity</th><th>Finis
   return shell(p,'Each row shows last week\'s %. Change only the activities that moved. This drives pages 3, 4, 5, 6 and 7.',
    `<div class="tw" style="max-height:560px"><table id="actTable">${h}</table></div>
     <div class="toolbar"><div class="seg" role="group" aria-label="Activity filter"><button data-filter="0" aria-pressed="${!filterAll}">Running now</button><button data-filter="1" aria-pressed="${filterAll}">All activities</button></div><span class="count">${n} shown</span></div>
-    <div class="toolbar" style="margin-top:18px"><span class="count">Planned % on ${dmyS(asOf())} (report date):</span><div class="seg" role="group" aria-label="Planned method"><button data-plm="time" aria-pressed="${timeMode()}">By schedule dates — same as MS Project</button><button data-plm="weight" aria-pressed="${!timeMode()}">By task weightage</button></div></div>
+    <p class="help" style="margin-top:18px">Planned % on ${dmyS(asOf())} uses the MS Project rule (days passed ÷ total days, per row). Actual % and the S-curve use the task weightage.</p>
     <h3 style="margin:10px 0 8px;font-size:17px">Work package summary <span class="auto">${TWON?'auto · weight = sum of its task weightage':'auto · weights editable'}</span></h3><div class="tw"><table class="sum-t" id="pkgTable">${sum}</table></div>
     ${twPanel()}`); };
 function twPanel(){ const tot=Object.values(S.tw||{}).reduce((a,b)=>a+(+b||0),0), n=Object.values(S.tw||{}).filter(v=>+v>0).length;
@@ -767,7 +767,7 @@ function twPanel(){ const tot=Object.values(S.tw||{}).reduce((a,b)=>a+(+b||0),0)
    <p class="help">Paste the task list with its weightage from Excel or MS Project (task name … weight %, one row per line — phase rows can stay in). Rows are matched to this site's schedule by name and order. Progress % of every task, package and the overall project then follows these weights. ${TWON&&Math.abs(tot-100)>0.5?'<b>Total is not 100% — percentages are scaled to the total.</b>':''}</p>
    <textarea id="twPaste" rows="6" placeholder="Site Survey&#9;3 days&#9;3&#9;0.39%"></textarea>
    <div class="toolbar"><button class="btn small primary" data-act2="twapply">Apply weightage</button>${TWON?'<button class="btn small" data-act2="twclear">Clear — weight by duration</button>':''}<span class="count">${esc(TW_MSG)}</span></div></details>`; }
-R.scurve=p=>shell(p,'Planned line uses the same rule as the Planned box (set on page 5 — default is the MS Project rule), one point per week on the report day. Actual line comes from each week you report.',
+R.scurve=p=>shell(p,'Planned line is built from the programme with the task weightage, one point per week on the report day. (The Planned box uses the MS Project rule, so the current week can differ.) Actual line comes from each week you report.',
   `<div class="toolbar" style="margin:0 0 8px"><label class="row count" style="gap:6px;cursor:pointer"><input type="checkbox" data-sclbl="1" ${S.scLabels!==false?'checked':''} style="width:auto"> Show numbers (%) on the S-curve — screen and report</label></div><canvas class="preview" id="sCanvas" width="1200" height="440"></canvas>${(()=>{ const d=sCurveData(); let r1='<tr><th>Week</th>', r2='<tr><td><b>Week ending</b></td>', r3='<tr><td><b>Planned %</b></td>', r4='<tr><td><b>Actual %</b></td>';
     d.cats.forEach((c,i)=>{ const w=i+1, cur=w===d.cur; r1+=`<th class="c"${cur?' style="background:var(--hot)"':''}>${c}</th>`; r2+=`<td class="c nw">${dmyS(weekPoint(w)).slice(0,6)}</td>`; r3+=`<td class="c">${d.pl[i].toFixed(1)}</td>`;
       r4+= w<d.cur?`<td class="c"><input type="number" step="0.1" min="0" max="100" data-h="${w}" value="${S.history[w]??''}" style="width:62px;min-width:0;text-align:right"></td>` : `<td class="c">${cur?d.ac[i].toFixed(1):''}</td>`; });
@@ -843,11 +843,11 @@ function applySchedule(target){ const {tasks,pkgs}=nestRows(RAW.map(r=>({...r}))
 }
 
 /* ============ S7 · CHARTS ============ */
-/* each week's point sits on the report day of that week (report 11-Nov → W15 = 11-Nov, W16 = 18-Nov …),
-   using the same planned rule as the Planned box — so the current week matches it exactly (MS Project: 46% on 11-Nov) */
+/* S-curve planned line: built from the programme with the task weightage (each task's planned % on that day × its weight),
+   one point per week on the report day (report 11-Nov → W15 = 11-Nov, W16 = 18-Nov …). The Planned box stays on the MS Project rule. */
 const weekPoint=w=>addD(asOf(),7*(w-weekNo(S.report.weekEnd)));
 function sCurveData(){ const c=calc(), cats=[], pl=[], ac=[];
-  for(let w=1;w<=LASTW;w++){ cats.push('W'+w); pl.push(w===c.wn?Math.round(c.pl*10)/10:Math.round(plannedOverallAt(weekPoint(w))*10)/10);
+  for(let w=1;w<=LASTW;w++){ cats.push('W'+w); pl.push(Math.round(plannedProgAt(weekPoint(w))*10)/10);
     ac.push(w<c.wn?(S.history[w]!=null&&S.history[w]!==''?+S.history[w]:null):w===c.wn?Math.round(c.ac*10)/10:null); }
   return {cats,pl,ac,cur:c.wn}; }
 function drawS(cv){ if(!cv) return; const g=cv.getContext('2d'),W=cv.width,H=cv.height,d=sCurveData(); g.fillStyle='#fff'; g.fillRect(0,0,W,H);
