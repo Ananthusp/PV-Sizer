@@ -478,7 +478,12 @@ function cloudSaveWeek(){ if(!fdb) return; const c=calc(); const id=`${SITE.id}_
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') flushCloud(); });
 window.addEventListener('pagehide',flushCloud); window.addEventListener('online',flushCloud); setInterval(()=>{ if(Object.values(SITES).some(s=>s._dirty)) flushCloud(); },60000);
 let READY=false;
-function afterReady(){ if(READY) return; READY=true; autoWeights(); }
+function afterReady(){ if(READY) return; READY=true; autoWeights(); seedMsRemarks(); }
+/* Zayed University milestone remarks (as in WR-15) — filled once if the site has none yet */
+function seedMsRemarks(){ const z=SITES['zu-carport']; if(!z || z.state.msRem!==undefined) return; const keep=CUR; if(CUR!=='zu-carport') openSite('zu-carport');
+  const want=[['milestone 1 achievement','On plan'],['municipality (dm) approval','3 rounds of revision carried out for final approval.'],['electricity authority approval','Final Approval delayed from DEWA'],['mobilization','Delayed due to DM approval and Civil contractor selection'],['delivery of modules','Available at Warehouse']];
+  S.msRem={}; TASKS.forEach(t=>{ const n=t.name.toLowerCase().replace(/^milestone \d+ - /,''); const w=want.find(x=>x[0]===n); if(w && (t.ms||/mobili/i.test(t.name))) S.msRem[t.id]=w[1]; }); save();
+  if(keep!==CUR) openSite(keep); else renderAll(); }
 
 /* ============ S5 · SCHEDULE IMPORT ============ */
 const MONTHS={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
@@ -640,14 +645,14 @@ const MS_LIST=()=>{ const ids=SITE.msIds&&SITE.msIds.length? SITE.msIds : null; 
 function milestoneRows(we){ return MS_LIST().map(t=>{ const id=t.id, done=(+S.actual[id]||0)>=100, ad=(S.msDate||{})[id]; let act,st,rem='';
   if(done){ act=ad?dmy(ad):'Achieved'; st='Achieved'; if(ad){ const d=diffD(t.finish,ad); rem=d>0?`${d} days after plan`:d<0?`${-d} days early`:'On plan'; } }
   else if(t.finish<we){ act='TBC'; st='Overdue'; rem=`${diffD(t.finish,we)} days late`; } else { act=dmy(t.finish); st=diffD(we,t.finish)<=14?'Due soon':'Upcoming'; }
-  return [t.name.replace(/^Milestone \d+ - /,''),dmy(t.finish),act,st,rem,id]; }); }
+  const mine=(S.msRem||{})[id]; return [t.name.replace(/^Milestone \d+ - /,''),dmy(t.finish),act,st,mine!=null&&mine!==''?mine:rem,id,rem]; }); }
 /* look-ahead: anything not finished that is running, late, or starts in the next 14 days · plus activities you add · minus ones you remove */
 function lookRows(){ const we=S.report.weekEnd, e=addD(we,14), A=t=>+S.actual[t.id]||0, hide=new Set((S.laHide||[]).map(String)), add=(S.laAdd||[]).map(String);
   const added=add.map(id=>LEAF.find(t=>String(t.id)===id)).filter(t=>t&&A(t)<100);
   const auto=LEAF.filter(t=>!t.ms&&A(t)<100&&t.start<=e&&!hide.has(String(t.id))&&!add.includes(String(t.id)))
     .sort((a,b)=>(A(b)>0)-(A(a)>0) || (b.finish<we)-(a.finish<we) || a.start.localeCompare(b.start));
   return [...added,...auto]; }
-function laRem(t){ const we=S.report.weekEnd, a=+S.actual[t.id]||0; if(a>0) return `${a}% done`+(t.finish<we?' · late':''); if(t.finish<we) return 'Late – not started'; if(t.start<=we) return 'Should have started'; return ''; }
+function laRem(t){ const a=+S.actual[t.id]||0; return a>0?`${a}% done`:'Not started'; }
 function respFor(t){ const n=(PKGS.find(p=>p.k===t.pkg)?.n||'').toLowerCase(); if(/engineer|design|approv/.test(n)) return 'Engineering'; if(/procure|supply|logist/.test(n)) return 'Procurement'; if(/test|commission/.test(n)) return 'T&C team'; if(/inspect/.test(n)) return 'QA/QC'; if(/hand|close/.test(n)) return 'Project manager'; return 'Site team'; }
 function upcomingChecks(){ const we=S.report.weekEnd, re=/inspection|approval|test|energi|meter|handover|commission|witness/i;
   return LEAF.filter(t=>!t.ms&&re.test(t.name)&&(+S.actual[t.id]||0)<100&&t.start<=addD(we,28)&&(t.finish>we||t.start<=we)).sort((a,b)=>a.start.localeCompare(b.start))
@@ -656,7 +661,7 @@ function delayDays(r){ const pe=r[3]; if(!pe) return ''; const d=diffD(pe,r[5]||
 function autoDelays(){ const we=S.report.weekEnd; const have=S.tables.delay.map(r=>r[0]).join(' '); const out=[];
   LEAF.filter(t=>!t.ms).forEach(t=>{ const a=+S.actual[t.id]||0; let why=''; if(t.finish<we&&a<100) why=`Planned finish passed, ${a}% done`; else if(t.start<we&&a===0&&workdays(t.start,we)>2) why='Not started as planned';
     if(!why||new RegExp('Task '+t.id+'(?!\\d)').test(have)) return; out.push([`${t.name} (Task ${t.id})`,'',t.start,t.finish,a>0?t.start:'','','',why]); }); return out; }
-const delayRowsAll=()=>[...S.tables.delay,...autoDelays()].slice(0,7);
+const delayRowsAll=()=>S.tables.delay.filter(r=>r.some(v=>String(v||'').trim())).slice(0,7);
 const MAN=['Engineers / Supervisors','Electricians','Solar Technicians','Civil / Steel Workers','Helpers / Labour'];
 const TRN=['No. of Persons Inducted','No. of Toolbox Talks','Special Awareness Training','Emergency Drill','HSE Inspections / Audits'];
 const PERF=['Lost Time Injury (LTI)','Near Miss','First Aid Cases','Medical Treatment Cases','Property Damage','Recordable Incident Cases','Environmental Incidents'];
@@ -678,16 +683,16 @@ const ST_MAT=['Not Ordered','Ordered','In Production','To be Delivered','Shipped
 const ST_DOC=['Approved','Approved with Comments','Partially Approved','Submitted','Under Review','Rejected','Pending',''];
 const ST_WIR=['Approved','Approved with Comments','Rejected','Pending',''];
 const TDEF={
-  mat:{max:10,fixed:true,cols:[['Material','t',160],['Qty ordered','t'],['Qty delivered','t'],['PO date','t'],['Delivery / ETA','t'],['Status','s',0,ST_MAT],['Remarks','t',160]]},
+  mat:{max:10,fixed:true,hide:[2,3,4],cols:[['Material','t',160],['Qty','t'],['Qty delivered','t'],['PO date','t'],['Delivery / ETA','t'],['Status','s',0,ST_MAT],['Remarks','t',160]]},
   doc:{max:11,cols:[['Document no.','t'],['Description','t',220],['Submitted','t'],['Status','s',0,ST_DOC],['Rev.','t',50],['Client comments / remarks','t',200]]},
   msub:{max:11,cols:[['Document no.','t'],['Material','t',170],['R0 date','t'],['R1 date','t'],['R2 date','t'],['R3 date','t'],['Current status','s',0,ST_DOC],['Remarks','t',140]]},
   wir:{max:11,cols:[['WIR no.','t'],['Description / activity','t',200],['Location / area','t'],['Submitted','t'],['Inspected','t'],['Status','s',0,ST_WIR],['Remarks','t',140]]},
   delay:{max:7,cols:[['Delay description','t',200],['Cause of delay','t',180],['Planned start','d'],['Planned end','d'],['Actual start','d'],['Actual end','d'],['Delay (days)','calc'],['Remarks / EOT claim','t',160]]},
   risk:{max:7,cols:[['Risk description','t',220],['Rating','s',0,['H','M','L']],['Start date','d'],['Must finish','d'],['Actual completion','d'],['Mitigation','t',200],['Owner','t',110]]}};
 function tableHTML(key){ const def=TDEF[key], rows=S.tables[key];
-  let h='<div class="tw"><table><tr>'+(def.fixed?'':'<th>#</th>')+def.cols.map(c=>`<th>${c[0]}</th>`).join('')+(def.fixed?'':'<th></th>')+'</tr>';
+  const hid=new Set(def.hide||[]); let h='<div class="tw"><table><tr>'+(def.fixed?'':'<th>#</th>')+def.cols.map((c,j)=>hid.has(j)?'':`<th>${c[0]}</th>`).join('')+(def.fixed?'':'<th></th>')+'</tr>';
   rows.forEach((r,i)=>{ h+='<tr>'+(def.fixed?'':`<td>${i+1}</td>`);
-    def.cols.forEach((c,j)=>{ const v=r[j]??''; const st=c[2]?` style="min-width:${c[2]}px"`:'';
+    def.cols.forEach((c,j)=>{ if(hid.has(j)) return; const v=r[j]??''; const st=c[2]?` style="min-width:${c[2]}px"`:'';
       if(c[1]==='s') h+=`<td><select data-t="${key}" data-r="${i}" data-c="${j}">${c[3].map(o=>`<option${o===v?' selected':''}>${o}</option>`).join('')}</select></td>`;
       else if(c[1]==='calc') h+=`<td class="r" data-dd="${i}">${delayDays(r)}</td>`;
       else if(c[1]==='d') h+=`<td><input type="date" data-t="${key}" data-r="${i}" data-c="${j}" value="${esc(v)}"></td>`;
@@ -764,8 +769,8 @@ R.scurve=p=>shell(p,'Planned line is built week by week from the programme: each
     d.cats.forEach((c,i)=>{ const w=i+1, cur=w===d.cur; r1+=`<th class="c"${cur?' style="background:var(--hot)"':''}>${c}</th>`; r2+=`<td class="c nw">${dmyS(weekEndOf(w)).slice(0,6)}</td>`; r3+=`<td class="c">${d.pl[i].toFixed(1)}</td>`;
       r4+= w<d.cur?`<td class="c"><input type="number" step="0.1" min="0" max="100" data-h="${w}" value="${S.history[w]??''}" style="width:62px;min-width:0;text-align:right"></td>` : `<td class="c">${cur?d.ac[i].toFixed(1):''}</td>`; });
     return `<h3 style="margin:16px 0 8px;font-size:17px">Week by week <span class="auto">planned auto · past actuals editable</span></h3><div class="tw"><table class="sum-t">${r1}</tr>${r2}</tr>${r3}</tr>${r4}</tr></table></div>`; })()}`);
-R.ms=p=>{ const rows=milestoneRows(S.report.weekEnd); return shell(p,'Milestones from the schedule. Tick when one is achieved; the date is recorded for you.',
-  `<div class="tw"><table><tr><th>Milestone</th><th>Planned</th><th>Actual / forecast</th><th>Status</th><th>Remarks</th><th class="c">Achieved</th><th>Date</th></tr>${rows.map(r=>`<tr><td>${esc(r[0])}</td><td class="nw">${r[1]}</td><td class="nw">${r[2]}</td><td>${r[3]==='Achieved'?'<span class="pill ok">Achieved</span>':r[3]==='Overdue'?'<span class="pill bad">Overdue</span>':r[3]==='Due soon'?'<span class="pill warn">Due soon</span>':'<span class="pill n">Upcoming</span>'}</td><td>${esc(r[4])}</td><td class="c"><input type="checkbox" data-ms="${r[5]}" ${r[3]==='Achieved'?'checked':''} style="width:auto"></td><td>${r[3]==='Achieved'?`<input type="date" data-msd="${r[5]}" value="${(S.msDate||{})[r[5]]||''}" style="min-width:130px">`:''}</td></tr>`).join('')||'<tr><td colspan="7">No milestones in the schedule.</td></tr>'}</table></div>`); };
+R.ms=p=>{ const rows=milestoneRows(S.report.weekEnd); return shell(p,'Milestones from the schedule. Tick when one is achieved; the date is recorded for you. Remarks are yours to edit — clear one to get the automatic text back.',
+  `<div class="tw"><table><tr><th>Milestone</th><th>Planned</th><th>Actual / forecast</th><th>Status</th><th>Remarks</th><th class="c">Achieved</th><th>Date</th></tr>${rows.map(r=>`<tr><td>${esc(r[0])}</td><td class="nw">${r[1]}</td><td class="nw">${r[2]}</td><td>${r[3]==='Achieved'?'<span class="pill ok">Achieved</span>':r[3]==='Overdue'?'<span class="pill bad">Overdue</span>':r[3]==='Due soon'?'<span class="pill warn">Due soon</span>':'<span class="pill n">Upcoming</span>'}</td><td><input data-msrem="${r[5]}" value="${esc(r[4])}" placeholder="${esc(r[6])}" style="min-width:220px" aria-label="Remarks"></td><td class="c"><input type="checkbox" data-ms="${r[5]}" ${r[3]==='Achieved'?'checked':''} style="width:auto"></td><td>${r[3]==='Achieved'?`<input type="date" data-msd="${r[5]}" value="${(S.msDate||{})[r[5]]||''}" style="min-width:130px">`:''}</td></tr>`).join('')||'<tr><td colspan="7">No milestones in the schedule.</td></tr>'}</table></div>`); };
 R.sched=p=>shell(p,'Bar chart drawn from the schedule with this week\'s progress and the data date. You can use a Primavera screenshot instead.',
   `<canvas class="preview" id="gCanvas" width="2400" height="973"></canvas><div class="grid" style="margin-top:12px"><label class="f">Schedule revision<input data-bind="report.schedRev" value="${esc(S.report.schedRev)}"></label><label class="f" style="grid-column:span 2">Critical path comment<input data-bind="report.cpComment" value="${esc(S.report.cpComment)}"></label><label class="f">Use a screenshot instead<input type="file" id="ganttFile" accept="image/*"></label></div>${GANTT_UP?'<div class="toolbar"><span class="count">Using your screenshot.</span><button class="btn small" data-act2="ganttclear">Use auto chart</button></div>':''}`);
 R.look=p=>{ const rows=lookRows(), on=new Set(rows.map(t=>String(t.id))), hidden=(S.laHide||[]).length;
@@ -782,9 +787,9 @@ function shotOrTable(k){ const sh=SHOTS[k];
   return tableHTML(k)+`<div class="toolbar"><label class="btn small">Use a screenshot instead of this table<input type="file" accept="image/*" data-shot="${k}" hidden></label></div>`; }
 R.wir=p=>shell(p,'Kept from last week. Add new inspection requests here.',tableHTML('wir'));
 R.risk=p=>shell(p,'Kept from last week.',tableHTML('risk'));
-R.delay=p=>{ const auto=autoDelays(), room=Math.max(0,7-S.tables.delay.length);
-  return shell(p,'Late activities are found from the schedule and added on their own. Add a row only for a delay you want to explain (for example with an EOT reference).',
-  tableHTML('delay')+`<h3 style="margin:16px 0 8px;font-size:16px">Found from schedule <span class="auto">auto</span></h3><div class="tw"><table><tr><th>Activity</th><th>Planned finish</th><th class="c">Delay (days)</th><th>Note</th></tr>${auto.map((r,i)=>`<tr${i>=room?' style="opacity:.5"':''}><td>${esc(r[0])}</td><td class="nw">${dmyS(r[3])}</td><td class="c">${delayDays(r)}</td><td>${esc(r[7])}${i>=room?' · no room on slide':''}</td></tr>`).join('')||'<tr><td colspan="4">Nothing late.</td></tr>'}</table></div>
+R.delay=p=>{ const auto=autoDelays();
+  return shell(p,'Only the rows you add here go in the report (up to 7).',
+  tableHTML('delay')+`<details class="more" style="margin-top:14px"><summary>Late activities in the schedule — ${auto.length} <span class="auto">not in the report unless you add them</span></summary><div class="tw"><table><tr><th>Activity</th><th>Planned finish</th><th class="c">Delay (days)</th><th>Note</th><th></th></tr>${auto.map((r,i)=>`<tr><td>${esc(r[0])}</td><td class="nw">${dmyS(r[3])}</td><td class="c">${delayDays(r)}</td><td>${esc(r[7])}</td><td><button class="btn small" data-dladd="${i}">Add to log</button></td></tr>`).join('')||'<tr><td colspan="5">Nothing late.</td></tr>'}</table></div></details>
   <label class="f" style="margin-top:12px">Notes<input data-bind="delayNotes" value="${esc(S.delayNotes)}"></label>`); };
 const QH=[['man',0,'Engineers / supervisors'],['man',1,'Electricians'],['man',2,'Solar technicians'],['man',3,'Civil / steel workers'],['man',4,'Helpers / labour']];
 R.hse1=p=>shell(p,'Workers on site are kept from last week. Cumulative totals and man-hours add up by themselves.',
@@ -952,8 +957,15 @@ async function buildPptx(){
   if(inc('look')){ s=await X('ppt/slides/slide7.xml'); tb=firstTable(s); lookRows().slice(0,6).forEach((t,i)=>{ const o=S.la[t.id]||{}; [t.name,dmy(t.start),dmy(t.finish),o.resp??respFor(t),o.rem??laRem(t)].forEach((v,j)=>setCell(cellAt(tb,i+1,j+1),v)); });
     setParas(byId(s,6),lines(listGet('upcoming')).slice(0,4),'333333'); setParas(byId(s,4),lines(S.laNotes).slice(0,4),'333333'); }
   const fill=async(n,rows,startCol,map)=>{ const d=await X(`ppt/slides/slide${n}.xml`), t=firstTable(d), rn=tableRows(t).length-1; rows.slice(0,rn).forEach((r,i)=>(map?map(r):r).forEach((v,j)=>setCell(cellAt(t,i+1,j+startCol),v))); };
-  if(inc('mat')) await fill(8,S.tables.mat,1); if(inc('doc')) await fill(9,S.tables.doc,1); if(inc('msub')){ if(SHOTS.msub){ const sp=SHOT_PAGES.msub; s=await X(`ppt/slides/slide${sp.slide}.xml`); const rels=await X(`ppt/slides/_rels/slide${sp.slide}.xml.rels`); putPicture(s,rels,zip,byId(s,sp.frame),[],SHOTS.msub.buf,'jpeg',c.wn,902,'MaterialSubmittals',SHOTS.msub); } else await fill(10,S.tables.msub,1); } if(inc('wir')) await fill(11,S.tables.wir,1);
-  if(inc('delay')){ await fill(12,delayRowsAll(),0,r=>[r[0],r[1],dmy(r[2]),dmy(r[3]),dmy(r[4]),dmy(r[5])||'Ongoing',delayDays(r),r[7]]); s=await X('ppt/slides/slide12.xml'); setText(byId(s,5),'Notes: '+(S.delayNotes||'—'),'333333'); }
+  /* drop table columns from a slide table (widths go to the columns you keep) and rows left empty */
+  const dropCols=(t,idx,share)=>{ const gc=[...t.getElementsByTagNameNS(NS.a,'gridCol')]; let freed=0; idx.forEach(k=>freed+=+gc[k].getAttribute('w'));
+    Object.entries(share).forEach(([k,f])=>gc[k].setAttribute('w',String(Math.round(+gc[k].getAttribute('w')+freed*f)))); idx.slice().sort((a,b)=>b-a).forEach(k=>{ gc[k].remove(); tableRows(t).forEach(tr=>{ const tc=[...tr.childNodes].filter(n=>n.localName==='tc'); if(tc[k]) tc[k].remove(); }); }); };
+  const dropEmptyRows=(t,used)=>tableRows(t).slice(used+1).forEach(tr=>tr.remove());
+  if(inc('mat')){ const d=await X('ppt/slides/slide8.xml'), t=firstTable(d); dropCols(t,[3,4,5],{1:.35,2:.15,6:.1,7:.4});
+    const h=cellAt(t,0,2).getElementsByTagNameNS(NS.a,'t')[0]; if(h) h.textContent='Qty';
+    const rows=S.tables.mat.filter(r=>(r[0]||'').trim()||(r[1]||'').trim()).slice(0,tableRows(t).length-1);
+    rows.forEach((r,i)=>[r[0],r[1],r[5],r[6]].forEach((v,j)=>setCell(cellAt(t,i+1,j+1),v))); dropEmptyRows(t,rows.length); } if(inc('doc')) await fill(9,S.tables.doc,1); if(inc('msub')){ if(SHOTS.msub){ const sp=SHOT_PAGES.msub; s=await X(`ppt/slides/slide${sp.slide}.xml`); const rels=await X(`ppt/slides/_rels/slide${sp.slide}.xml.rels`); putPicture(s,rels,zip,byId(s,sp.frame),[],SHOTS.msub.buf,'jpeg',c.wn,902,'MaterialSubmittals',SHOTS.msub); } else await fill(10,S.tables.msub,1); } if(inc('wir')) await fill(11,S.tables.wir,1);
+  if(inc('delay')){ const dr=delayRowsAll(); await fill(12,dr,0,r=>[r[0],r[1],dmy(r[2]),dmy(r[3]),dmy(r[4]),dmy(r[5])||'Ongoing',delayDays(r),r[7]]); s=await X('ppt/slides/slide12.xml'); if(dr.length) dropEmptyRows(firstTable(s),dr.length); setText(byId(s,5),'Notes: '+(S.delayNotes||'—'),'333333'); }
   if(inc('risk')) await fill(13,S.tables.risk,1,r=>[r[0],r[1],dmy(r[2]),dmy(r[3]),dmy(r[4]),r[5],r[6]]);
   const hs=S.hse;
   if(inc('hse1')){ s=await X('ppt/slides/slide14.xml'); let t1=byId(s,15).getElementsByTagNameNS(NS.a,'tbl')[0];
@@ -1025,6 +1037,7 @@ document.addEventListener('input',e=>{ const t=e.target, ds=t.dataset; if(!SITE)
   else if(ds.bind){ let v=t.type==='number'?+t.value:t.value; if(ds.bind==='report.reportDate'){ if(!v) return; S.report.weekEnd=v; S.report.weekStart=''; } if(ds.bind==='report.weekStart'&&(!v||v===addD(S.report.reportDate,-7))) v=''; setPath(S,ds.bind,v); save(); renderHeader(); if(ds.bind==='report.reportDate'){ renderBanners(); keepFocus(renderPage); } else if(ds.bind==='report.weekStart'){ const po=$('periodOut'); if(po){ const c2=calc(); po.value=dmy(c2.ws)+' to '+dmy(c2.we); } } const ro=$('refOut'); if(ro) ro.value=refNo(calc()); if(ds.bind==='report.schedRev') drawGantt($('gCanvas')); if(ds.bind.startsWith('hse.')) updHse(); }
   else if(ds.pc!=null) PHOTOS[+ds.pc].caption=t.value; else if(ds.pd!=null) PHOTOS[+ds.pd].date=t.value;
   else if(ds.msd){ (S.msDate ||= {})[ds.msd]=t.value; save(); }
+  else if(ds.msrem){ (S.msRem ||= {})[ds.msrem]=t.value.trim(); if(!S.msRem[ds.msrem]) delete S.msRem[ds.msrem]; save(); }
   else if(ds.m){ DRAFT.meta[ds.m]=t.value; } else if(ds.dref){ DRAFT.state.report.refPrefix=t.value; }
   else if(ds.rv){ const r=RAW[+ds.i]; if(ds.rv==='sum'||ds.rv==='ms') r[ds.rv]=t.checked; else r[ds.rv]=t.value; } });
 function updHse(){ const c=hseCalc(); [['hTW',c.tw],['hMH',c.mh],['hMHC',c.mhCum],['hSF',c.safe],['hSFC',c.safeCum]].forEach(([id,v])=>{ const el=$(id); if(el) el.textContent=v; }); }
@@ -1040,6 +1053,7 @@ document.addEventListener('change',e=>{ const t=e.target, ds=t.dataset;
 document.addEventListener('click',async e=>{ const b=e.target.closest('button'); if(!b) return; const ds=b.dataset;
   if(ds.page){ go(ds.page); }
   else if(ds.filter!=null){ filterAll=ds.filter==='1'; renderPage(); }
+  else if(ds.dladd!=null){ const r=autoDelays()[+ds.dladd]; if(r){ S.tables.delay.push(r.slice(0,8)); save(); renderPage(); toast('Added to the delay log'); } }
   else if(ds.shotclear){ delete SHOTS[ds.shotclear]; try{ localStorage.removeItem(shotKey(ds.shotclear)); }catch(err){} renderPage(); }
   else if(ds.plm){ S.plMethod=ds.plm; save(); renderHeader(); renderPage(); }
   else if(ds.add){ const def=TDEF[ds.add]; if(S.tables[ds.add].length>=def.max){ toast(`The slide holds ${def.max} rows. Remove a closed item first.`); return; } S.tables[ds.add].push(def.cols.map(()=>'')); save(); renderPage(); }
