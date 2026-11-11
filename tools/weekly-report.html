@@ -84,7 +84,7 @@ table{border-collapse:collapse;width:100%;font-size:13.5px}
 th{background:var(--brand);color:var(--brand-ink);font-weight:600;text-align:left;padding:7px 8px;font-size:12.5px;white-space:nowrap;position:sticky;top:0;z-index:1}
 td{border-top:1px solid var(--line);padding:4px 6px;vertical-align:middle}
 td input,td select{padding:4px 6px;font-size:13px;min-width:70px}
-td.c,th.c{text-align:center} td.r{text-align:right;font-variant-numeric:tabular-nums} td.nw{white-space:nowrap;font-variant-numeric:tabular-nums}
+td.c,th.c{text-align:center} td input.twin{width:72px;min-width:0;text-align:right} td.r{text-align:right;font-variant-numeric:tabular-nums} td.nw{white-space:nowrap;font-variant-numeric:tabular-nums}
 tr.grp td{background:var(--surface-2);font-weight:700;font-family:var(--display);font-size:15px}
 tr.ms td{color:var(--muted)}
 td select.pct{min-width:84px;font-weight:600} td select.pct.moved{border-color:var(--hot);color:var(--hot)}
@@ -200,7 +200,7 @@ const FB_SITES="reportSites", FB_WEEKS="weeklyReports";   /* one doc per site ·
 const LOCK_HASH="57917bceb9920cdccdef578fc6f03a57d4895e4184cbaa47b1de2de5574816f7";   /* same password as Project Costing */
 const LOCK_KEY="pv_costing_unlocked";
 const TEMPLATE_URL="report-assets/weekly-template.pptx", THUMB_URL=n=>`report-assets/thumbs/p${String(n).padStart(2,'0')}.jpg`;
-const LS_SITES="wr_sites_v1", LS_CUR="wr_current_site", LS_NAME="wr_user_name";
+const LS_SITES="wr_sites_v1", LS_CUR="wr_current_site", LS_NAME="wr_user_name", LS_BASE="wr_base_v1";   /* base = last copy known to be in the cloud (for merging) */
 
 /* ============ S1 · PAGES ============ */
 /* key, title, template slide file, thumb no., kind: fill (weekly input) / auto / carry (kept from last week) / fixed */
@@ -249,6 +249,93 @@ const weekEndOf=n=>addD(W1,n*7-1);
 
 /* ============ S3 · SITES + STATE ============ */
 const ZU_SCHED=[[1,0,"Zayed University - Execution Plan","2026-08-06","2027-03-06","S",""],[2,1,"Initiation","2026-08-06","2026-09-05","S",""],[3,2,"Contract review and Kickoff meeting","2026-08-06","2026-08-06","","INI"],[4,2,"Performance bonds & Advance bonds","2026-08-07","2026-09-05","","INI"],[5,2,"Project insurance","2026-08-07","2026-09-05","","INI"],[6,2,"Detailed project program","2026-08-07","2026-09-05","","INI"],[7,1,"Engineering & Approval Phase","2026-08-07","2026-10-15","S",""],[8,2,"Site Survey","2026-08-07","2026-08-10","","ENG"],[9,2,"Feasibility Report","2026-08-11","2026-08-17","","ENG"],[10,2,"Material Submittal to Client","2026-08-18","2026-08-22","","ENG"],[11,2,"Material Submittal approval from Client","2026-08-24","2026-08-25","","ENG"],[12,2,"Preliminary layout & structure column location submission incl. inverter location","2026-08-11","2026-08-17","","ENG"],[13,2,"Preliminary layout drawings approval from client","2026-08-18","2026-08-19","","ENG"],[14,2,"Engineering design submission to client (Electrical, Civil, Structural, Architectural)","2026-08-20","2026-08-31","","ENG"],[15,2,"Engineering drawing approval from client","2026-09-01","2026-09-03","","ENG"],[16,2,"IFC drawing submission to client","2026-09-04","2026-09-15","","ENG"],[17,2,"IFC drawings approval from client","2026-09-16","2026-09-18","","ENG"],[18,2,"Milestone 1 achievement","2026-09-03","2026-09-03","M","ENG"],[19,2,"Undertaking letter for consultant and contractor","2026-08-17","2026-08-18","","ENG"],[20,2,"DEWA Design Submittal and approvals","2026-09-04","2026-10-15","","ENG"],[21,2,"Milestone 2 - Electricity Authority approval","2026-10-15","2026-10-15","M","ENG"],[22,2,"Structural Design Submittal and approval","2026-09-04","2026-10-05","","ENG"],[23,2,"Municipality (DM) Approval","2026-10-05","2026-10-05","M","ENG"],[24,1,"Procurement & Logistics Phase","2026-10-08","2026-12-12","S",""],[25,2,"Carpark Mounting Structure","2026-10-08","2026-11-30","","PRO"],[26,2,"Delivery of mounting structure to site","2026-11-30","2026-11-30","M","PRO"],[27,2,"PV modules","2026-10-19","2026-10-29","","PRO"],[28,2,"Delivery of modules","2026-10-29","2026-10-29","M","PRO"],[29,2,"DC cables","2026-10-16","2026-11-19","","PRO"],[30,2,"AC cables","2026-10-28","2026-11-14","","PRO"],[31,2,"Switchgear","2026-10-30","2026-12-03","","PRO"],[32,2,"Inverters","2026-10-21","2026-12-11","","PRO"],[33,2,"Monitoring System (Meteocontrol)","2026-10-16","2026-12-12","","PRO"],[34,2,"Delivery of Inverters","2026-12-11","2026-12-11","M","PRO"],[35,2,"Rest of the BOQ","2026-11-03","2026-12-07","","PRO"],[36,1,"Construction","2026-10-08","2027-02-11","S",""],[37,2,"Installation","2026-10-08","2027-02-11","S",""],[38,3,"Site Set up","2026-10-08","2026-10-09","","CON"],[39,3,"Mobilization","2026-10-13","2026-10-13","M","CON"],[40,3,"Phase 1","2026-10-14","2026-11-25","S","CON"],[41,4,"Fence Installation (Ph-1)","2026-10-14","2026-10-14","","CON"],[42,4,"Interlock removal + Marking (Ph-1)","2026-10-15","2026-10-20","","CON"],[43,4,"Tree removal & Shifting (Ph-1)","2026-10-16","2026-10-27","","CON"],[44,4,"Trimming Street lights (Ph-1)","2026-10-16","2026-10-22","","CON"],[45,4,"Excavation + Compaction + PCC + Steel Works (Ph-1)","2026-10-21","2026-10-29","","CON"],[46,4,"Consultant + DM / DDA Inspection (Ph-1)","2026-10-30","2026-11-03","","CON"],[47,4,"Concreting (Ph-1)","2026-11-04","2026-11-06","","CON"],[48,4,"Pedestal casting + Anchor bolts (Ph-1)","2026-11-10","2026-11-13","","CON"],[49,4,"Trench + Pipe laying + Manhole Preparation (Ph-1)","2026-10-23","2026-11-03","","CON"],[50,4,"Backfilling + Compaction + Asphalt & Interlock fixing (Ph-1)","2026-11-14","2026-11-25","","CON"],[51,3,"Phase 2","2026-11-27","2027-01-07","S","CON"],[52,4,"Fence Installation (Ph-2)","2026-11-27","2026-11-27","","CON"],[53,4,"Interlock removal + Marking (Ph-2)","2026-11-28","2026-12-03","","CON"],[54,4,"Tree removal & Shifting (Ph-2)","2026-11-30","2026-12-10","","CON"],[55,4,"Trimming Street lights (Ph-2)","2026-11-30","2026-12-05","","CON"],[56,4,"Excavation + Compaction + PCC + Steel Works (Ph-2)","2026-12-04","2026-12-12","","CON"],[57,4,"Consultant + DM / DDA Inspection (Ph-2)","2026-12-14","2026-12-16","","CON"],[58,4,"Concreting (Ph-2)","2026-12-17","2026-12-19","","CON"],[59,4,"Pedestal casting + Anchor bolts (Ph-2)","2026-12-23","2026-12-26","","CON"],[60,4,"Trench + Pipe laying + Manhole Preparation (Ph-2)","2026-12-07","2026-12-17","","CON"],[61,4,"Backfilling + Compaction + Asphalt & Interlock fixing (Ph-2)","2026-12-28","2027-01-07","","CON"],[62,3,"Parking Poles installation","2026-12-29","2027-01-07","","CON"],[63,3,"Carpark Mounting Structure (Rafter + purlins)","2027-01-02","2027-01-19","","CON"],[64,3,"PV Modules installation","2027-01-08","2027-02-02","","CON"],[65,3,"DC Cable laying + DC Cable tray works","2027-01-15","2027-02-08","","CON"],[66,3,"PV modules completion","2027-02-02","2027-02-02","M","CON"],[67,3,"AC Works","2026-10-16","2026-12-25","S","CON"],[68,4,"Inverter Room Foundation & Structure construction","2026-10-16","2026-10-28","","CON"],[69,4,"Inverters Installation","2026-12-12","2026-12-18","","CON"],[70,4,"Switchgear installation","2026-12-10","2026-12-21","","CON"],[71,4,"Trenching works for AC cables","2026-10-16","2026-11-19","","CON"],[72,4,"AC cables laying","2026-11-20","2026-11-27","","CON"],[73,4,"POC Modification Works","2026-12-04","2026-12-21","","CON"],[74,4,"AC Cable termination","2026-12-22","2026-12-25","","CON"],[75,3,"Testing & Commissioning","2027-02-09","2027-02-11","","TNC"],[76,3,"Testing & commissioning completion","2027-02-11","2027-02-11","M","TNC"],[77,1,"T&C, Closeout","2027-02-03","2027-03-06","S",""],[78,2,"DC and AC side testing and submission of all reports to client","2027-02-12","2027-02-13","","TNC"],[79,2,"Client O&M inspection","2027-02-15","2027-02-17","","INS"],[80,2,"Snag rectification and submission of HOTO documents","2027-02-18","2027-03-05","","HOV"],[81,2,"Municipality Inspection and Approval","2027-02-03","2027-02-11","","INS"],[82,2,"DEWA Solar Inspection and Approval","2027-02-12","2027-02-25","","INS"],[83,2,"PR test and Harmonics test & Submission","2027-02-15","2027-02-23","","TNC"],[84,2,"Meter installation and Energization","2027-02-26","2027-03-04","","HOV"],[85,2,"DEWA Solar CSR (Request raise)","2027-03-04","2027-03-04","M","HOV"],[86,2,"Plant Operation Starts","2027-03-04","2027-03-04","M","HOV"],[87,2,"Plant handover and O&M Starts","2027-03-06","2027-03-06","","HOV"]];
+/* Zayed University task weightage (% of whole project) — applied once to the ZU site if it has no weightage yet */
+const ZU_TW=`Initiation|10.34
+Contract review and Kickoff meeting|0.13
+Performance bonds & Advance bonds|3.40
+Project insurance|3.40
+Detailed project program|3.40
+Engineering & Approval Phase|13.61
+Site Survey|0.39
+Feasibility Report|0.79
+Material Submittal to Client|0.65
+Material Submittal approval from Client|0.26
+Preliminary layout drawing submissions including inverter location & Structure column location submission|0.79
+Preliminary layout drawings Approval from client|0.26
+Engineering drawing (Electrical, Civil, Structural, Architectural design submission) to client|1.31
+Engineering drawing approval from client|0.39
+IFC drawing submission to client|1.31
+IFC drawings approval from client|0.39
+Milestone 1 achievement|0
+Undertaking letter for consultant and contractor|0.26
+DEWA Design Submittal and approvals|3.93
+Milestone 2 - Electricity Authority approval|0
+Structural Design Submittal and approval|2.88
+Municipality (DM) Approval|0
+Procurement & Logistics Phase|33.51
+Carpark Mounting Structure|6.02
+Delivery of mounting structure to site|0
+PV modules|1.31
+Delivery of modules|0
+DC cables|3.93
+AC cables|1.96
+Switchgear|3.93
+Inverters|5.89
+Monitoring System (Meteocontrol)|6.54
+Delivery of Inverters|0
+Rest of the BOQ|3.93
+Construction|35.99
+Installation|0
+Site Set up|0.26
+Mobilization|0
+Phase 1|0
+Fence Installation|0.13
+Interlock removal + Marking|0.65
+Tree removal & Shifting|1.31
+Trimming Street lights|0.79
+Excavation + Compaction + PCC + Steel Works|1.05
+Consultant + DM / DDA Inspection|0.39
+Concreting|0.39
+Pedestal casting + Anchor bolts|0.52
+Trench + Pipe laying + Manhole Preparation|1.31
+Backfilling + Removal sand + Compaction + Asphalt and interlock fixing|1.31
+Phase 2|0
+Fence Installation|0.13
+Interlock removal + Marking|0.65
+Tree removal & Shifting|1.31
+Trimming Street lights|0.79
+Excavation + Compaction + PCC + Steel Works|1.05
+Consultant + DM / DDA Inspection|0.39
+Concreting|0.39
+Pedestal casting + Anchor bolts|0.52
+Trench + Pipe laying + Manhole Preparation|1.31
+Backfilling + Removal sand + Compaction + Asphalt and interlock fixing|1.31
+Parking Poles installation|1.18
+Carpark Mounting Structure (Rafter + purlins)|1.96
+PV Modules|2.88
+DC Cable laying + DC Cable tray works|2.75
+PV modules completion|0
+AC Works|0
+Inverter Room Foundation & Structure construction|1.44
+Inverters Installation|0.79
+Switchgear|1.31
+Trenching works for AC cables|3.93
+AC cables|0.92
+POC Modification Works|1.96
+AC Cable termination|0.52
+Testing & Commissioning|0.39
+Testing & commisioning completion|0
+T&C, Closeout|6.54
+DC and AC Side Testing and submission all reports to client|0.26
+Client O&M inspection|0.39
+Snag rectification and submission of HOTO documents|1.83
+Municipality Inspection and Approval|0.92
+DEWA Solar Inspection and Approval|1.31
+PR test and Harmonics test & Submission|1.05
+Meter installation and Energization|0.65
+DEWA Solar CSR (Request raise)|0
+Plant Operation Starts|0
+Plant handover and O&M Starts|0.13`.split('\n').map(l=>{ const i=l.lastIndexOf('|'); return {name:l.slice(0,i),w:+l.slice(i+1)}; });
 function zuSeed(){
   const tasks=ZU_SCHED.map(r=>({id:r[0],lvl:r[1],name:r[2],start:r[3],finish:r[4],sum:r[5]==='S',ms:r[5]==='M',pkg:r[6]||''}));
   const st=blankState();
@@ -256,7 +343,7 @@ function zuSeed(){
   st.weights={INI:3,ENG:12,PRO:40,CON:35,TNC:4,INS:3,HOV:3};
   st.actual={}; st.msDate={23:'2026-11-02'};
   st.tables.delay=[['DM structural approval (Task 22/23)','Structural comments and resubmission','2026-09-04','2026-10-05','2026-09-04','2026-11-02','','']];
-  return {id:'zu-carport', created:Date.now(), updated:Date.now(),
+  return {id:'zu-carport', _seed:true, created:Date.now(), updated:0,
     meta:{name:'Zayed University – 1.2 MWp Carport Solar PV',short:'Zayed University 1.2 MWp Carport',cap:'1,200 kWp',loc:'Zayed University, Al Ruwayyah, Dubai',client:'Emerge Limited',cStart:'2026-08-06',cEnd:'2027-03-06',workweek:'monsat'},
     pages:PRESETS.full.slice(), schedFile:'ZU-SSE-PS-001_Two_Phase.pdf',
     pkgs:[{k:'INI',n:'Initiation'},{k:'ENG',n:'Engineering & Approvals (E&A)'},{k:'PRO',n:'Procurement & Logistics (P&L)'},{k:'CON',n:'Construction'},{k:'TNC',n:'Testing and commissioning'},{k:'INS',n:'Inspection'},{k:'HOV',n:'Handover and PAC'}],
@@ -275,12 +362,13 @@ let SITES={}, CUR='', PAGE='cover', PHOTOS=[], GANTT_UP=null;
 function fixSite(s){ s.state=Object.assign(blankState(),s.state||{}); s.state.report=Object.assign(blankState().report,s.state.report||{});
   s.state.tables=Object.assign(blankState().tables,s.state.tables||{}); s.state.hse=Object.assign(blankState().hse,s.state.hse||{});
   s.pages=s.pages||PRESETS.full.slice(); s.meta=Object.assign({workweek:'monsat'},s.meta||{}); return s; }
-function loadLocal(){ try{ const j=localStorage.getItem(LS_SITES); if(j) SITES=JSON.parse(j)||{}; CUR=localStorage.getItem(LS_CUR)||''; }catch(e){}
+let BASE={};   /* id → JSON of the last version this browser knows is in the cloud */
+function loadLocal(){ try{ const j=localStorage.getItem(LS_SITES); if(j) SITES=JSON.parse(j)||{}; CUR=localStorage.getItem(LS_CUR)||''; BASE=JSON.parse(localStorage.getItem(LS_BASE)||'{}')||{}; }catch(e){}
   Object.values(SITES).forEach(fixSite);
   if(!Object.keys(SITES).length){ const z=zuSeed(); SITES[z.id]=z; }
   if(!SITES[CUR]) CUR=Object.keys(SITES)[0]; }
-function saveLocal(){ try{ localStorage.setItem(LS_SITES,JSON.stringify(SITES)); localStorage.setItem(LS_CUR,CUR); }catch(e){} }
-let saveT; function save(){ if(!SITE) return; SITE.updated=Date.now(); SITE.updatedBy=userName(); saveLocal(); clearTimeout(saveT); saveT=setTimeout(()=>cloudSaveSite(SITE),1200); }
+function saveLocal(){ try{ localStorage.setItem(LS_SITES,JSON.stringify(SITES)); localStorage.setItem(LS_CUR,CUR); localStorage.setItem(LS_BASE,JSON.stringify(BASE)); }catch(e){} }
+let saveT, EDITS={}; function save(){ if(!SITE) return; SITE.updated=Date.now(); SITE.updatedBy=userName(); SITE._dirty=true; EDITS[SITE.id]=(EDITS[SITE.id]||0)+1; saveLocal(); clearTimeout(saveT); saveT=setTimeout(flushCloud,1200); }
 function userName(){ try{ return localStorage.getItem(LS_NAME)||''; }catch(e){ return ''; } }
 
 /* open a site: derive tasks, packages, week numbers */
@@ -288,7 +376,7 @@ function openSite(id){
   CUR=id; SITE=SITES[id]; S=SITE.state; OFF=WEEKEND[SITE.meta.workweek]||[0];
   TASKS=SITE.tasks||[]; LEAF=TASKS.filter(t=>!t.sum); WD={}; LEAF.forEach(t=>{ WD[t.id]=t.ms?0:Math.max(1,workdays(t.start,t.finish)); });
   PKGS=(SITE.pkgs||[]).map(p=>({k:p.k,n:p.n}));
-  PKGS.forEach(p=>{ if(S.weights[p.k]==null) S.weights[p.k]=defaultWeight(p.n); });
+  PKGS.forEach(p=>{ if(S.weights[p.k]==null) S.weights[p.k]=defaultWeight(p.n); }); refreshTW();
   const start=SITE.meta.cStart||TASKS[0]?.start||todayIso(); const d=D(start); const back=(d.getUTCDay()-((weekEndDay()+1)%7)+7)%7; W1=addD(start,-back);
   const end=TASKS.reduce((m,t)=>t.finish>m?t.finish:m, SITE.meta.cEnd||start); LASTW=Math.max(1,weekNo(weekEndOfDate(end)));
   if(!S.report.weekEnd){ let we=weekEndOfDate(addD(todayIso(),-3)); if(we<weekEndOf(1)) we=weekEndOf(1); S.report.weekEnd=we; S.report.reportDate=todayIso(); }
@@ -301,35 +389,90 @@ function defaultWeight(n){ n=n.toLowerCase();
   if(/construct|install|civil|mechan|erection|electr/.test(n)) return 35; if(/test|commission/.test(n)) return 4; if(/inspect/.test(n)) return 3; if(/hand|close|pac/.test(n)) return 3; return 5; }
 
 /* ============ S4 · FIREBASE SYNC ============ */
-let fdb=null, applyingRemote=false;
+/* How sharing works:
+   · The cloud copy is the master. When it changes, every open browser takes it — unless that browser has its own unsent edits.
+   · Each saved version gets a random "rev". Versions are compared by rev, not by the PC clock (clocks differ between PCs).
+   · Saving runs in a Firestore transaction. If someone else saved in between, the two sets of changes are merged field by field
+     (e.g. you update task 12 and a colleague updates task 40 → both are kept). If the same field was changed by both, the later save wins. */
+let fdb=null, cloudReady=false, PUSHING={};
 function setCloud(s,msg){ const el=$('cloud'); el.className='chip cloud'+(s==='live'?' live':s==='error'?' err':'');
   el.querySelector('span').textContent= s==='live'?'Shared · live': s==='connecting'?'Connecting…': s==='error'?'Not shared — saved on this browser':'Saved on this browser'; if(msg) el.title=msg; }
 function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
+function clean(o){ return JSON.parse(JSON.stringify(o)); }
+const newRev=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+function forCloud(s){ const c=clean(s); delete c._dirty; delete c._seed; return c; }
+const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+const isObj=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
+/* three-way merge: b = common base, m = mine, t = theirs */
+function merge3(b,m,t){
+  if(same(m,t)||same(t,b)) return m; if(same(m,b)) return t;
+  if(isObj(m)&&isObj(t)){ const bb=isObj(b)?b:{}, o={}; new Set([...Object.keys(t),...Object.keys(m)]).forEach(k=>{ const v=merge3(bb[k],m[k],t[k]); if(v!==undefined) o[k]=v; }); return o; }
+  if(Array.isArray(m)&&Array.isArray(t)&&Array.isArray(b)&&m.length===t.length&&t.length===b.length) return m.map((x,i)=>merge3(b[i],x,t[i]));
+  return m; }
+/* keep the cursor in the box you were typing in when the page redraws */
+function keepFocus(fn){ const a=document.activeElement; let sel=null;
+  if(a&&a!==document.body&&a.attributes){ const at=[...a.attributes].filter(x=>x.name.startsWith('data-')).map(x=>`[${x.name}="${CSS.escape(x.value)}"]`).join(''); if(at) sel={q:a.tagName.toLowerCase()+at,s:a.selectionStart,e:a.selectionEnd}; }
+  fn(); if(sel){ const n=document.querySelector(sel.q); if(n){ n.focus(); try{ if(sel.s!=null) n.setSelectionRange(sel.s,sel.e); }catch(e){} } } }
+function reopenCur(by){ if(!SITES[CUR]) CUR=Object.keys(SITES)[0]; const keepPage=PAGE, ph=PHOTOS, gu=GANTT_UP;
+  keepFocus(()=>{ openSite(CUR); PAGE=keepPage; PHOTOS=ph; GANTT_UP=gu; renderAll(); }); if(by && by!==userName()) toast('Updated by '+by); }
+
 async function initCloud(){
-  if(!FIREBASE_CONFIG){ setCloud('local'); return; }
+  if(!FIREBASE_CONFIG){ setCloud('local'); afterReady(); return; }
   setCloud('connecting');
   try{
     await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
     await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js');
     if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     fdb=firebase.firestore();
-    fdb.collection(FB_SITES).onSnapshot(snap=>{
-      if(snap.empty){ Object.values(SITES).forEach(cloudSaveSite); setCloud('live'); return; }
-      let changedCur=false; const remote=new Set();
-      snap.forEach(d=>{ const raw=d.data(); let s; try{ s=raw.json?JSON.parse(raw.json):raw; }catch(err){ return; } if(!s||!s.id) return; remote.add(s.id); if(!SITES[s.id] || (s.updated||0)>(SITES[s.id].updated||0)){ SITES[s.id]=fixSite(s); if(s.id===CUR) changedCur=true; } });
-      snap.docChanges().forEach(ch=>{ if(ch.type==='removed'){ delete SITES[ch.doc.id]; if(ch.doc.id===CUR) changedCur=true; } });
-      Object.keys(SITES).forEach(id=>{ if(!remote.has(id)) cloudSaveSite(SITES[id]); });
-      saveLocal(); setCloud('live');
-      if(changedCur){ const by=SITES[CUR]?.updatedBy; if(!SITES[CUR]) CUR=Object.keys(SITES)[0]; const keepPage=PAGE, ph=PHOTOS, gu=GANTT_UP; openSite(CUR); PAGE=keepPage; PHOTOS=ph; GANTT_UP=gu; renderAll(); if(by && by!==userName()) toast('Updated by '+by); }
-      else renderSitePick();
-    }, err=>setCloud('error',err.message+' — check Firestore rules for '+FB_SITES));
-  }catch(e){ setCloud('error',String(e)); }
+    fdb.collection(FB_SITES).onSnapshot(onCloud, err=>{ setCloud('error',err.message+' — check Firestore rules for '+FB_SITES); toast('Not shared: '+err.message); afterReady(); });
+  }catch(e){ setCloud('error',String(e)); afterReady(); }
 }
-function clean(o){ return JSON.parse(JSON.stringify(o)); }
-function cloudSaveSite(s){ if(fdb&&s) fdb.collection(FB_SITES).doc(s.id).set({id:s.id,name:s.meta?.name||'',updated:s.updated||0,updatedBy:s.updatedBy||'',json:JSON.stringify(s)}).catch(e=>{ setCloud('error',e.message); toast('Firebase: '+e.message); }); }
-function cloudDeleteSite(id){ if(fdb) fdb.collection(FB_SITES).doc(id).delete(); }
+function onCloud(snap){
+  const first=!cloudReady; if(first && snap.metadata.fromCache) return;   /* wait for the real server copy */
+  if(first && snap.empty){ Object.values(SITES).forEach(s=>{ delete s._seed; s._dirty=true; }); cloudReady=true; saveLocal(); setCloud('live'); flushCloud(); afterReady(); return; }
+  let changedCur=false, by=''; const remote=new Set();
+  snap.forEach(d=>{ if(d.metadata.hasPendingWrites) return; const raw=d.data(); let s; try{ s=raw.json?JSON.parse(raw.json):raw; }catch(err){ return; } if(!s||!s.id) return;
+    remote.add(s.id); const loc=SITES[s.id];
+    if(loc && loc.rev && loc.rev===s.rev){ BASE[s.id]=raw.json; return; }                 /* already in step */
+    if(loc && loc._dirty && !loc._seed && BASE[s.id]) return;                               /* my unsent edits — merged when they are sent */
+    SITES[s.id]=fixSite(s); BASE[s.id]=raw.json; if(s.id===CUR){ changedCur=true; by=s.updatedBy||''; } });   /* the shared copy wins */
+  snap.docChanges().forEach(ch=>{ if(ch.type==='removed'){ delete SITES[ch.doc.id]; delete BASE[ch.doc.id]; if(ch.doc.id===CUR) changedCur=true; } });
+  if(first){ Object.keys(SITES).forEach(id=>{ if(remote.has(id)) return; const s=SITES[id];
+      if(s._seed || BASE[id]){ delete SITES[id]; delete BASE[id]; if(id===CUR) changedCur=true; }   /* starter copy, or deleted by someone else */
+      else s._dirty=true; });                                                                   /* made on this browser, never shared yet */
+    if(!Object.keys(SITES).length){ const z=zuSeed(); SITES[z.id]=z; changedCur=true; }
+    cloudReady=true; }
+  saveLocal(); setCloud('live');
+  if(changedCur) reopenCur(by); else renderSitePick();
+  flushCloud(); if(first) afterReady();
+}
+function flushCloud(){ clearTimeout(saveT); saveT=null; if(!fdb||!cloudReady) return; Object.values(SITES).forEach(s=>{ if(s._dirty) pushSite(s.id); }); }
+function pushSite(id){
+  if(PUSHING[id]){ PUSHING[id]='again'; return; } const s0=SITES[id]; if(!s0) return; PUSHING[id]=true; delete s0._seed;
+  const e0=EDITS[id]||0, mine=forCloud(s0), base=BASE[id]?JSON.parse(BASE[id]):null, ref=fdb.collection(FB_SITES).doc(id); let merged=false;
+  fdb.runTransaction(async tx=>{ const d=await tx.get(ref); let out=clean(mine); merged=false;
+    if(d.exists){ let th=null; try{ th=JSON.parse(d.data().json); }catch(e){}
+      if(th){ const inStep=base && ((th.rev||base.rev)? th.rev===base.rev : same(th,base));
+        if(!base){ out=clean(th); merged=true; }                                   /* never synced from here: the shared copy wins */
+        else if(!inStep){ out=merge3(base,mine,th); merged=!same(out,mine); } } }   /* someone saved in between: merge */
+    out.rev=newRev(); out.updated=Date.now(); out.updatedBy=userName()||mine.updatedBy||'';
+    tx.set(ref,{id,name:out.meta?.name||'',updated:out.updated,updatedBy:out.updatedBy,rev:out.rev,json:JSON.stringify(out)}); return out; })
+  .then(out=>{ BASE[id]=JSON.stringify(out); const cur=SITES[id]; const again=PUSHING[id]==='again'; PUSHING[id]=false; if(!cur){ saveLocal(); return; }
+    const editedSince=(EDITS[id]||0)!==e0;
+    if(merged){ const nw=editedSince? merge3(mine,forCloud(cur),out) : clean(out); nw.rev=out.rev; SITES[id]=fixSite(nw); if(editedSince) SITES[id]._dirty=true; if(id===CUR) reopenCur(''); toast('Merged with changes saved by others'); }
+    else { cur.rev=out.rev; cur.updated=out.updated; if(!editedSince) delete cur._dirty; }
+    saveLocal(); setCloud('live'); if(again||SITES[id]?._dirty) setTimeout(flushCloud,400); })
+  .catch(e=>{ PUSHING[id]=false; setCloud('error',e.message); toast('Not shared yet — will retry: '+e.message); });
+}
+function cloudSaveSite(s){ if(!s) return; s._dirty=true; EDITS[s.id]=(EDITS[s.id]||0)+1; saveLocal(); flushCloud(); }
+function cloudDeleteSite(id){ delete BASE[id]; saveLocal(); if(fdb) fdb.collection(FB_SITES).doc(id).delete(); }
 function cloudSaveWeek(){ if(!fdb) return; const c=calc(); const id=`${SITE.id}_W${String(c.wn).padStart(2,'0')}`;
   fdb.collection(FB_WEEKS).doc(id).set({id,site:SITE.id,week:c.wn,weekEnd:c.we,saved:Date.now(),by:userName(),planned:c.pl,actual:c.ac,json:JSON.stringify({pkg:c.pk,state:S})}).catch(()=>{}); }
+/* send unsent edits when the tab is hidden/closed or the connection comes back; re-check every minute */
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') flushCloud(); });
+window.addEventListener('pagehide',flushCloud); window.addEventListener('online',flushCloud); setInterval(()=>{ if(Object.values(SITES).some(s=>s._dirty)) flushCloud(); },60000);
+let READY=false;
+function afterReady(){ if(READY) return; READY=true; autoWeights(); }
 
 /* ============ S5 · SCHEDULE IMPORT ============ */
 const MONTHS={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
@@ -425,8 +568,42 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 const lines=s=>String(s||'').split('\n').map(x=>x.trim()).filter(Boolean);
 const pct=(v,d=1)=>(Math.round(v*Math.pow(10,d))/Math.pow(10,d)).toFixed(d)+'%';
 const sgn=v=>(v>0.05?'+':v<-0.05?'−':'±')+Math.abs(v).toFixed(1)+'%';
-function pkgCalc(dd,act){ const out={}; PKGS.forEach(p=>{ let w=0,pl=0,ac=0; LEAF.filter(t=>t.pkg===p.k&&!t.ms).forEach(t=>{ const d=WD[t.id]; w+=d; pl+=d*plannedPct(t,dd); ac+=d*(+(act?.[t.id])||0); }); out[p.k]={pl:w?pl/w:0,ac:w?ac/w:0,w}; }); return out; }
-function overall(pk,key){ let sw=0,v=0; PKGS.forEach(p=>{ if(!pk[p.k]?.w) return; const w=+S.weights[p.k]||0; sw+=w; v+=w*pk[p.k][key]; }); return sw?v/sw:0; }
+/* task weightage: S.tw = {task id: % of the whole project}. When set, every % (task → package → overall, planned and actual) is weighted by it.
+   When not set, tasks are weighted by working days and packages by the package weights (old method). */
+let TWON=false;
+function refreshTW(){ TWON=!!S && Object.values(S.tw||{}).some(v=>+v>0); }
+const taskW=t=>TWON?(+S.tw[t.id]||0):(WD[t.id]||0);
+const fmtW=v=>(Math.round(v*100)/100).toFixed(2).replace(/\.?0+$/,'')+'%';
+function pkgWeight(k,pk){ return TWON?(pk[k]?.w||0):(+S.weights[k]||0); }
+function pkgCalc(dd,act){ const out={}; PKGS.forEach(p=>{ let w=0,pl=0,ac=0; LEAF.filter(t=>t.pkg===p.k&&!t.ms).forEach(t=>{ const d=taskW(t); w+=d; pl+=d*plannedPct(t,dd); ac+=d*(+(act?.[t.id])||0); }); out[p.k]={pl:w?pl/w:0,ac:w?ac/w:0,w}; }); return out; }
+function overall(pk,key){ let sw=0,v=0; PKGS.forEach(p=>{ if(!pk[p.k]?.w) return; const w=pkgWeight(p.k,pk); sw+=w; v+=w*pk[p.k][key]; }); return sw?v/sw:0; }
+/* match pasted rows [{name,w}] to schedule activities by name, keeping the order (so Phase 1 / Phase 2 duplicates land on the right rows) */
+const STOP=new Set(['and','the','to','from','of','for','incl','including','with','all','on','in','at','by']);
+function toks(s){ return new Set(String(s).toLowerCase().replace(/\(ph-?\s*\d\)/g,' ').replace(/[^a-z0-9]+/g,' ').split(' ').filter(w=>w.length>1&&!STOP.has(w)).map(w=>w.length>3?w.replace(/s$/,''):w)); }
+function simName(a,b){ const A=toks(a),B=toks(b); if(!A.size||!B.size) return 0; let n=0; A.forEach(x=>{ if(B.has(x)) n++; }); return 2*n/(A.size+B.size); }
+function matchWeights(rows){ const tw={}, miss=[]; let p=0; const used=new Set();
+  rows.forEach(r=>{ let best=-1,bs=0;
+    for(let j=p;j<Math.min(TASKS.length,p+15);j++){ if(used.has(j)) continue; const s=simName(r.name,TASKS[j].name); if(s>bs+1e-9){ bs=s; best=j; } if(s>=0.99) break; }
+    if(bs<0.5){ best=-1; bs=0; TASKS.forEach((t,j)=>{ if(used.has(j)) return; const s=simName(r.name,t.name); if(s>bs){ bs=s; best=j; } }); if(bs<0.75) best=-1; }
+    if(best<0){ if(r.w>0) miss.push(r.name); return; }
+    used.add(best); p=Math.max(p,best+1); const t=TASKS[best]; if(!t.sum) tw[t.id]=r.w; });
+  return {tw,miss}; }
+function parseWeights(text){ const out=[];
+  String(text||'').split(/\r?\n/).forEach(line=>{ if(!line.trim()) return; const cells=line.split('\t').map(c=>c.trim()); let w=null, name='';
+    const pc=line.match(/(-?\d+(?:\.\d+)?)\s*%\s*$/); if(pc) w=+pc[1];
+    else if(cells.length>1&&/^\d+(\.\d+)?$/.test(cells[cells.length-1])) w=+cells[cells.length-1];
+    if(w==null) return;
+    name= cells.length>1 ? cells.find(c=>c)||'' : line.replace(/\s+\d+(?:\.\d+)?\s*(?:days?|d|wks?|w|mons?)\b.*$/i,'').replace(/\s*-?\d+(?:\.\d+)?\s*%\s*$/,'');
+    name=name.trim(); if(name && !/^task name$/i.test(name)) out.push({name,w}); });
+  return out; }
+let TW_MSG='';
+function applyWeights(rows,quiet){ const {tw,miss}=matchWeights(rows); const n=Object.values(tw).filter(v=>v>0).length; if(!n){ if(!quiet) toast('No activities matched. Paste rows with the task name and the weight %.'); return false; }
+  S.tw=tw; refreshTW(); const tot=Object.values(tw).reduce((a,b)=>a+b,0);
+  const c=calc(); if(c.wn>1 && Object.keys(S.lastActual||{}).length) S.history[c.wn-1]=Math.round(overall(pkgCalc(weekEndOf(c.wn-1),S.lastActual),'ac')*10)/10;   /* last week's point redone with the new weights */
+  TW_MSG=`Weightage set for ${n} activities · total ${fmtW(tot)}`+(miss.length?` · not matched: ${miss.join(', ')}`:'');
+  save(); if(!quiet) toast(TW_MSG); return true; }
+function autoWeights(){ const s=SITES['zu-carport']; if(!s || s.state.tw!==undefined) return; const keep=CUR;
+  if(CUR!=='zu-carport') openSite('zu-carport'); applyWeights(ZU_TW,true); if(keep!==CUR) openSite(keep); else renderAll(); }
 const plannedOverallAt=dd=>overall(pkgCalc(dd,{}),'pl');
 function calc(){ const we=S.report.weekEnd, wn=weekNo(we); const pk=pkgCalc(we,S.actual), pkLast=pkgCalc(we,S.lastActual);
   const pl=overall(pk,'pl'), ac=overall(pk,'ac'); return {we,wn,pk,pkLast,pl,ac,varr:ac-pl,ws:addD(we,-6),elapsed:Math.max(0,diffD(SITE.meta.cStart||W1,we)+1),remaining:Math.max(0,diffD(we,SITE.meta.cEnd||we))}   /* counted days: start day included; remaining = days after the week end up to completion */; }
@@ -538,19 +715,25 @@ R.exec=p=>{ const c=calc(); return shell(p,'Planned, actual and variance come fr
    <div class="two">${listHTML('highlights','Work done this week')}${listHTML('issues','Problems / help needed from client (optional)')}</div>`); };
 let filterAll=false;
 function isActive(t,we){ if(t.ms) return false; const a=+S.actual[t.id]||0, la=+S.lastActual[t.id]||0; return t.start<=we&&(a<100||a>la); }
-R.wp=p=>{ const c=calc(); let h='<tr><th>Activity</th><th>Finish</th><th class="c">Should be</th><th class="c">Last week</th><th class="c">This week</th><th>Status</th></tr>', n=0;
+R.wp=p=>{ const c=calc(); let h='<tr><th>Activity</th><th>Finish</th>'+(TWON?'<th class="c">Weight %</th>':'')+'<th class="c">Should be</th><th class="c">Last week</th><th class="c">This week</th><th>Status</th></tr>', n=0;
   PKGS.forEach(pk=>{ const rows=LEAF.filter(t=>t.pkg===pk.k&&(filterAll||isActive(t,c.we))); if(!rows.length) return;
-    h+=`<tr class="grp"><td colspan="2">${esc(pk.n)}</td><td class="c">${pct(c.pk[pk.k].pl,0)}</td><td class="c">${pct(c.pkLast[pk.k].ac,0)}</td><td class="c" data-pkac="${pk.k}">${pct(c.pk[pk.k].ac,0)}</td><td></td></tr>`;
+    h+=`<tr class="grp"><td colspan="2">${esc(pk.n)}</td>${TWON?`<td class="c" data-pkw="${pk.k}">${fmtW(c.pk[pk.k].w)}</td>`:''}<td class="c">${pct(c.pk[pk.k].pl,0)}</td><td class="c">${pct(c.pkLast[pk.k].ac,0)}</td><td class="c" data-pkac="${pk.k}">${pct(c.pk[pk.k].ac,0)}</td><td></td></tr>`;
     rows.forEach(t=>{ n++; const pl=plannedPct(t,c.we), a=+S.actual[t.id]||0, la=+S.lastActual[t.id]||0;
-      if(t.ms){ h+=`<tr class="ms"><td>◆ ${esc(t.name)}</td><td class="nw">${dmyS(t.finish)}</td><td class="c">${pl>=100?'Due':'—'}</td><td class="c">${la>=100?'Yes':'—'}</td><td class="c"><label class="row" style="gap:4px;justify-content:center"><input type="checkbox" data-ms="${t.id}" ${a>=100?'checked':''} style="width:auto"> achieved</label></td><td></td></tr>`; return; }
-      h+=`<tr><td>${esc(t.name)}</td><td class="nw">${dmyS(t.finish)}</td><td class="c">${pl.toFixed(0)}%</td><td class="c">${la}%</td><td class="c">${pctSelect(t.id,a,la)}</td><td data-st="${t.id}">${statusPill(a,pl)}</td></tr>`; }); });
-  if(!n) h+='<tr><td colspan="6" style="padding:12px;color:var(--muted)">Nothing running in this week. Tap "All activities".</td></tr>';
+      if(t.ms){ h+=`<tr class="ms"><td>◆ ${esc(t.name)}</td><td class="nw">${dmyS(t.finish)}</td>${TWON?'<td></td>':''}<td class="c">${pl>=100?'Due':'—'}</td><td class="c">${la>=100?'Yes':'—'}</td><td class="c"><label class="row" style="gap:4px;justify-content:center"><input type="checkbox" data-ms="${t.id}" ${a>=100?'checked':''} style="width:auto"> achieved</label></td><td></td></tr>`; return; }
+      h+=`<tr><td>${esc(t.name)}</td><td class="nw">${dmyS(t.finish)}</td>${TWON?`<td class="c"><input class="twin" type="number" step="0.01" min="0" data-tw="${t.id}" value="${+S.tw[t.id]||0}" aria-label="Weight %"></td>`:''}<td class="c">${pl.toFixed(0)}%</td><td class="c">${la}%</td><td class="c">${pctSelect(t.id,a,la)}</td><td data-st="${t.id}">${statusPill(a,pl)}</td></tr>`; }); });
+  if(!n) h+='<tr><td colspan="7" style="padding:12px;color:var(--muted)">Nothing running in this week. Tap "All activities".</td></tr>';
   let sum='<tr><th>#</th><th>Work package</th><th>Weight</th><th>Planned</th><th>Actual</th><th>This week</th><th>Variance</th></tr>';
-  PKGS.forEach((pk,i)=>{ const x=c.pk[pk.k]; if(!x.w) return; const d=x.ac-x.pl; sum+=`<tr><td>${i+1}</td><td>${esc(pk.n)}</td><td><input type="number" min="0" max="100" data-w="${pk.k}" value="${S.weights[pk.k]}" style="width:64px;min-width:0" aria-label="Weight"></td><td>${pct(x.pl)}</td><td>${pct(x.ac)}</td><td>${sgn(x.ac-c.pkLast[pk.k].ac)}</td><td>${d<-3?'<span class="pill bad">'+sgn(d)+'</span>':d<0?'<span class="pill warn">'+sgn(d)+'</span>':'<span class="pill ok">'+sgn(d)+'</span>'}</td></tr>`; });
+  PKGS.forEach((pk,i)=>{ const x=c.pk[pk.k]; if(!x.w) return; const d=x.ac-x.pl; sum+=`<tr><td>${i+1}</td><td>${esc(pk.n)}</td><td>${TWON?`<span data-pkw2="${pk.k}">${fmtW(x.w)}</span>`:`<input type="number" min="0" max="100" data-w="${pk.k}" value="${S.weights[pk.k]}" style="width:64px;min-width:0" aria-label="Weight">`}</td><td>${pct(x.pl)}</td><td>${pct(x.ac)}</td><td>${sgn(x.ac-c.pkLast[pk.k].ac)}</td><td>${d<-3?'<span class="pill bad">'+sgn(d)+'</span>':d<0?'<span class="pill warn">'+sgn(d)+'</span>':'<span class="pill ok">'+sgn(d)+'</span>'}</td></tr>`; });
   return shell(p,'Each row shows last week\'s %. Change only the activities that moved. This drives pages 3, 4, 5, 6 and 7.',
    `<div class="tw" style="max-height:560px"><table id="actTable">${h}</table></div>
     <div class="toolbar"><div class="seg" role="group" aria-label="Activity filter"><button data-filter="0" aria-pressed="${!filterAll}">Running now</button><button data-filter="1" aria-pressed="${filterAll}">All activities</button></div><span class="count">${n} shown</span></div>
-    <h3 style="margin:18px 0 8px;font-size:17px">Work package summary <span class="auto">auto · weights editable</span></h3><div class="tw"><table class="sum-t" id="pkgTable">${sum}</table></div>`); };
+    <h3 style="margin:18px 0 8px;font-size:17px">Work package summary <span class="auto">${TWON?'auto · weight = sum of its task weightage':'auto · weights editable'}</span></h3><div class="tw"><table class="sum-t" id="pkgTable">${sum}</table></div>
+    ${twPanel()}`); };
+function twPanel(){ const tot=Object.values(S.tw||{}).reduce((a,b)=>a+(+b||0),0), n=Object.values(S.tw||{}).filter(v=>+v>0).length;
+  return `<details class="more"${TWON?'':' open'}><summary>Task weightage — ${TWON?`${n} activities · total ${fmtW(tot)}`:'not set (tasks weighted by duration)'}</summary>
+   <p class="help">Paste the task list with its weightage from Excel or MS Project (task name … weight %, one row per line — phase rows can stay in). Rows are matched to this site's schedule by name and order. Progress % of every task, package and the overall project then follows these weights. ${TWON&&Math.abs(tot-100)>0.5?'<b>Total is not 100% — percentages are scaled to the total.</b>':''}</p>
+   <textarea id="twPaste" rows="6" placeholder="Site Survey&#9;3 days&#9;3&#9;0.39%"></textarea>
+   <div class="toolbar"><button class="btn small primary" data-act2="twapply">Apply weightage</button>${TWON?'<button class="btn small" data-act2="twclear">Clear — weight by duration</button>':''}<span class="count">${esc(TW_MSG)}</span></div></details>`; }
 R.scurve=p=>shell(p,'Planned line comes from the schedule; the actual line from each week you report.',
   `<canvas class="preview" id="sCanvas" width="1200" height="440"></canvas><details class="more"><summary>Actual % of past weeks</summary><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(92px,1fr));margin-top:8px">${(()=>{ const c=calc(); let h=''; for(let w=1;w<c.wn;w++) h+=`<label class="f">W${String(w).padStart(2,'0')}<input type="number" step="0.1" min="0" max="100" data-h="${w}" value="${S.history[w]??''}"></label>`; return h||'<span class="count">No past weeks yet.</span>'; })()}</div></details>`);
 R.ms=p=>{ const rows=milestoneRows(S.report.weekEnd); return shell(p,'Milestones from the schedule. Tick when one is achieved; the date is recorded for you.',
@@ -614,7 +797,7 @@ function applySchedule(target){ const {tasks,pkgs}=nestRows(RAW.map(r=>({...r}))
   // keep actual % when a revised schedule is uploaded: match by name, then by id
   if(target.tasks?.length){ const old={}; target.tasks.forEach(t=>{ old[t.name.toLowerCase()]=t.id; }); const st=target.state; const na={}, nl={};
     tasks.forEach(t=>{ const oid=old[t.name.toLowerCase()]??(target.tasks.some(o=>o.id===t.id)?t.id:null); if(oid!=null){ if(st.actual[oid]!=null) na[t.id]=st.actual[oid]; if(st.lastActual[oid]!=null) nl[t.id]=st.lastActual[oid]; } });
-    st.actual=na; st.lastActual=nl; }
+    st.actual=na; st.lastActual=nl; if(st.tw){ const ntw={}; tasks.forEach(t=>{ const oid=old[t.name.toLowerCase()]??(target.tasks.some(o=>o.id===t.id&&o.name===t.name)?t.id:null); if(oid!=null&&st.tw[oid]!=null) ntw[t.id]=st.tw[oid]; }); st.tw=ntw; } }
   target.tasks=tasks; target.pkgs=pkgs; target.msIds=null; target.state.weights={}; pkgs.forEach(p=>{ target.state.weights[p.k]=defaultWeight(p.n); });
   if(!target.meta.cStart) target.meta.cStart=tasks[0]?.start||''; if(!target.meta.cEnd) target.meta.cEnd=tasks.reduce((m,t)=>t.finish>m?t.finish:m,'');
 }
@@ -639,7 +822,7 @@ function ganttRows(we){ const MAXR=30,pick=[];
     if(late||moved||soon||msSoon) pick.push({t,pr:late?0:moved?1:msSoon?2:3}); });
   pick.sort((x,y)=>x.pr-y.pr||x.t.start.localeCompare(y.t.start)); const phases=TASKS.filter(t=>t.sum&&(t.ph||t.lvl===1));
   const keep=new Set(pick.slice(0,MAXR-phases.length).map(p=>p.t.id)); return TASKS.filter(t=>(t.sum&&(t.ph||t.lvl===1))||keep.has(t.id)); }
-function sumActual(t){ const i=TASKS.indexOf(t); let w=0,a=0; for(let j=i+1;j<TASKS.length&&TASKS[j].lvl>t.lvl;j++){ const k=TASKS[j]; if(k.sum||k.ms) continue; w+=WD[k.id]; a+=WD[k.id]*(+S.actual[k.id]||0); } return w?a/w:0; }
+function sumActual(t){ const i=TASKS.indexOf(t); let w=0,a=0; for(let j=i+1;j<TASKS.length&&TASKS[j].lvl>t.lvl;j++){ const k=TASKS[j]; if(k.sum||k.ms) continue; const kw=taskW(k); w+=kw; a+=kw*(+S.actual[k.id]||0); } return w?a/w:0; }
 function drawGantt(cv){ if(!cv) return; const g=cv.getContext('2d'),W=cv.width,H=cv.height,we=S.report.weekEnd;
   if(GANTT_UP){ const im=new Image(); im.onload=()=>{ g.fillStyle='#fff'; g.fillRect(0,0,W,H); const r=Math.min(W/im.width,H/im.height); g.drawImage(im,(W-im.width*r)/2,(H-im.height*r)/2,im.width*r,im.height*r); }; im.src=GANTT_UP.url; return; }
   g.fillStyle='#fff'; g.fillRect(0,0,W,H); if(!TASKS.length){ g.fillStyle='#5d6b7a'; g.font='28px sans-serif'; g.fillText('Upload a schedule to draw the bar chart',60,H/2); return; }
@@ -723,7 +906,7 @@ async function buildPptx(){
   if(inc('scurve')){ s=await X('ppt/slides/slide4.xml'); setText(byId(s,7),sgn(c.ac-overall(c.pkLast,'ac'))); setText(byId(s,10),sgn(c.pl-plannedOverallAt(addD(c.we,-7)))); setText(byId(s,13),sgn(c.varr)); setText(byId(s,16),wk); await writeChart(zip,X,sCurveData()); }
   if(inc('wp')){ s=await X('ppt/slides/slide5.xml'); tb=firstTable(s); const rowsN=tableRows(tb).length-1; const used=PKGS.filter(p=>c.pk[p.k].w);
     used.slice(0,rowsN).forEach((p,i)=>{ const x=c.pk[p.k], d=x.ac-x.pl; const st=x.ac>=99.95?'Complete':(x.pl<.05&&x.ac<.05)?'Not started':d<=-3?'Behind':'On track';
-      setCell(cellAt(tb,i+1,1),p.n); [String(S.weights[p.k])+'%',pct(x.pl),pct(x.ac),sgn(x.ac-c.pkLast[p.k].ac).replace('±0.0%','0.0%'),sgn(d),pct(100-x.ac),st].forEach((v,j)=>setCell(cellAt(tb,i+1,j+2),v)); });
+      setCell(cellAt(tb,i+1,1),p.n); [fmtW(pkgWeight(p.k,c.pk)),pct(x.pl),pct(x.ac),sgn(x.ac-c.pkLast[p.k].ac).replace('±0.0%','0.0%'),sgn(d),pct(100-x.ac),st].forEach((v,j)=>setCell(cellAt(tb,i+1,j+2),v)); });
     tableRows(tb).slice(used.length+1).forEach(tr=>tr.remove()); }
   if(inc('ms')){ s=await X('ppt/slides/slide18.xml'); tb=firstTable(s); const mr=milestoneRows(c.we).slice(0,12); mr.forEach((r,i)=>r.slice(0,5).forEach((v,j)=>setCell(cellAt(tb,i+1,j+1),v)));
     tableRows(tb).slice(Math.max(1,mr.length)+1).forEach(tr=>tr.remove());
@@ -794,6 +977,7 @@ function startNextWeek(){ const c=calc(); S.history[c.wn]=Math.round(c.ac*10)/10
 document.addEventListener('input',e=>{ const t=e.target, ds=t.dataset; if(!SITE) return;
   if(ds.act){ const v=Math.max(0,Math.min(100,+t.value||0)); S.actual[ds.act]=v; t.classList.toggle('moved',v!==(+S.lastActual[ds.act]||0)); const task=TASKS.find(x=>String(x.id)===ds.act); const st=document.querySelector(`[data-st="${ds.act}"]`); if(st&&task) st.innerHTML=statusPill(v,plannedPct(task,S.report.weekEnd)); save(); renderHeader(); const c=calc(); PKGS.forEach(p=>{ const el=document.querySelector(`[data-pkac="${p.k}"]`); if(el) el.textContent=pct(c.pk[p.k].ac,0); }); }
   else if(ds.w){ S.weights[ds.w]=+t.value||0; save(); renderHeader(); }
+  else if(ds.tw){ S.tw[ds.tw]=Math.max(0,+t.value||0); refreshTW(); save(); renderHeader(); const c=calc(); PKGS.forEach(p=>{ const a=document.querySelector(`[data-pkac="${p.k}"]`); if(a) a.textContent=pct(c.pk[p.k].ac,0); document.querySelectorAll(`[data-pkw="${p.k}"],[data-pkw2="${p.k}"]`).forEach(el=>el.textContent=fmtW(c.pk[p.k].w)); }); }
   else if(ds.h){ S.history[ds.h]=t.value===''?null:+t.value; save(); drawS($('sCanvas')); }
   else if(ds.la){ (S.la[ds.la] ||= {})[ds.k]=t.value; save(); }
   else if(ds.t){ S.tables[ds.t][+ds.r][+ds.c]=t.value; save(); if(ds.t==='delay'){ const cell=document.querySelector(`[data-dd="${ds.r}"]`); if(cell) cell.textContent=delayDays(S.tables.delay[+ds.r]); } }
@@ -832,11 +1016,13 @@ document.addEventListener('click',async e=>{ const b=e.target.closest('button');
     else if(a==='savename'){ const v=$('nameIn').value.trim(); if(!v) return; try{ localStorage.setItem(LS_NAME,v); }catch(err){} save(); renderBanners(); }
     else if(a==='siteset') openSiteSettings(); else if(a==='schedule') openSiteSettings();
     else if(a==='ganttclear'){ GANTT_UP=null; renderPage(); }
+    else if(a==='twapply'){ const rows=parseWeights($('twPaste').value); if(!rows.length){ toast('Paste rows that end with the weight %, e.g. "Site Survey  3 days  0.39%".'); return; } if(applyWeights(rows)) renderAll(); }
+    else if(a==='twclear'){ S.tw={}; refreshTW(); TW_MSG='Weightage cleared — tasks weighted by duration again.'; save(); renderAll(); }
     else if(a==='cancel'){ closeModal(); }
     else if(a==='createsite'||a==='savesite'){ if(!DRAFT.meta.name.trim()){ toast('Give the project a name.'); return; } if(!DRAFT.meta.short) DRAFT.meta.short=DRAFT.meta.name;
       if(RAW){ applySchedule(DRAFT); RAW=null; } else if(a==='createsite'&&!DRAFT.tasks.length){ toast('Upload the schedule first — the report is built from it.'); return; }
       DRAFT.updated=Date.now(); DRAFT.updatedBy=userName(); if(a==='createsite') DRAFT.state.report.weekEnd='';
-      SITES[DRAFT.id]=fixSite(DRAFT); cloudSaveSite(SITES[DRAFT.id]); closeModal(); openSite(DRAFT.id); toast(a==='createsite'?'Site created.':'Site saved.'); }
+      delete DRAFT._seed; SITES[DRAFT.id]=fixSite(DRAFT); cloudSaveSite(SITES[DRAFT.id]); closeModal(); openSite(DRAFT.id); toast(a==='createsite'?'Site created.':'Site saved.'); }
     else if(a==='deletesite'){ if(($('delConfirm').value||'').trim()!==(SITE.meta.short||SITE.meta.name)){ toast('Type the short name exactly to delete.'); return; } const id=SITE.id; delete SITES[id]; cloudDeleteSite(id); closeModal(); if(!Object.keys(SITES).length){ const z=zuSeed(); SITES[z.id]=z; } openSite(Object.keys(SITES)[0]); toast('Site deleted.'); } } });
 $('sitePick').onchange=e=>openSite(e.target.value);
 $('btnNewSite').onclick=openNewSite; $('btnSiteSet').onclick=openSiteSettings;
